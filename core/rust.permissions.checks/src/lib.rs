@@ -1,11 +1,3 @@
-use crate::cache::SilverpeltCache;
-use crate::{
-    module_config::{
-        get_best_command_configuration, get_command_extended_data, get_module_configuration,
-    },
-    types::{GuildCommandConfiguration, GuildModuleConfiguration},
-    utils::permute_command_names,
-};
 use botox::cache::CacheHttpImpl;
 use kittycat::perms::Permission;
 use log::info;
@@ -13,6 +5,14 @@ use permissions::types::{PermissionChecks, PermissionResult};
 use serde::{Deserialize, Serialize};
 use serenity::all::{GuildId, UserId};
 use serenity::small_fixed_array::FixedArray;
+use silverpelt::cache::SilverpeltCache;
+use silverpelt::{
+    module_config::{
+        get_best_command_configuration, get_command_extended_data, get_module_configuration,
+    },
+    types::{GuildCommandConfiguration, GuildModuleConfiguration},
+    utils::permute_command_names,
+};
 use sqlx::PgPool;
 
 #[inline]
@@ -21,7 +21,7 @@ pub async fn get_user_discord_info(
     user_id: UserId,
     cache_http: &CacheHttpImpl,
     reqwest: &reqwest::Client,
-    poise_ctx: &Option<crate::Context<'_>>,
+    poise_ctx: &Option<silverpelt::Context<'_>>,
 ) -> Result<
     (
         bool,                              // is_owner
@@ -144,10 +144,10 @@ pub async fn get_user_kittycat_perms(
     guild_owner_id: UserId,
     user_id: UserId,
     roles: &FixedArray<serenity::all::RoleId>,
-) -> Result<Vec<kittycat::perms::Permission>, crate::Error> {
+) -> Result<Vec<kittycat::perms::Permission>, silverpelt::Error> {
     if let Some(ref custom_resolved_kittycat_perms) = opts.custom_resolved_kittycat_perms {
         if !opts.skip_custom_resolved_fit_checks {
-            let kc_perms = crate::member_permission_calc::get_kittycat_perms(
+            let kc_perms = silverpelt::member_permission_calc::get_kittycat_perms(
                 &mut *pool.acquire().await?,
                 guild_id,
                 guild_owner_id,
@@ -168,7 +168,7 @@ pub async fn get_user_kittycat_perms(
             Ok(custom_resolved_kittycat_perms.to_vec())
         }
     } else {
-        Ok(crate::member_permission_calc::get_kittycat_perms(
+        Ok(silverpelt::member_permission_calc::get_kittycat_perms(
             &mut *pool.acquire().await?,
             guild_id,
             guild_owner_id,
@@ -234,10 +234,10 @@ pub async fn check_command(
     guild_id: GuildId,
     user_id: UserId,
     pool: &PgPool,
-    cache_http: &CacheHttpImpl,
+    serenity_context: &serenity::all::Context,
     reqwest: &reqwest::Client,
     // If a poise::Context is available and originates from a Application Command, we can fetch the guild+member from cache itself
-    poise_ctx: &Option<crate::Context<'_>>,
+    poise_ctx: &Option<silverpelt::Context<'_>>,
     // Needed for settings and the website (potentially)
     opts: CheckCommandOptions,
 ) -> PermissionResult {
@@ -376,13 +376,20 @@ pub async fn check_command(
     }
 
     // Try getting guild+member from cache to speed up response times first
-    let (is_owner, guild_owner_id, member_perms, roles) =
-        match get_user_discord_info(guild_id, user_id, cache_http, reqwest, poise_ctx).await {
-            Ok(v) => v,
-            Err(e) => {
-                return e;
-            }
-        };
+    let (is_owner, guild_owner_id, member_perms, roles) = match get_user_discord_info(
+        guild_id,
+        user_id,
+        &botox::cache::CacheHttpImpl::from_ctx(&serenity_context),
+        reqwest,
+        poise_ctx,
+    )
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            return e;
+        }
+    };
 
     if is_owner {
         return PermissionResult::OkWithMessage {
@@ -426,7 +433,7 @@ pub async fn check_command(
                 guild_id,
                 templating::Template::Named(template.clone()),
                 pool.clone(),
-                cache_http.clone(),
+                serenity_context.clone(),
                 reqwest.clone(),
                 PermissionTemplateContext {
                     member_native_permissions: member_perms,

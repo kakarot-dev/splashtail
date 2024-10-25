@@ -11,3 +11,4 @@ indexmap = { version = "2", features = ["serde"] }
 
 # Anti-Raid specific
 silverpelt = { path = "../rust.silverpelt" }
+modules_ext = { path = "../rust.modules_ext" }

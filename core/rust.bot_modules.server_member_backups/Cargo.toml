@@ -9,3 +9,4 @@ edition = "2021"
 
 # Anti-Raid specific
 silverpelt = { path = "../rust.silverpelt" }
+modules_ext = { path = "../rust.modules_ext" }

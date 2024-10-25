@@ -29,16 +29,16 @@ pub async fn filter(
 
         let data = ctx.data();
 
-        let res = silverpelt::cmd::check_command(
+        let res = permission_checks::check_command(
             &data.silverpelt_cache,
             cmd.qualified_name.as_str(),
             guild_id,
             ctx.author().id,
             &ctx.data().pool,
-            &botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
+            ctx.serenity_context(),
             &data.reqwest,
             &Some(*ctx),
-            silverpelt::cmd::CheckCommandOptions::default(),
+            permission_checks::CheckCommandOptions::default(),
         )
         .await;
 

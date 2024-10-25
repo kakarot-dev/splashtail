@@ -1,4 +1,3 @@
-use botox::cache::CacheHttpImpl;
 use futures_util::StreamExt;
 use permissions::types::PermissionChecks;
 use silverpelt::types::GuildCommandConfiguration;
@@ -35,17 +34,16 @@ pub async fn commands_check(
     let data = ctx.data();
 
     // Check if the user has permission to use the command
-    let cache_http = &CacheHttpImpl::from_ctx(ctx.serenity_context());
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &command,
         guild_id,
         ctx.author().id,
         &data.pool,
-        cache_http,
+        ctx.serenity_context(),
         &data.reqwest,
         &Some(ctx),
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             ignore_command_disabled: true,
             channel_id: Some(ctx.channel_id()),
             ..Default::default()
@@ -111,17 +109,16 @@ pub async fn commands_enable(
     }
 
     // Check if the user has permission to use the command
-    let cache_http = &CacheHttpImpl::from_ctx(ctx.serenity_context());
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &command,
         guild_id,
         ctx.author().id,
         &data.pool,
-        cache_http,
+        ctx.serenity_context(),
         &data.reqwest,
         &Some(ctx),
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             ignore_command_disabled: true,
             channel_id: Some(ctx.channel_id()),
             ..Default::default()
@@ -226,17 +223,16 @@ pub async fn commands_disable(
     }
 
     // Check if the user has permission to use the command
-    let cache_http = &CacheHttpImpl::from_ctx(ctx.serenity_context());
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &command,
         guild_id,
         ctx.author().id,
         &ctx.data().pool,
-        cache_http,
+        ctx.serenity_context(),
         &data.reqwest,
         &Some(ctx),
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             ignore_command_disabled: true,
             channel_id: Some(ctx.channel_id()),
             ..Default::default()
@@ -333,17 +329,16 @@ pub async fn commands_modperms(
     };
 
     // Check if the user has permission to use the command
-    let cache_http = &CacheHttpImpl::from_ctx(ctx.serenity_context());
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &command,
         guild_id,
         ctx.author().id,
         &data.pool,
-        cache_http,
+        ctx.serenity_context(),
         &data.reqwest,
         &Some(ctx),
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             ignore_command_disabled: true,
             channel_id: Some(ctx.channel_id()),
             ..Default::default()
@@ -469,16 +464,16 @@ pub async fn commands_modperms(
                     continue;
                 }
 
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     "commands enable",
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions {
+                    permission_checks::CheckCommandOptions {
                         channel_id: Some(ctx.channel_id()),
                         ..Default::default()
                     },
@@ -524,16 +519,16 @@ pub async fn commands_modperms(
                     continue;
                 }
 
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     "commands disable",
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions {
+                    permission_checks::CheckCommandOptions {
                         channel_id: Some(ctx.channel_id()),
                         ..Default::default()
                     },
@@ -581,16 +576,16 @@ pub async fn commands_modperms(
 
                 // If there is no change, then only do permission checking
                 if cmd_extended_data.is_default_enabled {
-                    let perm_res = silverpelt::cmd::check_command(
+                    let perm_res = permission_checks::check_command(
                         &data.silverpelt_cache,
                         "commands enable",
                         guild_id,
                         ctx.author().id,
                         &data.pool,
-                        cache_http,
+                        ctx.serenity_context(),
                         &data.reqwest,
                         &Some(ctx),
-                        silverpelt::cmd::CheckCommandOptions {
+                        permission_checks::CheckCommandOptions {
                             channel_id: Some(ctx.channel_id()),
                             ..Default::default()
                         },
@@ -615,16 +610,16 @@ pub async fn commands_modperms(
                         continue;
                     }
                 } else {
-                    let perm_res = silverpelt::cmd::check_command(
+                    let perm_res = permission_checks::check_command(
                         &data.silverpelt_cache,
                         "commands disable",
                         guild_id,
                         ctx.author().id,
                         &data.pool,
-                        cache_http,
+                        ctx.serenity_context(),
                         &data.reqwest,
                         &Some(ctx),
-                        silverpelt::cmd::CheckCommandOptions {
+                        permission_checks::CheckCommandOptions {
                             channel_id: Some(ctx.channel_id()),
                             ..Default::default()
                         },
@@ -653,16 +648,16 @@ pub async fn commands_modperms(
                 new_command_config.disabled = None;
             }
             "perms/reset" => {
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     &command,
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions {
+                    permission_checks::CheckCommandOptions {
                         custom_command_configuration: Some(GuildCommandConfiguration {
                             perms: None,
                             ..new_command_config.clone()
@@ -733,25 +728,18 @@ pub async fn commands_modperms(
 
                 match perms {
                     Ok(perms) => {
-                        let parsed = silverpelt::validators::parse_permission_checks(
-                            guild_id,
-                            data.pool.clone(),
-                            cache_http.clone(),
-                            data.reqwest.clone(),
-                            &perms,
-                        )
-                        .await?;
+                        let parsed = permissions::parse::parse_permission_checks(&perms).await?;
 
-                        let perm_res = silverpelt::cmd::check_command(
+                        let perm_res = permission_checks::check_command(
                             &data.silverpelt_cache,
                             &command,
                             guild_id,
                             ctx.author().id,
                             &data.pool,
-                            cache_http,
+                            ctx.serenity_context(),
                             &data.reqwest,
                             &Some(ctx),
-                            silverpelt::cmd::CheckCommandOptions {
+                            permission_checks::CheckCommandOptions {
                                 custom_command_configuration: Some(GuildCommandConfiguration {
                                     perms: Some(parsed.clone()),
                                     ..new_command_config.clone()
@@ -790,16 +778,16 @@ pub async fn commands_modperms(
                 }
             }
             "cmd/save" => {
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     &command,
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions {
+                    permission_checks::CheckCommandOptions {
                         ignore_command_disabled: true,
                         custom_command_configuration: Some(new_command_config.clone()),
                         channel_id: Some(ctx.channel_id()),

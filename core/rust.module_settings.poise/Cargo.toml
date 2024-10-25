@@ -1,5 +1,5 @@
 [package]
-name = "silverpelt"
+name = "module_settings_poise"
 description = "Silverpelt provides the core library used to produce Anti-Raid modules. In Warriors, Silverpelt represents the mortal plane and the stars that guide the clans."
 version = "0.1.0"
 edition = "2021"
@@ -26,9 +26,11 @@ bitflags = "2"
 # Anti-Raid specific
 splashcore_rs = { path = "../rust.std" }
 permissions = { path = "../rust.permissions" }
+permission_checks = { path = "../rust.permissions.checks" }
 module_settings = { path = "../rust.module_settings" }
 config = { path = "../rust.config" }
 sandwich_driver = { path = "../rust.sandwich_driver" }
+silverpelt = { path = "../rust.silverpelt" }
 
 [dependencies.tokio]
 version = "1"

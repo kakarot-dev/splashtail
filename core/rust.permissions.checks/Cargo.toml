@@ -1,5 +1,6 @@
 [package]
-name = "bot_modules_lockdown"
+name = "permission_checks"
+description = "Permission checking for Anti-Raid modules."
 version = "0.1.0"
 edition = "2021"
 
@@ -7,34 +8,43 @@ edition = "2021"
 
 [dependencies]
 poise = { git = "https://github.com/Anti-Raid/poise", branch = "serenity-next" }
-log = "0.4"
-serde = "1.0"
-sqlx = { version = "0.8", features = [ "runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
-uuid = { version = "1", features = ["serde"] }
 chrono = { version = "0.4", features = ["serde"]}
-serde_json = "1.0"
-futures-util = "0.3"
 indexmap = { version = "2", features = ["serde"] }
+futures-util = "0.3"
+serde_json = "1.0"
 moka = { version = "0.12", features = ["future", "futures-util"] }
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "rustls-tls-native-roots"] }
-async-trait = "0.1.80"
+serde = { version = "1.0", features = ["derive"] }
+typetag = "0.2"
 dashmap = { version = "6", features = ["serde", "inline", "rayon"] }
+sqlx = { version = "0.8", features = [ "runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "rustls-tls-native-roots"] }
+log = "0.4"
+async-trait = "0.1.80"
+regex = "1"
+bitflags = "2"
 
 # Anti-Raid specific
-silverpelt = { path = "../rust.silverpelt" }
 splashcore_rs = { path = "../rust.std" }
+permissions = { path = "../rust.permissions" }
 module_settings = { path = "../rust.module_settings" }
+config = { path = "../rust.config" }
 sandwich_driver = { path = "../rust.sandwich_driver" }
-modules_ext = { path = "../rust.modules_ext" }
+silverpelt = { path = "../rust.silverpelt" }
+templating = { path = "../rust.templating" }
+
+[dependencies.tokio]
+version = "1"
+features = ["sync", "macros", "rt-multi-thread"]
+
+[dependencies.botox]
+git = "https://github.com/Anti-Raid/botox"
+branch = "main"
 
 [dependencies.serenity]
 git = "https://github.com/Anti-Raid/serenity"
 branch = "next"
 features = ["model", "http", "cache", "rustls_backend", "unstable"]
 
-[dependencies.botox]
-git = "https://github.com/Anti-Raid/botox"
+[dependencies.kittycat]
+git = "https://github.com/infinitybotlist/kittycat"
 branch = "main"
-
-[package.metadata.cargo-machete]
-ignored = ["uuid", "chrono"]

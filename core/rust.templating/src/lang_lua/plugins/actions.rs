@@ -33,11 +33,19 @@ pub struct SendMessageChannelAction {
     message: crate::core::messages::Message,
 }
 
+/// A sting user action
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct StingUserAction {
+    pub sting: silverpelt::stings::StingCreate,
+}
+
 /// An action executor is used to execute actions such as kick/ban/timeout from Lua
 /// templates
 pub struct ActionExecutor {
     template_data: Arc<state::TemplateData>,
     guild_id: serenity::all::GuildId,
+    pool: sqlx::PgPool,
+    serenity_context: serenity::all::Context,
     cache_http: botox::cache::CacheHttpImpl,
     reqwest_client: reqwest::Client,
     ratelimits: Arc<state::LuaActionsRatelimit>,
@@ -113,7 +121,7 @@ impl LuaUserData for ActionExecutor {
                 ));
             }
 
-            this.cache_http
+            this.serenity_context
                 .http
                 .ban_user(
                     this.guild_id,
@@ -139,7 +147,7 @@ impl LuaUserData for ActionExecutor {
                 ));
             }
 
-            this.cache_http
+            this.serenity_context
                 .http
                 .kick_member(this.guild_id, data.user_id, Some(data.reason.as_str()))
                 .await
@@ -171,7 +179,7 @@ impl LuaUserData for ActionExecutor {
 
             this.guild_id
                 .edit_member(
-                    &this.cache_http.http,
+                    &this.serenity_context.http,
                     data.user_id,
                     serenity::all::EditMember::new()
                         .audit_log_reason(data.reason.as_str())
@@ -216,7 +224,7 @@ impl LuaUserData for ActionExecutor {
                     return Err(LuaError::external("Channel not in guild"));
                 }
 
-                let bot_user_id = this.cache_http.cache.current_user().id;
+                let bot_user_id = this.serenity_context.cache.current_user().id;
 
                 let bot_user = sandwich_driver::member_in_guild(
                     &this.cache_http,
@@ -255,11 +263,30 @@ impl LuaUserData for ActionExecutor {
                 cm = cm.embeds(msg.embeds);
 
                 guild_channel
-                    .send_message(&this.cache_http.http, cm)
+                    .send_message(&this.serenity_context.http, cm)
                     .await
                     .map_err(LuaError::external)?;
 
                 Ok(())
+            },
+        );
+
+        methods.add_async_method(
+            "create_user_sting",
+            |lua, this, data: LuaValue| async move {
+                let data = lua.from_value::<StingUserAction>(data)?;
+
+                this.check_action("sting_user".to_string())
+                    .map_err(LuaError::external)?;
+
+                let sting = data.sting;
+
+                let sting = sting
+                    .create_and_dispatch_returning_id(this.serenity_context.clone(), &this.pool)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                Ok(sting.to_string())
             },
         );
     }
@@ -283,9 +310,11 @@ pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
             let executor = ActionExecutor {
                 template_data: template_data.clone(),
                 guild_id: data.guild_id,
-                cache_http: data.cache_http.clone(),
+                cache_http: botox::cache::CacheHttpImpl::from_ctx(&data.serenity_context),
+                serenity_context: data.serenity_context.clone(),
                 reqwest_client: data.reqwest_client.clone(),
                 ratelimits: data.actions_ratelimits.clone(),
+                pool: data.pool.clone(),
             };
 
             Ok(executor)

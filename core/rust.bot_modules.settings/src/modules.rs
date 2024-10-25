@@ -301,17 +301,16 @@ pub async fn modules_modperms(
         return Err("Module not found".into());
     };
 
-    let cache_http = botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context());
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &format!("acl__modules_modperms {}", module.id()),
         guild_id,
         ctx.author().id,
         &data.pool,
-        &cache_http,
+        ctx.serenity_context(),
         &data.reqwest,
         &Some(ctx),
-        silverpelt::cmd::CheckCommandOptions::default(),
+        permission_checks::CheckCommandOptions::default(),
     )
     .await;
 
@@ -426,16 +425,16 @@ pub async fn modules_modperms(
                     continue;
                 }
 
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     "modules enable",
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    &cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions::default(),
+                    permission_checks::CheckCommandOptions::default(),
                 )
                 .await;
 
@@ -478,16 +477,16 @@ pub async fn modules_modperms(
                     continue;
                 }
 
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     "modules disable",
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    &cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions::default(),
+                    permission_checks::CheckCommandOptions::default(),
                 )
                 .await;
 
@@ -531,16 +530,16 @@ pub async fn modules_modperms(
                 }
 
                 if module.is_default_enabled() {
-                    let perm_res = silverpelt::cmd::check_command(
+                    let perm_res = permission_checks::check_command(
                         &data.silverpelt_cache,
                         "modules enable",
                         guild_id,
                         ctx.author().id,
                         &data.pool,
-                        &cache_http,
+                        ctx.serenity_context(),
                         &data.reqwest,
                         &Some(ctx),
-                        silverpelt::cmd::CheckCommandOptions::default(),
+                        permission_checks::CheckCommandOptions::default(),
                     )
                     .await;
 
@@ -562,16 +561,16 @@ pub async fn modules_modperms(
                         continue;
                     }
                 } else {
-                    let perm_res = silverpelt::cmd::check_command(
+                    let perm_res = permission_checks::check_command(
                         &data.silverpelt_cache,
                         "modules disable",
                         guild_id,
                         ctx.author().id,
                         &data.pool,
-                        &cache_http,
+                        ctx.serenity_context(),
                         &data.reqwest,
                         &Some(ctx),
-                        silverpelt::cmd::CheckCommandOptions::default(),
+                        permission_checks::CheckCommandOptions::default(),
                     )
                     .await;
 
@@ -597,16 +596,16 @@ pub async fn modules_modperms(
                 new_module_config.disabled = None;
             }
             "module/default-perms/reset" => {
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     &format!("acl__{}_defaultperms_check", module.id()),
                     guild_id,
                     ctx.author().id,
                     &data.pool,
-                    &cache_http,
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions {
+                    permission_checks::CheckCommandOptions {
                         custom_module_configuration: Some(GuildModuleConfiguration {
                             default_perms: None,
                             disabled: Some(false),
@@ -678,25 +677,18 @@ pub async fn modules_modperms(
 
                 match perms {
                     Ok(perms) => {
-                        let parsed = silverpelt::validators::parse_permission_checks(
-                            guild_id,
-                            data.pool.clone(),
-                            cache_http.clone(),
-                            data.reqwest.clone(),
-                            &perms,
-                        )
-                        .await?;
+                        let parsed = permissions::parse::parse_permission_checks(&perms).await?;
 
-                        let perm_res = silverpelt::cmd::check_command(
+                        let perm_res = permission_checks::check_command(
                             &data.silverpelt_cache,
                             &format!("acl__{}_defaultperms_check", module.id()),
                             guild_id,
                             ctx.author().id,
                             &data.pool,
-                            &cache_http,
+                            ctx.serenity_context(),
                             &data.reqwest,
                             &Some(ctx),
-                            silverpelt::cmd::CheckCommandOptions {
+                            permission_checks::CheckCommandOptions {
                                 custom_module_configuration: Some(GuildModuleConfiguration {
                                     disabled: Some(false),
                                     default_perms: Some(parsed.clone()),

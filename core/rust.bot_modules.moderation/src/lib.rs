@@ -153,4 +153,8 @@ impl silverpelt::module::Module for Module {
             std::sync::Arc::new(core::punishment_actions::CreateRemoveAllRolesAction),
         ]
     }
+
+    fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
+        modules_ext::create_full_command_list(self)
+    }
 }

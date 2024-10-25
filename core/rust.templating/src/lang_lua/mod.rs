@@ -69,7 +69,7 @@ struct ArLuaThreadInnerState {
 async fn create_lua_vm(
     guild_id: GuildId,
     pool: sqlx::PgPool,
-    cache_http: botox::cache::CacheHttpImpl,
+    serenity_context: serenity::all::Context,
     reqwest_client: reqwest::Client,
 ) -> LuaResult<ArLua> {
     let lua = Lua::new_with(
@@ -154,7 +154,7 @@ async fn create_lua_vm(
     let user_data = state::LuaUserData {
         pool,
         guild_id,
-        cache_http,
+        serenity_context,
         reqwest_client,
         kv_constraints: state::LuaKVConstraints::default(),
         per_template: scc::HashMap::new(),
@@ -359,20 +359,20 @@ pub(crate) async fn resolve_template_to_bytecode(
 async fn get_lua_vm(
     guild_id: GuildId,
     pool: sqlx::PgPool,
-    cache_http: botox::cache::CacheHttpImpl,
+    serenity_context: serenity::all::Context,
     reqwest_client: reqwest::Client,
 ) -> LuaResult<ArLua> {
     match VMS.get(&guild_id).await {
         Some(vm) => {
             if vm.broken.load(std::sync::atomic::Ordering::Acquire) {
-                let vm = create_lua_vm(guild_id, pool, cache_http, reqwest_client).await?;
+                let vm = create_lua_vm(guild_id, pool, serenity_context, reqwest_client).await?;
                 VMS.insert(guild_id, vm.clone()).await;
                 return Ok(vm);
             }
             Ok(vm.clone())
         }
         None => {
-            let vm = create_lua_vm(guild_id, pool, cache_http, reqwest_client).await?;
+            let vm = create_lua_vm(guild_id, pool, serenity_context, reqwest_client).await?;
             VMS.insert(guild_id, vm.clone()).await;
             Ok(vm)
         }
@@ -380,7 +380,7 @@ async fn get_lua_vm(
 }
 
 pub(crate) struct ParseCompileState {
-    pub cache_http: botox::cache::CacheHttpImpl,
+    pub serenity_context: serenity::all::Context,
     pub reqwest_client: reqwest::Client,
     pub guild_id: GuildId,
     pub template: crate::Template,
@@ -423,7 +423,7 @@ pub async fn render_template<Request: serde::Serialize, Response: serde::de::Des
     let lua = get_lua_vm(
         state.guild_id,
         state.pool,
-        state.cache_http,
+        state.serenity_context,
         state.reqwest_client,
     )
     .await?;

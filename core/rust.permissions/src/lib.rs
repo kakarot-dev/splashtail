@@ -1,6 +1,9 @@
+pub mod parse;
 pub mod types;
 
 use types::{PermissionCheck, PermissionChecks, PermissionResult};
+
+pub type Error = Box<dyn std::error::Error + Send + Sync>; // This is constant and should be copy pasted
 
 /// This function runs a single permission check on a command without taking any branching decisions
 ///

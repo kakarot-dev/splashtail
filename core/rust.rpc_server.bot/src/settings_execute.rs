@@ -12,7 +12,6 @@ pub(crate) async fn settings_operation(
     State(AppData {
         data,
         serenity_context,
-        cache_http,
         ..
     }): State<AppData>,
     Path((guild_id, user_id)): Path<(serenity::all::GuildId, serenity::all::UserId)>,
@@ -71,16 +70,16 @@ pub(crate) async fn settings_operation(
         });
     }
 
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &opt.get_corresponding_command(op),
         guild_id,
         user_id,
         &data.pool,
-        &cache_http,
+        &serenity_context,
         &data.reqwest,
         &None,
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             ignore_module_disabled: true,
             ..Default::default()
         },

@@ -37,7 +37,7 @@ pub async fn exec_template(
         guild_id,
         templating::Template::Raw(expr),
         ctx.data().pool.clone(),
-        botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
+        ctx.serenity_context().clone(),
         ctx.data().reqwest.clone(),
         ExecContext {
             user: ctx.author().clone(),

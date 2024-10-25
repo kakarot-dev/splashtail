@@ -143,6 +143,20 @@ impl StingCreate {
 
         Ok(())
     }
+
+    /// Creates a new Sting and dispatches it as an event in one go
+    pub async fn create_and_dispatch_returning_id(
+        self,
+        ctx: serenity::all::Context,
+        db: impl sqlx::PgExecutor<'_>,
+    ) -> Result<sqlx::types::Uuid, crate::Error> {
+        let sting = self.create_without_dispatch(db).await?;
+        let sid = sting.id;
+
+        sting.dispatch_event(ctx).await?;
+
+        Ok(sid)
+    }
 }
 
 /// For safety purposes, ``delete_sting_by_id`` should be used instead of directly deleting stings as it ensures deletes are guild-scoped

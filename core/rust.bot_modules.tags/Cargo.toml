@@ -26,6 +26,7 @@ sandwich_driver = { path = "../rust.sandwich_driver" }
 rust_buildstats = { path = "../rust.buildstats" }
 splashcore_rs = { path = "../rust.std" }
 templating = { path = "../rust.templating" }
+modules_ext = { path = "../rust.modules_ext" }
 
 [dependencies.serenity]
 git = "https://github.com/Anti-Raid/serenity"

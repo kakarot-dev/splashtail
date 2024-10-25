@@ -28,6 +28,7 @@ splashcore_rs = { path = "../rust.std" }
 module_settings = { path = "../rust.module_settings" }
 std_events = { path = "../rust.stdevents" }
 templating = { path = "../rust.templating" }
+modules_ext = { path = "../rust.modules_ext" }
 
 [dependencies.serenity]
 git = "https://github.com/Anti-Raid/serenity"

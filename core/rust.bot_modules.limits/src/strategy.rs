@@ -188,7 +188,7 @@ impl Strategy for TemplateStrategy {
             ha.guild_id,
             templating::Template::Named(self.0.clone()),
             data.pool.clone(),
-            botox::cache::CacheHttpImpl::from_ctx(ctx),
+            ctx.clone(),
             data.reqwest.clone(),
             TemplateStrategyContext {
                 handle_mod_action: ha.clone(),

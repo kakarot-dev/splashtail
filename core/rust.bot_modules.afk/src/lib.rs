@@ -39,6 +39,10 @@ impl silverpelt::module::Module for Module {
     fn config_options(&self) -> Vec<module_settings::types::ConfigOption> {
         vec![(*settings::AFKS).clone()]
     }
+
+    fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
+        modules_ext::create_full_command_list(self)
+    }
 }
 
 struct EventHandler;

@@ -265,7 +265,7 @@ func Route(d uapi.RouteData, r *http.Request) uapi.HttpResponse {
 			updateCols = append(updateCols, "perms")
 			updateArgs = append(updateArgs, nil)
 		} else {
-			parsedValue, err := rpc.ParsePermissionChecks(d.Context, guildId, value)
+			parsedValue, err := rpc.ParsePermissionChecks(d.Context, value)
 
 			if err != nil {
 				return uapi.HttpResponse{

@@ -308,6 +308,27 @@ async fn check_modules_test_impl(ctx: &serenity::all::Context) -> Result<(), Err
                 .into());
             }
         }
+
+        // Ensure that the corresponding command for each config option exists in command list
+        let command_list = module.full_command_list();
+
+        for config_opt in module.config_options() {
+            for op_type in config_opt.operations.keys() {
+                let corresponding_command = command_list.iter().find(|cmd| {
+                    cmd.0.qualified_name == config_opt.get_corresponding_command(*op_type)
+                });
+
+                if corresponding_command.is_none() {
+                    return Err(format!(
+                        "Module {} has a config option {} with an operation {} that does not have a corresponding command",
+                        module.id(),
+                        config_opt.id,
+                        op_type
+                    )
+                    .into());
+                }
+            }
+        }
     }
 
     Ok(())

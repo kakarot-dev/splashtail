@@ -1,4 +1,4 @@
-use permissions::types::{PermissionCheck, PermissionChecks};
+use crate::types::{PermissionCheck, PermissionChecks};
 
 const MAX_PERM_CHECK: usize = 10;
 const MAX_KITTYCAT_PERMS: usize = 10;
@@ -7,10 +7,6 @@ const MAX_NATIVE_PERMS: usize = 10;
 
 // Parses a user-inputted PermissionChecks object into a parsed PermissionChecks object.
 pub async fn parse_permission_checks(
-    guild_id: serenity::all::GuildId,
-    pool: sqlx::PgPool,
-    cache_http: botox::cache::CacheHttpImpl,
-    reqwest_client: reqwest::Client,
     pc: &PermissionChecks,
 ) -> Result<PermissionChecks, crate::Error> {
     match pc {
@@ -74,18 +70,8 @@ pub async fn parse_permission_checks(
                 checks: parsed_checks,
             })
         }
-        PermissionChecks::Template { template } => {
-            templating::parse(
-                guild_id,
-                templating::Template::Named(template.clone()),
-                pool,
-                cache_http,
-                reqwest_client,
-            )
-            .await?;
-            Ok(PermissionChecks::Template {
-                template: template.clone(),
-            })
-        }
+        PermissionChecks::Template { template } => Ok(PermissionChecks::Template {
+            template: template.clone(),
+        }),
     }
 }

@@ -1,3 +1,4 @@
+use crate::settings_poise;
 use module_settings::types::{
     ColumnType, InnerColumnType, InnerColumnTypeStringKind, OperationType,
 };
@@ -51,7 +52,7 @@ fn convert_bitflags_string_to_value(
 fn serenity_resolvedvalue_to_value(
     rv: &serenity::all::ResolvedValue,
     column_type: &ColumnType,
-) -> Result<splashcore_rs::value::Value, crate::Error> {
+) -> Result<splashcore_rs::value::Value, silverpelt::Error> {
     // Before checking column_type, first handle unresolved resolved values so they don't waste our time
     #[allow(clippy::single_match)]
     match rv {
@@ -218,8 +219,8 @@ fn serenity_resolvedvalue_to_value(
 
 /// Base command callback used for the root command
 async fn base_command(
-    ctx: poise::Context<'_, crate::data::Data, crate::Error>,
-) -> Result<(), poise::FrameworkError<'_, crate::data::Data, crate::Error>> {
+    ctx: poise::Context<'_, silverpelt::data::Data, silverpelt::Error>,
+) -> Result<(), poise::FrameworkError<'_, silverpelt::data::Data, silverpelt::Error>> {
     match ctx
         .send(
             poise::CreateReply::new()
@@ -245,8 +246,8 @@ struct SubcommandCallbackWrapper {
 /// Gets the values from a poise ResolvedValue handling choices and all that garbage
 fn poise_getvalues(
     config_opt: &module_settings::types::ConfigOption,
-    ctx: &poise::ApplicationContext<'_, crate::data::Data, crate::Error>,
-) -> Result<indexmap::IndexMap<String, splashcore_rs::value::Value>, crate::Error> {
+    ctx: &poise::ApplicationContext<'_, silverpelt::data::Data, silverpelt::Error>,
+) -> Result<indexmap::IndexMap<String, splashcore_rs::value::Value>, silverpelt::Error> {
     let mut map = indexmap::IndexMap::new();
 
     // Due to dynamic columns, we need to parse in order
@@ -290,8 +291,8 @@ fn poise_getvalues(
 
 /// Subcommand callback
 async fn subcommand_command(
-    ctx: poise::ApplicationContext<'_, crate::data::Data, crate::Error>,
-) -> Result<(), poise::FrameworkError<'_, crate::data::Data, crate::Error>> {
+    ctx: poise::ApplicationContext<'_, silverpelt::data::Data, silverpelt::Error>,
+) -> Result<(), poise::FrameworkError<'_, silverpelt::data::Data, silverpelt::Error>> {
     let Some(cwctx) = ctx
         .command()
         .custom_data
@@ -308,7 +309,7 @@ async fn subcommand_command(
 
     match cwctx.operation_type {
         OperationType::View => {
-            return crate::settings_poise::settings_viewer(
+            return settings_poise::settings_viewer(
                 &poise::Context::Application(ctx),
                 &cwctx.config_option,
                 indexmap::IndexMap::new(), // TODO: Add filtering in the future
@@ -329,7 +330,7 @@ async fn subcommand_command(
                 )
             })?;
 
-            return crate::settings_poise::settings_creator(
+            return settings_poise::settings_creator(
                 &poise::Context::Application(ctx),
                 &cwctx.config_option,
                 entry,
@@ -350,7 +351,7 @@ async fn subcommand_command(
                 )
             })?;
 
-            return crate::settings_poise::settings_updater(
+            return settings_poise::settings_updater(
                 &poise::Context::Application(ctx),
                 &cwctx.config_option,
                 entry,
@@ -381,7 +382,7 @@ async fn subcommand_command(
                 ));
             };
 
-            return crate::settings_poise::settings_deleter(
+            return settings_poise::settings_deleter(
                 &poise::Context::Application(ctx),
                 &cwctx.config_option,
                 pkey,
@@ -400,7 +401,7 @@ async fn subcommand_command(
 pub fn create_poise_commands_from_setting(
     module_id: &str,
     config_opt: &module_settings::types::ConfigOption,
-) -> poise::Command<crate::data::Data, crate::Error> {
+) -> poise::Command<silverpelt::data::Data, silverpelt::Error> {
     poise::Command {
         name: config_opt.id.to_string(),
         qualified_name: config_opt.id.to_string(),
@@ -433,7 +434,7 @@ pub fn create_poise_commands_from_setting(
 pub fn create_poise_subcommands_from_setting(
     module_id: &str,
     config_opt: &module_settings::types::ConfigOption,
-) -> Vec<poise::Command<crate::data::Data, crate::Error>> {
+) -> Vec<poise::Command<silverpelt::data::Data, silverpelt::Error>> {
     let mut sub_cmds = Vec::new();
 
     // Create subcommands
@@ -542,7 +543,7 @@ fn is_column_required_for_operation_type(
 fn create_command_args_for_operation_type(
     config_opt: &module_settings::types::ConfigOption,
     operation_type: module_settings::types::OperationType,
-) -> Vec<poise::CommandParameter<crate::data::Data, crate::Error>> {
+) -> Vec<poise::CommandParameter<silverpelt::data::Data, silverpelt::Error>> {
     let mut args = vec![];
 
     if operation_type == OperationType::View {
@@ -697,7 +698,7 @@ fn create_command_args_for_operation_type(
                                     _ => unreachable!(),
                                 };
 
-                                let resp = crate::settings_poise::bitflag_autocomplete(
+                                let resp = settings_poise::bitflag_autocomplete(
                                     poise::Context::Application(ctx),
                                     values,
                                     partial,

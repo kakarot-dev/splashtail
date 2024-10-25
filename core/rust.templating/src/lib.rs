@@ -120,8 +120,6 @@ pub async fn parse(
     guild_id: serenity::all::GuildId,
     template: Template,
     pool: sqlx::PgPool,
-    cache_http: botox::cache::CacheHttpImpl,
-    reqwest_client: reqwest::Client,
 ) -> Result<(), Error> {
     let template_content = match template {
         Template::Raw(ref template) => template.clone(),
@@ -141,7 +139,7 @@ pub async fn execute<C: Context + serde::Serialize, RenderResult: serde::de::Des
     guild_id: serenity::all::GuildId,
     template: Template,
     pool: sqlx::PgPool,
-    cache_http: botox::cache::CacheHttpImpl,
+    serenity_context: serenity::all::Context,
     reqwest_client: reqwest::Client,
     ctx: C,
 ) -> Result<RenderResult, Error> {
@@ -157,7 +155,7 @@ pub async fn execute<C: Context + serde::Serialize, RenderResult: serde::de::Des
         TemplateLanguage::Lua => lang_lua::render_template(
             ctx,
             lang_lua::ParseCompileState {
-                cache_http,
+                serenity_context,
                 reqwest_client,
                 guild_id,
                 template,

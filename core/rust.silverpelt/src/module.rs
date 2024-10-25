@@ -47,15 +47,10 @@ pub trait Module: Send + Sync {
         Vec::new()
     }
 
-    /// The full command list of the module
+    /// The full command list of the module.
     ///
-    /// Note that modules should not need to override this function (normally)
-    ///
-    /// When in doubt, just implement `raw_commands` instead
-    fn full_command_list(&self) -> Vec<CommandObj> {
-        create_full_command_list(self)
-    }
-
+    /// Note: most modules can use the modules_ext::create_full_command_list function to generate this automatically
+    fn full_command_list(&self) -> Vec<CommandObj>;
     /// Event listeners for the module
     fn event_listeners(&self) -> Option<Box<dyn ModuleEventListeners>> {
         None
@@ -204,68 +199,4 @@ pub fn validate_module<T: Module + ?Sized>(module: &T) -> Result<(), crate::Erro
     }
 
     Ok(())
-}
-
-fn string_to_static_str(s: String) -> &'static str {
-    Box::leak(s.into_boxed_str())
-}
-
-fn create_full_command_list<T: Module + ?Sized>(module: &T) -> Vec<CommandObj> {
-    #[poise::command(slash_command, rename = "")]
-    pub async fn base_cmd(_ctx: crate::Context<'_>) -> Result<(), crate::Error> {
-        Ok(())
-    }
-
-    let mut commands = module.raw_commands();
-
-    // acl__{module}_defaultperms_check is a special command that is added to all modules
-    let mut acl_module_defaultperms_check = base_cmd();
-    acl_module_defaultperms_check.name = format!("acl__{}_defaultperms_check", module.id());
-    acl_module_defaultperms_check.qualified_name =
-        format!("acl__{}_defaultperms_check", module.id());
-    commands.push((
-        acl_module_defaultperms_check,
-        indexmap::indexmap! {
-            "" => crate::CommandExtendedData {
-                virtual_command: true,
-                ..Default::default()
-            },
-        },
-    ));
-
-    // Add in the settings related commands
-    for config_opt in module.config_options() {
-        let created_cmd =
-            crate::settings_autogen::create_poise_commands_from_setting(module.id(), &config_opt);
-
-        let mut extended_data = indexmap::IndexMap::new();
-
-        // Add base command to extended data
-        let mut command_extended_data =
-            crate::CommandExtendedData::kittycat_or_admin(module.id(), config_opt.id);
-
-        if module.root_module() {
-            command_extended_data.virtual_command = true; // Root modules should not have any settings related commands accessible by default
-        }
-
-        extended_data.insert("", command_extended_data);
-
-        for sub in created_cmd.subcommands.iter() {
-            let mut command_extended_data =
-                crate::CommandExtendedData::kittycat_or_admin(module.id(), config_opt.id);
-
-            if module.root_module() {
-                command_extended_data.virtual_command = true; // Root modules should not have any settings related commands accessible by default
-            }
-
-            extended_data.insert(
-                string_to_static_str(sub.name.to_string()),
-                command_extended_data,
-            );
-        }
-
-        commands.push((created_cmd, extended_data));
-    }
-
-    commands
 }

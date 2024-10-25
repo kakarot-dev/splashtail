@@ -71,4 +71,8 @@ impl silverpelt::module::Module for Module {
             |_ctx| (true, "Sandwich HTTP API is enabled".to_string()),
         )]
     }
+
+    fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
+        modules_ext::create_full_command_list(self)
+    }
 }

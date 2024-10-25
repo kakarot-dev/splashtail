@@ -86,7 +86,7 @@ pub async fn tag(
         guild_id,
         templating::Template::Named(template),
         ctx.data().pool.clone(),
-        botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
+        ctx.serenity_context().clone(),
         ctx.data().reqwest.clone(),
         TagContext {
             user: ctx.author().clone(),

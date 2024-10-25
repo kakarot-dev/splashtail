@@ -32,10 +32,7 @@ pub fn create_bot_rpc_server(
             get(check_command_permission),
         )
         // Verify/parse a set of permission checks returning the parsed checks [ParsePermissionChecks]
-        .route(
-            "/parse-permission-checks/:guild_id",
-            get(parse_permission_checks),
-        )
+        .route("/parse-permission-checks", get(parse_permission_checks))
         // Dispatches a TrustedWebEvent
         .route(
             "/dispatch-trusted-web-event",
@@ -174,7 +171,9 @@ async fn base_guild_user_info(
 /// Returns if the user has permission to run a command on a given guild [CheckCommandPermission]
 async fn check_command_permission(
     State(AppData {
-        data, cache_http, ..
+        data,
+        serenity_context,
+        ..
     }): State<AppData>,
     Path((guild_id, user_id)): Path<(serenity::all::GuildId, serenity::all::UserId)>,
     Json(req): Json<crate::types::CheckCommandPermissionRequest>,
@@ -183,16 +182,16 @@ async fn check_command_permission(
 
     let flags = crate::types::RpcCheckCommandOptionsFlags::from_bits_truncate(opts.flags);
 
-    let perm_res = silverpelt::cmd::check_command(
+    let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
         &req.command,
         guild_id,
         user_id,
         &data.pool,
-        &cache_http,
+        &serenity_context,
         &data.reqwest,
         &None,
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             ignore_module_disabled: flags
                 .contains(crate::types::RpcCheckCommandOptionsFlags::IGNORE_MODULE_DISABLED),
             ignore_command_disabled: flags
@@ -222,28 +221,17 @@ async fn check_command_permission(
 
 /// Verify/parse a set of permission checks returning the parsed checks [ParsePermissionChecks]
 async fn parse_permission_checks(
-    State(AppData {
-        data,
-        serenity_context,
-        ..
-    }): State<AppData>,
-    Path(guild_id): Path<serenity::all::GuildId>,
+    State(AppData { .. }): State<AppData>,
     Json(checks): Json<permissions::types::PermissionChecks>,
 ) -> Response<permissions::types::PermissionChecks> {
-    let parsed_checks = silverpelt::validators::parse_permission_checks(
-        guild_id,
-        data.pool.clone(),
-        botox::cache::CacheHttpImpl::from_ctx(&serenity_context),
-        data.reqwest.clone(),
-        &checks,
-    )
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to parse permission checks: {:#?}", e),
-        )
-    })?;
+    let parsed_checks = permissions::parse::parse_permission_checks(&checks)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to parse permission checks: {:#?}", e),
+            )
+        })?;
 
     Ok(Json(parsed_checks))
 }

@@ -1,4 +1,3 @@
-use botox::cache::CacheHttpImpl;
 use log::{error, info};
 use silverpelt::{data::Data, Context, Error};
 
@@ -145,16 +144,16 @@ pub async fn command_check(ctx: Context<'_>) -> Result<bool, Error> {
 
     let command = ctx.command();
 
-    let res = silverpelt::cmd::check_command(
+    let res = permission_checks::check_command(
         &data.silverpelt_cache,
         &command.qualified_name,
         guild_id,
         ctx.author().id,
         &data.pool,
-        &CacheHttpImpl::from_ctx(ctx.serenity_context()),
+        ctx.serenity_context(),
         &data.reqwest,
         &Some(ctx),
-        silverpelt::cmd::CheckCommandOptions {
+        permission_checks::CheckCommandOptions {
             channel_id: Some(ctx.channel_id()),
             ..Default::default()
         },

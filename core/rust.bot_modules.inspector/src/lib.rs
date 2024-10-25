@@ -34,6 +34,10 @@ impl silverpelt::module::Module for Module {
             (*settings::INSPECTOR_SPECIFIC_OPTIONS).clone(),
         ]
     }
+
+    fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
+        modules_ext::create_full_command_list(self)
+    }
 }
 
 struct EventListener;

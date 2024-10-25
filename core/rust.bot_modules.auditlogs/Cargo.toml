@@ -29,6 +29,7 @@ module_settings = { path = "../rust.module_settings" }
 gwevent = { path = "../rust.gwevent" }
 templating = { path = "../rust.templating" }
 std_events = { path = "../rust.stdevents" }
+modules_ext = { path = "../rust.modules_ext" }
 
 [dependencies.tokio]
 version = "1"

@@ -44,6 +44,11 @@ impl LuaActionsRatelimit {
             create_quota(NonZeroU32::new(15).unwrap(), Duration::from_secs(20))?;
         let sendmessage_channel_lim1 = DefaultKeyedRateLimiter::keyed(sendmessage_channel_quota1);
 
+        // Sting user limits (are even smaller to allow for even more actions)
+        let sting_user_quota1 =
+            create_quota(NonZeroU32::new(30).unwrap(), Duration::from_secs(20))?;
+        let sting_user_lim1 = DefaultKeyedRateLimiter::keyed(sting_user_quota1);
+
         // Create the clock
         let clock = QuantaClock::default();
 
@@ -53,6 +58,7 @@ impl LuaActionsRatelimit {
                 "ban".to_string() => vec![ban_lim1, ban_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
                 "kick".to_string() => vec![kick_lim1, kick_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
                 "sendmessage_channel".to_string() => vec![sendmessage_channel_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
+                "sting_user".to_string() => vec![sting_user_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
             ),
             clock,
         })
@@ -129,7 +135,7 @@ pub struct LuaUserData {
     pub last_execution_time: Arc<crate::atomicinstant::AtomicInstant>,
     pub pool: sqlx::PgPool,
     pub guild_id: serenity::all::GuildId,
-    pub cache_http: botox::cache::CacheHttpImpl,
+    pub serenity_context: serenity::all::Context,
     pub reqwest_client: reqwest::Client,
     pub kv_constraints: LuaKVConstraints,
 

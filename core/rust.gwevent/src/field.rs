@@ -171,6 +171,19 @@ impl Field {
                     m.face(),
                 ))
             }
+            Field::PartialMember(m) => {
+                if let Some(user) = &m.user {
+                    Ok(format!(
+                        "{} [``{}``], pending={}, avatar={}",
+                        user.mention(),
+                        user.name,
+                        m.pending(),
+                        user.face(),
+                    ))
+                } else {
+                    Ok("None".to_string())
+                }
+            }
             Field::ChannelIds(c) => {
                 let mut channels = Vec::new();
 

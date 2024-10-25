@@ -54,6 +54,7 @@ permissions = { path = "../rust.permissions" }
 gwevent = { path = "../rust.gwevent" }
 config = { path = "../rust.config" }
 limits = { path = "../rust.limits" }
+silverpelt = { path = "../rust.silverpelt" }
 
 # Template language support
 mlua = { version = "0.10.0-rc.1", features = ["async", "luau", "serialize", "macros", "send"], optional = true } # Supported by default

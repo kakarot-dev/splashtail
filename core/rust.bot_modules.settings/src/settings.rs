@@ -1033,8 +1033,6 @@ impl SettingDataValidator for GuildTemplateValidator {
             ctx.guild_id,
             templating::Template::Raw(s.to_string()),
             ctx.data.pool.clone(),
-            ctx.data.cache_http.clone(),
-            ctx.data.reqwest.clone(),
         )
         .await;
 

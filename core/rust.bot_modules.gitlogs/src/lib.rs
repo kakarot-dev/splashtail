@@ -22,4 +22,8 @@ impl silverpelt::module::Module for Module {
             (*settings::EVENT_MODIFIERS).clone(),
         ]
     }
+
+    fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
+        modules_ext::create_full_command_list(self)
+    }
 }

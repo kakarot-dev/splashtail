@@ -56,10 +56,10 @@ fn _get_display_value(column_type: &ColumnType, value: &Value) -> String {
 
 /// Common settings viewer for poise, sends an embed, all that stuff
 pub async fn settings_viewer(
-    ctx: &crate::Context<'_>,
+    ctx: &silverpelt::Context<'_>,
     setting: &ConfigOption,
     fields: indexmap::IndexMap<String, Value>, // The filters to apply
-) -> Result<(), crate::Error> {
+) -> Result<(), silverpelt::Error> {
     fn _create_reply<'a>(
         setting: &ConfigOption,
         values: &'a [State],
@@ -143,19 +143,18 @@ pub async fn settings_viewer(
     };
 
     let data = ctx.data();
-    let cache_http = botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context());
 
     {
-        let perm_res = crate::cmd::check_command(
+        let perm_res = permission_checks::check_command(
             &data.silverpelt_cache,
             &setting.get_corresponding_command(OperationType::View),
             guild_id,
             ctx.author().id,
             &data.pool,
-            &cache_http,
+            ctx.serenity_context(),
             &data.reqwest,
             &Some(*ctx),
-            crate::cmd::CheckCommandOptions {
+            permission_checks::CheckCommandOptions {
                 ignore_module_disabled: true,
                 ..Default::default()
             },
@@ -295,10 +294,10 @@ pub async fn settings_viewer(
 
 /// Common settings creator for poise, sends an embed, all that stuff
 pub async fn settings_creator(
-    ctx: &crate::Context<'_>,
+    ctx: &silverpelt::Context<'_>,
     setting: &ConfigOption,
     fields: indexmap::IndexMap<String, Value>,
-) -> Result<(), crate::Error> {
+) -> Result<(), silverpelt::Error> {
     fn _create_reply<'a>(setting: &ConfigOption, value: &State) -> poise::CreateReply<'a> {
         let mut embed = serenity::all::CreateEmbed::default();
 
@@ -351,19 +350,18 @@ pub async fn settings_creator(
     };
 
     let data = ctx.data();
-    let cache_http = botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context());
 
     {
-        let perm_res = crate::cmd::check_command(
+        let perm_res = permission_checks::check_command(
             &data.silverpelt_cache,
             &setting.get_corresponding_command(OperationType::Create),
             guild_id,
             ctx.author().id,
             &data.pool,
-            &cache_http,
+            ctx.serenity_context(),
             &data.reqwest,
             &Some(*ctx),
-            crate::cmd::CheckCommandOptions {
+            permission_checks::CheckCommandOptions {
                 ignore_module_disabled: true,
                 ..Default::default()
             },
@@ -426,10 +424,10 @@ pub async fn settings_creator(
 
 /// Common settings updater for poise, sends an embed, all that stuff
 pub async fn settings_updater(
-    ctx: &crate::Context<'_>,
+    ctx: &silverpelt::Context<'_>,
     setting: &ConfigOption,
     fields: indexmap::IndexMap<String, Value>,
-) -> Result<(), crate::Error> {
+) -> Result<(), silverpelt::Error> {
     fn _create_reply<'a>(setting: &ConfigOption, value: &State) -> poise::CreateReply<'a> {
         let mut embed = serenity::all::CreateEmbed::default();
 
@@ -482,19 +480,18 @@ pub async fn settings_updater(
     };
 
     let data = ctx.data();
-    let cache_http = botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context());
 
     {
-        let perm_res = crate::cmd::check_command(
+        let perm_res = permission_checks::check_command(
             &data.silverpelt_cache,
             &setting.get_corresponding_command(OperationType::Update),
             guild_id,
             ctx.author().id,
             &data.pool,
-            &cache_http,
+            ctx.serenity_context(),
             &data.reqwest,
             &Some(*ctx),
-            crate::cmd::CheckCommandOptions {
+            permission_checks::CheckCommandOptions {
                 ignore_module_disabled: true,
                 ..Default::default()
             },
@@ -543,10 +540,10 @@ pub async fn settings_updater(
 
 /// Common settings deleter for poise, sends an embed, all that stuff
 pub async fn settings_deleter(
-    ctx: &crate::Context<'_>,
+    ctx: &silverpelt::Context<'_>,
     setting: &ConfigOption,
     pkey: Value,
-) -> Result<(), crate::Error> {
+) -> Result<(), silverpelt::Error> {
     fn _create_reply<'a>(setting: &ConfigOption, value: &State) -> poise::CreateReply<'a> {
         let mut embed = serenity::all::CreateEmbed::default();
 
@@ -601,19 +598,18 @@ pub async fn settings_deleter(
     }
 
     let data = ctx.data();
-    let cache_http = botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context());
 
     {
-        let perm_res = crate::cmd::check_command(
+        let perm_res = permission_checks::check_command(
             &data.silverpelt_cache,
             &setting.get_corresponding_command(OperationType::Delete),
             guild_id,
             ctx.author().id,
             &data.pool,
-            &cache_http,
+            ctx.serenity_context(),
             &data.reqwest,
             &Some(*ctx),
-            crate::cmd::CheckCommandOptions {
+            permission_checks::CheckCommandOptions {
                 ignore_module_disabled: true,
                 ..Default::default()
             },
@@ -676,7 +672,7 @@ pub async fn settings_deleter(
 
 #[allow(dead_code)]
 pub async fn standard_autocomplete<'a>(
-    ctx: super::Context<'_>,
+    ctx: silverpelt::Context<'_>,
     setting: &ConfigOption,
     partial: &'a str,
 ) -> Vec<serenity::all::AutocompleteChoice<'a>> {
@@ -734,7 +730,7 @@ pub async fn standard_autocomplete<'a>(
 
 #[inline(always)]
 pub async fn bitflag_autocomplete<'a>(
-    ctx: super::Context<'_>,
+    ctx: silverpelt::Context<'_>,
     values: &indexmap::IndexMap<String, i64>,
     partial: &'a str,
 ) -> Vec<serenity::all::AutocompleteChoice<'a>> {

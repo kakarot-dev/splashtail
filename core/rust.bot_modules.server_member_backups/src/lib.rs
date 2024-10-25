@@ -16,4 +16,8 @@ impl silverpelt::module::Module for Module {
     fn raw_commands(&self) -> Vec<silverpelt::module::CommandObj> {
         vec![]
     }
+
+    fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
+        modules_ext::create_full_command_list(self)
+    }
 }

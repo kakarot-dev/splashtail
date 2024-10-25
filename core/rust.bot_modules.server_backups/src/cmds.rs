@@ -394,16 +394,16 @@ pub async fn backups_list(ctx: Context<'_>) -> Result<(), Error> {
             }
             "backups_restore" => {
                 // Check permission
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     "backups restore",
                     guild_id,
                     ctx.author().id,
                     &ctx.data().pool,
-                    &botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions::default(), // TODO: Maybe change this to allow backups restore to be disabled?
+                    permission_checks::CheckCommandOptions::default(), // TODO: Maybe change this to allow backups restore to be disabled?
                 )
                 .await;
 
@@ -678,16 +678,16 @@ pub async fn backups_list(ctx: Context<'_>) -> Result<(), Error> {
             }
             "backups_delete" => {
                 // Check permission
-                let perm_res = silverpelt::cmd::check_command(
+                let perm_res = permission_checks::check_command(
                     &data.silverpelt_cache,
                     "backups delete",
                     guild_id,
                     ctx.author().id,
                     &ctx.data().pool,
-                    &botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
+                    ctx.serenity_context(),
                     &data.reqwest,
                     &Some(ctx),
-                    silverpelt::cmd::CheckCommandOptions::default(), // TODO: Maybe change this to allow backups delete to be disabled?
+                    permission_checks::CheckCommandOptions::default(), // TODO: Maybe change this to allow backups delete to be disabled?
                 )
                 .await;
 

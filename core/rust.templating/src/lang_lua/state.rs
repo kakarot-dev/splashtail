@@ -120,6 +120,7 @@ impl Default for LuaKVConstraints {
 
 #[allow(dead_code)]
 pub struct TemplateData {
+    pub path: String,
     pub pragma: crate::TemplatePragma,
 }
 
@@ -142,15 +143,24 @@ pub struct LuaUserData {
 
     /// Stores the lua kv ratelimiters
     pub kv_ratelimits: Arc<LuaKvRatelimit>,
+
+    /// Stores a cache of the included templates
+    ///
+    /// If source hash does not match expected source hash (the template changed), the template is recompiled
+    pub included_bytecache_cache: Arc<scc::HashMap<crate::Template, Vec<u8>>>,
+
+    /// Stores the luau compiler
+    pub compiler: Arc<mlua::Compiler>,
 }
 
 pub fn add_template(
     lua: &mlua::Lua,
+    path: String,
     pragma: crate::TemplatePragma,
 ) -> Result<String, crate::Error> {
     let token = botox::crypto::gen_random(32);
 
-    let data = TemplateData { pragma };
+    let data = TemplateData { path, pragma };
 
     let data = Arc::new(data);
 

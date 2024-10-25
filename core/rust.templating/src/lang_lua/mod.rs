@@ -129,7 +129,7 @@ async fn create_lua_vm(
 
     // Override require function for plugin support and increased security
     lua.globals()
-        .set("require", lua.create_function(plugins::require)?)?;
+        .set("require", lua.create_async_function(plugins::require)?)?;
 
     let last_execution_time =
         Arc::new(atomicinstant::AtomicInstant::new(std::time::Instant::now()));
@@ -148,6 +148,8 @@ async fn create_lua_vm(
         Ok(LuaVmState::Continue)
     });
 
+    let compiler = Arc::new(compiler);
+
     // Set lua user data
     let user_data = state::LuaUserData {
         pool,
@@ -163,13 +165,14 @@ async fn create_lua_vm(
             state::LuaActionsRatelimit::new().map_err(|e| LuaError::external(e.to_string()))?,
         ),
         last_execution_time: last_execution_time.clone(),
+        included_bytecache_cache: Arc::new(scc::HashMap::new()),
+        compiler: compiler.clone(),
     };
 
     lua.set_app_data(user_data);
 
     let bytecode_cache: Arc<BytecodeCache> = Arc::new(scc::HashMap::new());
     let broken = Arc::new(std::sync::atomic::AtomicBool::new(false));
-    let compiler = Arc::new(compiler);
 
     let thread_inner_state = Arc::new(ArLuaThreadInnerState {
         lua: lua.clone(),
@@ -239,7 +242,14 @@ async fn create_lua_vm(
                                 }
                             };
 
-                            let token = match state::add_template(&tis_ref.lua, pragma) {
+                            let token = match state::add_template(
+                                &tis_ref.lua,
+                                match template {
+                                    crate::Template::Raw(_) => "".to_string(),
+                                    crate::Template::Named(name) => name,
+                                },
+                                pragma,
+                            ) {
                                 Ok(token) => token,
                                 Err(e) => {
                                     let _ = callback.send(Err(LuaError::external(e)));

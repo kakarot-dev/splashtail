@@ -175,27 +175,43 @@ async fn event_listener<'a>(
 
                 info!("Starting IPC");
                 let data = ctx.serenity_context.data::<Data>();
+                let serenity_context = ctx.serenity_context.clone();
 
                 // Create a new rpc server
-                let rpc_server =
-                    rust_rpc_server_bot::create_bot_rpc_server(data.clone(), ctx.serenity_context);
-
                 // Start the rpc server
                 tokio::task::spawn(async move {
                     log::info!("Starting RPC server");
-                    let opts = rust_rpc_server::CreateRpcServerOptions {
-                        bind: rust_rpc_server::CreateRpcServerBind::Address(format!(
-                            "{}:{}",
-                            config::CONFIG.base_ports.bot_bind_addr,
-                            config::CONFIG.base_ports.bot
-                        )),
-                    };
 
-                    match rust_rpc_server::start_rpc_server(opts, rpc_server).await {
-                        Ok(_) => {}
-                        Err(e) => {
-                            error!("Error starting RPC server: {}", e);
+                    let mut count = 0;
+                    loop {
+                        let rpc_server = rust_rpc_server_bot::create_bot_rpc_server(
+                            data.clone(),
+                            &serenity_context,
+                        );
+
+                        if count > 10 {
+                            error!("Failed to start RPC server after 10 attempts, exiting...");
                             std::process::exit(1);
+                        }
+
+                        let opts = rust_rpc_server::CreateRpcServerOptions {
+                            bind: rust_rpc_server::CreateRpcServerBind::Address(format!(
+                                "{}:{}",
+                                config::CONFIG.base_ports.bot_bind_addr,
+                                config::CONFIG.base_ports.bot
+                            )),
+                        };
+
+                        match rust_rpc_server::start_rpc_server(opts, rpc_server).await {
+                            Ok(_) => {
+                                info!("RPC server started successfully");
+                                break;
+                            }
+                            Err(e) => {
+                                error!("Error starting RPC server: {}", e);
+                                count += 1;
+                                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                            }
                         }
                     }
                 });

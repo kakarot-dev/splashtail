@@ -8,6 +8,7 @@ resolver = "2"
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.
 incremental = true # Enable incremental compilation.
+opt-level = 3
 
 [profile.dev]
 opt-level = 1 # Optimize for faster compilation times.

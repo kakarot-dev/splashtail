@@ -1,5 +1,7 @@
-local args = ...
+-- @pragma {"lang":"lua","actions":["sendmessage_channel"]}
+local args, token = ...
 local message_plugin = require "@antiraid/message"
+local actions_plugin = require "@antiraid/actions"
 
 -- Make the embed
 local embed = message_plugin.new_message_embed()
@@ -24,4 +26,9 @@ local message = message_plugin.new_message()
 
 table.insert(message.embeds, embed)
 
-return message
+-- Send message using action executor
+local actions_executor = actions_plugin.new(token);
+actions_executor:sendmessage_channel({
+    channel_id = args.sink,
+    message = message
+})

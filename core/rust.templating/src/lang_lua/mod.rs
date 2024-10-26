@@ -344,8 +344,6 @@ pub(crate) async fn resolve_template_to_bytecode(
         }
     });
 
-    println!("Resolving template to bytecode: {:?}", template_content);
-
     if let Some(Some(bytecode)) = existing_bycode {
         return Ok(bytecode);
     }

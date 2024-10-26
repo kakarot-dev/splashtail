@@ -5,7 +5,6 @@ use module_settings::types::{
     InnerColumnType, InnerColumnTypeStringKind, NoOpValidator, OperationSpecific, OperationType,
     PostAction, SettingsError,
 };
-use serenity::all::{ChannelType, Permissions};
 use splashcore_rs::value::Value;
 use std::sync::LazyLock;
 
@@ -40,11 +39,8 @@ pub static SINK: LazyLock<ConfigOption> = LazyLock::new(|| {
             Column {
                 id: "sink",
                 name: "Sink",
-                description: "The sink where the logs are sent to if returned by template",
-                column_type: ColumnType::new_scalar(InnerColumnType::String { min_length: None, max_length: None, allowed_values: vec![], kind: InnerColumnTypeStringKind::Channel {
-                    allowed_types: vec![ChannelType::Text, ChannelType::Voice, ChannelType::PublicThread, ChannelType::PrivateThread, ChannelType::News],
-                    needed_bot_permissions: Permissions::VIEW_CHANNEL | Permissions::SEND_MESSAGES | Permissions::EMBED_LINKS,
-                } }),
+                description: "Any extra context for the sink",
+                column_type: ColumnType::new_scalar(InnerColumnType::String { min_length: None, max_length: None, allowed_values: vec![], kind: InnerColumnTypeStringKind::Normal }),
                 nullable: false,
                 default: None,
                 unique: false,

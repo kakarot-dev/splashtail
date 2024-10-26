@@ -393,6 +393,12 @@ pub async fn kick(
         return Err("Reason must be less than/equal to 384 characters".into());
     }
 
+    let stings = stings.unwrap_or(0);
+
+    if stings < 0 {
+        return Err("Stings must be greater than or equal to 0".into());
+    }
+
     let Some(guild_id) = ctx.guild_id() else {
         return Err("This command can only be used in a guild".into());
     };
@@ -402,42 +408,32 @@ pub async fn kick(
     // Check user hierarchy before performing moderative actions
     check_hierarchy(&ctx, member.user.id).await?;
 
-    // Add limit, erroring if the user has hit limits
-    let limits_hit = {
-        let (send, mut recv) = tokio::sync::mpsc::channel(1);
-
-        silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
-            silverpelt::ar_event::EventHandlerContext {
-                guild_id,
-                data: data.clone(),
-                event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
-                    std_events::limits_hook::HandleLimitActionEvent {
-                        limit: std_events::limits_hook::LimitTypes::Kick,
-                        user_id: ctx.author().id,
-                        target: Some(member.user.id.to_string()),
-                        action_data: serde_json::json!({
-                            "reason": reason,
-                            "stings": stings.unwrap_or(1),
-                            "ar": true,
-                        }),
-                        send_chan: Some(send),
-                    },
-                )),
-                serenity_context: ctx.serenity_context().clone(),
-            },
-        ))
-        .await?;
-
-        let Some(res) = recv.recv().await else {
-            return Err("Failed to receive limit hit response".into());
-        };
-
-        res.is_limited
+    // Dispatch event to modules, erroring out if the dispatch errors (e.g. limits hit due to a lua template etc)
+    let Some(author) = ctx.author_member().await else {
+        return Err("This command can only be used in a guild".into());
     };
 
-    if limits_hit {
-        return Err("You have hit this server's kick limit".into());
-    }
+    silverpelt::ar_event::dispatch_event_to_modules_errflatten(
+        std::sync::Arc::new(silverpelt::ar_event::EventHandlerContext {
+            guild_id,
+            data: data.clone(),
+            event: silverpelt::ar_event::AntiraidEvent::Custom(
+                Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                    event_name: "AR/KickMember/Start".to_string(),
+                    event_titlename: "(Anti-Raid) Kick Member (Pre-Warning)".to_string(),
+                    event_data: indexmap::indexmap! {
+                        "target".to_string() => member.user.clone().into(),
+                        "moderator".to_string() => author.user.clone().into(),
+                        "reason".to_string() => reason.clone().into(),
+                        "stings".to_string() => stings.into(),
+                        "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
+                    }
+                })
+            ),
+            serenity_context: ctx.serenity_context().clone(),
+        }),
+    )
+    .await?;
 
     let mut embed = CreateEmbed::new()
         .title("Kicking Member...")
@@ -453,17 +449,7 @@ pub async fn kick(
         .into_message()
         .await?;
 
-    let Some(author) = ctx.author_member().await else {
-        return Err("This command can only be used in a guild".into());
-    };
-
     // Try kicking them
-    let stings = stings.unwrap_or(0);
-
-    if stings < 0 {
-        return Err("Stings must be greater than or equal to 0".into());
-    }
-
     let mut tx = data.pool.begin().await?;
 
     let mut sting_dispatch = None;
@@ -513,33 +499,33 @@ pub async fn kick(
 
     tx.commit().await?;
 
+    silverpelt::ar_event::dispatch_event_to_modules_errflatten(
+        std::sync::Arc::new(silverpelt::ar_event::EventHandlerContext {
+            guild_id,
+            data: data.clone(),
+            event: silverpelt::ar_event::AntiraidEvent::Custom(
+                Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                    event_name: "AR/KickMember/End".to_string(),
+                    event_titlename: "(Anti-Raid) Kick Member (Post-Warning)".to_string(),
+                    event_data: indexmap::indexmap! {
+                        "target".to_string() => member.user.clone().into(),
+                        "moderator".to_string() => author.user.clone().into(),
+                        "reason".to_string() => reason.clone().into(),
+                        "stings".to_string() => stings.into(),
+                        "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
+                    }
+                })
+            ),
+            serenity_context: ctx.serenity_context().clone(),
+        }),
+    )
+    .await?;
+
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
             .dispatch_event(ctx.serenity_context().clone())
             .await?;
     };
-
-    silverpelt::ar_event::dispatch_event_to_modules_errflatten(
-            std::sync::Arc::new(silverpelt::ar_event::EventHandlerContext {
-                guild_id,
-                data: data.clone(),
-                event: silverpelt::ar_event::AntiraidEvent::Custom(
-                    Box::new(std_events::auditlog::AuditLogDispatchEvent {
-                        event_name: "AR/KickMember".to_string(),
-                        event_titlename: "(Anti-Raid) Kick Member".to_string(),
-                        event_data: indexmap::indexmap! {
-                            "target".to_string() => member.user.clone().into(),
-                            "moderator".to_string() => author.user.clone().into(),
-                            "reason".to_string() => reason.clone().into(),
-                            "stings".to_string() => stings.into(),
-                            "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
-                        }
-                    })
-                ),
-                serenity_context: ctx.serenity_context().clone(),
-            }),
-        )
-        .await?;
 
     embed = CreateEmbed::new()
         .title("Kicking Member...")
@@ -582,47 +568,46 @@ pub async fn ban(
         return Err("This command can only be used in a guild".into());
     };
 
+    let stings = stings.unwrap_or(1);
+
+    if stings < 0 {
+        return Err("Stings must be greater than or equal to 0".into());
+    }
+
+    let dmd = prune_dmd.unwrap_or_default();
+
     let data = ctx.data();
 
     // Check user hierarchy before performing moderative actions
     check_hierarchy(&ctx, member.id).await?;
 
-    // Add limit, erroring if the user has hit limits
-    let limits_hit = {
-        let (send, mut recv) = tokio::sync::mpsc::channel(1);
-
-        silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
-            silverpelt::ar_event::EventHandlerContext {
-                guild_id,
-                data: data.clone(),
-                event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
-                    std_events::limits_hook::HandleLimitActionEvent {
-                        limit: std_events::limits_hook::LimitTypes::Ban,
-                        user_id: ctx.author().id,
-                        target: Some(member.id.to_string()),
-                        action_data: serde_json::json!({
-                            "reason": reason,
-                            "stings": stings.unwrap_or(1),
-                            "ar": true,
-                        }),
-                        send_chan: Some(send),
-                    },
-                )),
-                serenity_context: ctx.serenity_context().clone(),
-            },
-        ))
-        .await?;
-
-        let Some(res) = recv.recv().await else {
-            return Err("Failed to receive limit hit response".into());
-        };
-
-        res.is_limited
+    // Dispatch event to modules, erroring out if the dispatch errors (e.g. limits hit due to a lua template etc)
+    let Some(author) = ctx.author_member().await else {
+        return Err("This command can only be used in a guild".into());
     };
 
-    if limits_hit {
-        return Err("You have hit this server's ban limit".into());
-    }
+    silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
+        silverpelt::ar_event::EventHandlerContext {
+            guild_id,
+            data: data.clone(),
+            event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
+                std_events::auditlog::AuditLogDispatchEvent {
+                    event_name: "AR/BanMember/Start".to_string(),
+                    event_titlename: "(Anti-Raid) Ban Member (Pre-Warning)".to_string(),
+                    event_data: indexmap::indexmap! {
+                        "target".to_string() => member.clone().into(),
+                        "moderator".to_string() => author.user.clone().into(),
+                        "reason".to_string() => reason.clone().into(),
+                        "stings".to_string() => stings.into(),
+                        "prune_dmd".to_string() => dmd.into(),
+                        "log".to_string() => to_log_format(&author.user, &member, &reason).into(),
+                    },
+                },
+            )),
+            serenity_context: ctx.serenity_context().clone(),
+        },
+    ))
+    .await?;
 
     let mut embed = CreateEmbed::new()
         .title("Banning Member...")
@@ -637,19 +622,6 @@ pub async fn ban(
         .await?
         .into_message()
         .await?;
-
-    // Try banning them
-    let dmd = prune_dmd.unwrap_or_default();
-
-    let Some(author) = ctx.author_member().await else {
-        return Err("This command can only be used in a guild".into());
-    };
-
-    let stings = stings.unwrap_or(1);
-
-    if stings < 0 {
-        return Err("Stings must be greater than or equal to 0".into());
-    }
 
     let mut tx = data.pool.begin().await?;
 
@@ -702,20 +674,14 @@ pub async fn ban(
 
     tx.commit().await?;
 
-    if let Some(sting_dispatch) = sting_dispatch {
-        sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
-            .await?;
-    };
-
     silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
         silverpelt::ar_event::EventHandlerContext {
             guild_id,
             data: data.clone(),
             event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
                 std_events::auditlog::AuditLogDispatchEvent {
-                    event_name: "AR/BanMember".to_string(),
-                    event_titlename: "(Anti-Raid) Ban Member".to_string(),
+                    event_name: "AR/BanMember/End".to_string(),
+                    event_titlename: "(Anti-Raid) Ban Member (Post-Warning)".to_string(),
                     event_data: indexmap::indexmap! {
                         "target".to_string() => member.clone().into(),
                         "moderator".to_string() => author.user.clone().into(),
@@ -730,6 +696,12 @@ pub async fn ban(
         },
     ))
     .await?;
+
+    if let Some(sting_dispatch) = sting_dispatch {
+        sting_dispatch
+            .dispatch_event(ctx.serenity_context().clone())
+            .await?;
+    };
 
     embed = CreateEmbed::new()
         .title("Banning Member...")
@@ -773,12 +745,49 @@ pub async fn tempban(
         return Err("This command can only be used in a guild".into());
     };
 
+    let stings = stings.unwrap_or(1);
+
+    if stings < 0 {
+        return Err("Stings must be greater than or equal to 0".into());
+    }
+
+    let dmd = prune_dmd.unwrap_or_default();
+
+    let duration = parse_duration_string(&duration)?;
+
     let data = ctx.data();
 
     // Check user hierarchy before performing moderative actions
     check_hierarchy(&ctx, member.id).await?;
 
-    let duration = parse_duration_string(&duration)?;
+    // Dispatch event to modules, erroring out if the dispatch errors (e.g. limits hit due to a lua template etc)
+    let Some(author) = ctx.author_member().await else {
+        return Err("This command can only be used in a guild".into());
+    };
+
+    silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
+        silverpelt::ar_event::EventHandlerContext {
+            guild_id,
+            data: data.clone(),
+            event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
+                std_events::auditlog::AuditLogDispatchEvent {
+                    event_name: "AR/BanMemberTemporary/Start".to_string(),
+                    event_titlename: "(Anti-Raid) Ban Member (Temporary) (Pre-Warning)".to_string(),
+                    event_data: indexmap::indexmap! {
+                        "target".to_string() => member.clone().into(),
+                        "moderator".to_string() => author.user.clone().into(),
+                        "reason".to_string() => reason.clone().into(),
+                        "stings".to_string() => stings.into(),
+                        "prune_dmd".to_string() => dmd.into(),
+                        "log".to_string() => to_log_format(&author.user, &member, &reason).into(),
+                        "duration".to_string() => (duration.0 * duration.1.to_seconds()).into(),
+                    },
+                },
+            )),
+            serenity_context: ctx.serenity_context().clone(),
+        },
+    ))
+    .await?;
 
     let mut embed = CreateEmbed::new()
         .title("(Temporarily) Banning Member...")
@@ -793,19 +802,6 @@ pub async fn tempban(
         .await?
         .into_message()
         .await?;
-
-    // Try banning them
-    let dmd = prune_dmd.unwrap_or_default();
-
-    let Some(author) = ctx.author_member().await else {
-        return Err("This command can only be used in a guild".into());
-    };
-
-    let stings = stings.unwrap_or(1);
-
-    if stings < 0 {
-        return Err("Stings must be greater than or equal to 0".into());
-    }
 
     let mut tx = data.pool.begin().await?;
 
@@ -862,20 +858,15 @@ pub async fn tempban(
 
     tx.commit().await?;
 
-    if let Some(sting_dispatch) = sting_dispatch {
-        sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
-            .await?;
-    };
-
     silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
         silverpelt::ar_event::EventHandlerContext {
             guild_id,
             data: data.clone(),
             event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
                 std_events::auditlog::AuditLogDispatchEvent {
-                    event_name: "AR/BanMemberTemporary".to_string(),
-                    event_titlename: "(Anti-Raid) Ban Member (Temporary)".to_string(),
+                    event_name: "AR/BanMemberTemporary/End".to_string(),
+                    event_titlename: "(Anti-Raid) Ban Member (Temporary) (Post-Warning)"
+                        .to_string(),
                     event_data: indexmap::indexmap! {
                         "target".to_string() => member.clone().into(),
                         "moderator".to_string() => author.user.clone().into(),
@@ -891,6 +882,12 @@ pub async fn tempban(
         },
     ))
     .await?;
+
+    if let Some(sting_dispatch) = sting_dispatch {
+        sting_dispatch
+            .dispatch_event(ctx.serenity_context().clone())
+            .await?;
+    };
 
     embed = CreateEmbed::new()
         .title("(Temporarily) Banned Member...")
@@ -930,7 +927,40 @@ pub async fn unban(
         return Err("This command can only be used in a guild".into());
     };
 
+    let stings = stings.unwrap_or(1);
+
+    if stings < 0 {
+        return Err("Stings must be greater than or equal to 0".into());
+    }
+
     let data = ctx.data();
+
+    // Dispatch event to modules, erroring out if the dispatch errors (e.g. limits hit due to a lua template etc)
+    let Some(author) = ctx.author_member().await else {
+        return Err("This command can only be used in a guild".into());
+    };
+
+    silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
+        silverpelt::ar_event::EventHandlerContext {
+            guild_id,
+            data: data.clone(),
+            event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
+                std_events::auditlog::AuditLogDispatchEvent {
+                    event_name: "AR/UnbanMember/Start".to_string(),
+                    event_titlename: "(Anti-Raid) Unban Member (Pre-Warning)".to_string(),
+                    event_data: indexmap::indexmap! {
+                        "target".to_string() => user.clone().into(),
+                        "moderator".to_string() => author.user.clone().into(),
+                        "reason".to_string() => reason.clone().into(),
+                        "stings".to_string() => stings.into(),
+                        "log".to_string() => to_log_format(&author.user, &user, &reason).into(),
+                    },
+                },
+            )),
+            serenity_context: ctx.serenity_context().clone(),
+        },
+    ))
+    .await?;
 
     let mut embed = CreateEmbed::new()
         .title("Unbanning Member...")
@@ -945,16 +975,6 @@ pub async fn unban(
         .await?
         .into_message()
         .await?;
-
-    let Some(author) = ctx.author_member().await else {
-        return Err("This command can only be used in a guild".into());
-    };
-
-    let stings = stings.unwrap_or(0);
-
-    if stings < 0 {
-        return Err("Stings must be greater than or equal to 0".into());
-    }
 
     let mut tx = data.pool.begin().await?;
 
@@ -990,20 +1010,14 @@ pub async fn unban(
 
     tx.commit().await?;
 
-    if let Some(sting_dispatch) = sting_dispatch {
-        sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
-            .await?;
-    };
-
     silverpelt::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
         silverpelt::ar_event::EventHandlerContext {
             guild_id,
             data: data.clone(),
             event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
                 std_events::auditlog::AuditLogDispatchEvent {
-                    event_name: "AR/UnbanMember".to_string(),
-                    event_titlename: "(Anti-Raid) Unban Member".to_string(),
+                    event_name: "AR/UnbanMember/End".to_string(),
+                    event_titlename: "(Anti-Raid) Unban Member (Post-Warning)".to_string(),
                     event_data: indexmap::indexmap! {
                         "target".to_string() => user.clone().into(),
                         "moderator".to_string() => author.user.clone().into(),
@@ -1017,6 +1031,12 @@ pub async fn unban(
         },
     ))
     .await?;
+
+    if let Some(sting_dispatch) = sting_dispatch {
+        sting_dispatch
+            .dispatch_event(ctx.serenity_context().clone())
+            .await?;
+    };
 
     embed = CreateEmbed::new()
         .title("Unbanning Member...")
@@ -1061,23 +1081,6 @@ pub async fn timeout(
 
     let data = ctx.data();
 
-    // Check user hierarchy before performing moderative actions
-    check_hierarchy(&ctx, member.user.id).await?;
-
-    let mut embed = CreateEmbed::new()
-        .title("Timing out Member...")
-        .description(format!(
-            "{} | Timing out {}",
-            get_icon_of_state("pending"),
-            member.mention()
-        ));
-
-    let mut base_message = ctx
-        .send(CreateReply::new().embed(embed))
-        .await?
-        .into_message()
-        .await?;
-
     // Try timing them out
     let duration = parse_duration_string(&duration)?;
 
@@ -1094,10 +1097,6 @@ pub async fn timeout(
         return Err("Timeout duration must be less than 28 days (2419200 seconds)".into());
     }
 
-    let Some(author) = ctx.author_member().await else {
-        return Err("This command can only be used in a guild".into());
-    };
-
     let time = (duration.0 * duration.1.to_seconds() * 1000) as i64;
 
     let stings = stings.unwrap_or(1);
@@ -1105,6 +1104,51 @@ pub async fn timeout(
     if stings < 0 {
         return Err("Stings must be greater than or equal to 0".into());
     }
+
+    // Check user hierarchy before performing moderative actions
+    check_hierarchy(&ctx, member.user.id).await?;
+
+    // Dispatch event to modules, erroring out if the dispatch errors (e.g. limits hit due to a lua template etc)
+    let Some(author) = ctx.author_member().await else {
+        return Err("This command can only be used in a guild".into());
+    };
+
+    silverpelt::ar_event::dispatch_event_to_modules_errflatten(
+        std::sync::Arc::new(silverpelt::ar_event::EventHandlerContext {
+            guild_id,
+            data: data.clone(),
+            event: silverpelt::ar_event::AntiraidEvent::Custom(
+                Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                    event_name: "AR/TimeoutMember/Start".to_string(),
+                    event_titlename: "(Anti-Raid) Timeout Member (Pre-Warning)".to_string(),
+                    event_data: indexmap::indexmap! {
+                        "target".to_string() => member.clone().into(),
+                        "moderator".to_string() => author.user.clone().into(),
+                        "reason".to_string() => reason.clone().into(),
+                        "stings".to_string() => stings.into(),
+                        "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
+                        "duration".to_string() => (duration.0 * duration.1.to_seconds()).into(),
+                    }
+                })
+            ),
+            serenity_context: ctx.serenity_context().clone(),
+        }),
+    )
+    .await?;
+
+    let mut embed = CreateEmbed::new()
+        .title("Timing out Member...")
+        .description(format!(
+            "{} | Timing out {}",
+            get_icon_of_state("pending"),
+            member.mention()
+        ));
+
+    let mut base_message = ctx
+        .send(CreateReply::new().embed(embed))
+        .await?
+        .into_message()
+        .await?;
 
     let mut tx = data.pool.begin().await?;
 
@@ -1175,8 +1219,8 @@ pub async fn timeout(
             data: data.clone(),
             event: silverpelt::ar_event::AntiraidEvent::Custom(
                 Box::new(std_events::auditlog::AuditLogDispatchEvent {
-                    event_name: "AR/TimeoutMember".to_string(),
-                    event_titlename: "(Anti-Raid) Timeout Member".to_string(),
+                    event_name: "AR/TimeoutMember/End".to_string(),
+                    event_titlename: "(Anti-Raid) Timeout Member (Post-Warning)".to_string(),
                     event_data: indexmap::indexmap! {
                         "target".to_string() => member.clone().into(),
                         "moderator".to_string() => author.user.clone().into(),

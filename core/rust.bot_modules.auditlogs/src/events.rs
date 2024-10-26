@@ -1,8 +1,6 @@
 use gwevent::field::Field;
 use include_dir::{include_dir, Dir};
-use log::warn;
 use poise::serenity_prelude::FullEvent;
-use serenity::all::{ChannelId, CreateMessage};
 use silverpelt::ar_event::{AntiraidEvent, EventHandlerContext};
 use std_events::auditlog::AuditLogDispatchEvent;
 
@@ -282,7 +280,7 @@ async fn dispatch_audit_log(
             }
         };
 
-        let discord_reply = templating::execute::<_, Option<templating::core::messages::Message>>(
+        templating::execute::<_, Option<()>>(
             guild_id,
             template,
             data.pool.clone(),
@@ -292,77 +290,11 @@ async fn dispatch_audit_log(
                 event_titlename: event_titlename.to_string(),
                 event_name: event_name.to_string(),
                 event_data: event_data.clone(),
+                sink_id: sink.id.to_string(),
+                sink: sink.sink.clone(),
             },
         )
-        .await;
-
-        let discord_reply = match discord_reply {
-            Ok(reply) => {
-                if let Some(reply) = reply {
-                    match templating::core::messages::to_discord_reply(reply) {
-                        Ok(reply) => reply,
-                        Err(e) => {
-                            let embed = serenity::all::CreateEmbed::default()
-                                .description(format!("Failed to render template: {}", e));
-
-                            templating::core::messages::DiscordReply {
-                                embeds: vec![embed],
-                                ..Default::default()
-                            }
-                        }
-                    }
-                } else {
-                    continue;
-                }
-            }
-            Err(e) => {
-                let embed = serenity::all::CreateEmbed::default()
-                    .description(format!("Failed to render template: {}", e));
-
-                templating::core::messages::DiscordReply {
-                    embeds: vec![embed],
-                    ..Default::default()
-                }
-            }
-        };
-
-        let channel: ChannelId = sink.sink.parse()?;
-
-        let mut message = CreateMessage::default().embeds(discord_reply.embeds);
-
-        if let Some(content) = discord_reply.content {
-            message = message.content(content);
-        }
-
-        match channel.send_message(&ctx.http, message).await {
-            Ok(_) => {}
-            Err(e) => {
-                warn!(
-                    "Failed to send audit log event to channel: {} [sink id: {}]",
-                    e, sink.id
-                );
-
-                if let serenity::Error::Http(serenity::http::HttpError::UnsuccessfulRequest(
-                    ref err,
-                )) = e
-                {
-                    match err.status_code {
-                        reqwest::StatusCode::FORBIDDEN
-                        | reqwest::StatusCode::UNAUTHORIZED
-                        | reqwest::StatusCode::NOT_FOUND
-                        | reqwest::StatusCode::GONE => {
-                            sqlx::query!(
-                                "UPDATE auditlogs__sinks SET broken = true WHERE id = $1",
-                                sink.id
-                            )
-                            .execute(&data.pool)
-                            .await?;
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        };
+        .await?;
     }
 
     Ok(())
@@ -375,6 +307,8 @@ struct AuditLogContext {
     pub event_titlename: String,
     pub event_name: String,
     pub event_data: indexmap::IndexMap<String, Field>,
+    pub sink_id: String,
+    pub sink: String,
 }
 
 #[typetag::serde]

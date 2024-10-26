@@ -411,8 +411,8 @@ pub async fn kick(
                 guild_id,
                 data: data.clone(),
                 event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
-                    std_events::limit::HandleLimitActionEvent {
-                        limit: std_events::limit::LimitTypes::Kick,
+                    std_events::limits_hook::HandleLimitActionEvent {
+                        limit: std_events::limits_hook::LimitTypes::Kick,
                         user_id: ctx.author().id,
                         target: Some(member.user.id.to_string()),
                         action_data: serde_json::json!({
@@ -596,8 +596,8 @@ pub async fn ban(
                 guild_id,
                 data: data.clone(),
                 event: silverpelt::ar_event::AntiraidEvent::Custom(Box::new(
-                    std_events::limit::HandleLimitActionEvent {
-                        limit: std_events::limit::LimitTypes::Ban,
+                    std_events::limits_hook::HandleLimitActionEvent {
+                        limit: std_events::limits_hook::LimitTypes::Ban,
                         user_id: ctx.author().id,
                         target: Some(member.id.to_string()),
                         action_data: serde_json::json!({

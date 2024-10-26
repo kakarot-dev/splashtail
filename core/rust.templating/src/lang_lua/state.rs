@@ -150,10 +150,8 @@ pub struct LuaUserData {
     /// Stores the lua kv ratelimiters
     pub kv_ratelimits: Arc<LuaKvRatelimit>,
 
-    /// Stores a cache of the included templates
-    ///
-    /// If source hash does not match expected source hash (the template changed), the template is recompiled
-    pub included_bytecache_cache: Arc<scc::HashMap<crate::Template, Vec<u8>>>,
+    /// The bytecode cache
+    pub vm_bytecode_cache: Arc<super::BytecodeCache>,
 
     /// Stores the luau compiler
     pub compiler: Arc<mlua::Compiler>,

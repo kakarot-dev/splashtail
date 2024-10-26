@@ -6,6 +6,7 @@ pub mod lune;
 pub mod message;
 pub mod permissions;
 
+use crate::lang_lua::state;
 use mlua::prelude::*;
 use std::sync::LazyLock;
 
@@ -40,8 +41,96 @@ pub struct RequirePluginArgs {
     pub plugin_cache: Option<bool>,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+pub struct RequireTemplateImportArgs {
+    pub token: Option<String>,
+    pub current_path: Option<String>,
+    pub custom_prefix: Option<String>,
+}
+
 pub async fn require(lua: Lua, (plugin_name, args): (String, LuaValue)) -> LuaResult<LuaTable> {
     // Relative imports are special, they include the template stored in guild_templates
+    if plugin_name.starts_with("./") || plugin_name.starts_with("../") {
+        let (pool, guild_id, compiler, vm_bytecode_cache, per_template) = {
+            let Some(data) = lua.app_data_ref::<state::LuaUserData>() else {
+                return Err(LuaError::external("No app data found"));
+            };
+
+            (
+                data.pool.clone(),
+                data.guild_id,
+                data.compiler.clone(),
+                data.vm_bytecode_cache.clone(),
+                data.per_template.clone(),
+            )
+        };
+
+        let args: RequireTemplateImportArgs = lua
+            .from_value::<Option<RequireTemplateImportArgs>>(args)?
+            .unwrap_or_default();
+
+        // Get the current path if token is specified
+        let current_path = {
+            if let Some(token) = args.token {
+                // Get the current path from the token
+                let template_data = per_template
+                    .get(&token)
+                    .ok_or_else(|| LuaError::external("Template not found"))?;
+
+                template_data.path.clone()
+            } else if let Some(current_path) = args.current_path {
+                current_path
+            } else {
+                // Root is the current path
+                "".to_string()
+            }
+        };
+        let resolved_path = resolve_template_import_path(
+            &current_path,
+            &plugin_name,
+            &args.custom_prefix.unwrap_or("/".to_string()),
+        );
+
+        let cache_key = format!("requireTemplate:{}", resolved_path);
+
+        if let Some(table) = lua.named_registry_value::<LuaTable>(&cache_key).ok() {
+            return Ok(table);
+        }
+
+        let rec = sqlx::query!(
+            "
+            SELECT content FROM guild_templates WHERE guild_id = $1 AND name = $2",
+            guild_id.to_string(),
+            resolved_path
+        )
+        .fetch_optional(&pool)
+        .await
+        .map_err(|_| LuaError::external("Failed to fetch template"))?;
+
+        let Some(rec) = rec else {
+            return Err(LuaError::external("Template not found"));
+        };
+
+        let template_bytecode = crate::lang_lua::resolve_template_to_bytecode(
+            rec.content,
+            crate::Template::Named(resolved_path.clone()),
+            &vm_bytecode_cache,
+            &compiler,
+        )
+        .await
+        .map_err(|_| LuaError::external("Failed to compile template"))?;
+
+        let table: LuaTable = lua
+            .load(&template_bytecode)
+            .set_name(resolved_path)
+            .set_mode(mlua::ChunkMode::Binary) // Ensure auto-detection never selects binary mode
+            .call_async(())
+            .await?;
+
+        lua.set_named_registry_value(&cache_key, table.clone())?;
+
+        return Ok(table);
+    }
 
     match PLUGINS.get(plugin_name.as_str()) {
         Some(plugin) => {

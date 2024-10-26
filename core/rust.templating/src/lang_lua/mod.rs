@@ -150,6 +150,8 @@ async fn create_lua_vm(
 
     let compiler = Arc::new(compiler);
 
+    let bytecode_cache: Arc<BytecodeCache> = Arc::new(scc::HashMap::new());
+
     // Set lua user data
     let user_data = state::LuaUserData {
         pool,
@@ -165,13 +167,12 @@ async fn create_lua_vm(
             state::LuaActionsRatelimit::new().map_err(|e| LuaError::external(e.to_string()))?,
         ),
         last_execution_time: last_execution_time.clone(),
-        included_bytecache_cache: Arc::new(scc::HashMap::new()),
+        vm_bytecode_cache: bytecode_cache.clone(),
         compiler: compiler.clone(),
     };
 
     lua.set_app_data(user_data);
 
-    let bytecode_cache: Arc<BytecodeCache> = Arc::new(scc::HashMap::new());
     let broken = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
     let thread_inner_state = Arc::new(ArLuaThreadInnerState {
@@ -246,7 +247,7 @@ async fn create_lua_vm(
                                 &tis_ref.lua,
                                 match template {
                                     crate::Template::Raw(_) => "".to_string(),
-                                    crate::Template::Named(name) => name,
+                                    crate::Template::Named(ref name) => name.clone(),
                                 },
                                 pragma,
                             ) {
@@ -268,10 +269,15 @@ async fn create_lua_vm(
                                 }
                             };
 
+                            let exec_name = match template {
+                                crate::Template::Raw(_) => "script".to_string(),
+                                crate::Template::Named(ref name) => name.to_string(),
+                            };
+
                             let v: LuaValue = match tis_ref
                                 .lua
                                 .load(&template_bytecode)
-                                .set_name("script")
+                                .set_name(&exec_name)
                                 .set_mode(mlua::ChunkMode::Binary) // Ensure auto-detection never selects binary mode
                                 .call_async((args, token.clone()))
                                 .await

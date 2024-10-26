@@ -57,7 +57,7 @@ limits = { path = "../rust.limits" }
 silverpelt = { path = "../rust.silverpelt" }
 
 # Template language support
-mlua = { version = "0.10.0-rc.1", features = ["async", "luau", "serialize", "macros", "send"], optional = true } # Supported by default
+mlua = { version = "0.10.0", features = ["async", "luau", "serialize", "macros", "send"], optional = true } # Supported by default
 
 [dependencies.tokio]
 version = "1"

@@ -629,7 +629,6 @@ dependencies = [
  "bot_modules_core",
  "bot_modules_gitlogs",
  "bot_modules_inspector",
- "bot_modules_limits",
  "bot_modules_lockdown",
  "bot_modules_member_verify_autotriggers",
  "bot_modules_moderation",
@@ -689,35 +688,6 @@ dependencies = [
  "splashcore_text",
  "sqlx",
  "std_events",
-]
-
-[[package]]
-name = "bot_modules_limits"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "botox",
- "chrono",
- "dashmap 6.1.0",
- "futures-util",
- "governor",
- "indexmap",
- "log",
- "module_settings",
- "modules_ext",
- "moka",
- "poise",
- "serde",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
- "std_events",
- "strum",
- "strum_macros",
- "templating",
- "typetag",
 ]
 
 [[package]]
@@ -2806,9 +2776,9 @@ dependencies = [
 
 [[package]]
 name = "luau0-src"
-version = "0.10.3+luau640"
+version = "0.11.0+luau647"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f39d12b514a676c943990cfbe6200fedcb9c293c8c9219d29be512a6969be92"
+checksum = "ca47356c40f9121e3b3d582bf7355e8b25751b2e8afdfda49cf05775dfbc6b0a"
 dependencies = [
  "cc",
 ]
@@ -2928,11 +2898,12 @@ dependencies = [
 
 [[package]]
 name = "mlua"
-version = "0.10.0-rc.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7928e85ce39d4ea4d11dc850fde2acb503fc114a76f53e8606dd9ed237a491e9"
+checksum = "0f6ddbd668297c46be4bdea6c599dcc1f001a129586272d53170b7ac0a62961e"
 dependencies = [
  "bstr",
+ "either",
  "erased-serde",
  "futures-util",
  "libloading",
@@ -2947,9 +2918,9 @@ dependencies = [
 
 [[package]]
 name = "mlua-sys"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebe026d6bd1583a9cf9080e189030ddaea7e6f5f0deb366a8e26f8a26c4135b8"
+checksum = "e9eebac25c35a13285456c88ee2fde93d9aee8bcfdaf03f9d6d12be3391351ec"
 dependencies = [
  "cc",
  "cfg-if",
@@ -2959,9 +2930,9 @@ dependencies = [
 
 [[package]]
 name = "mlua_derive"
-version = "0.10.0-rc.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e110f0addea6b8d2f2378717e94f63b36a74274760b4895943b3a5650fa7513e"
+checksum = "2cfc5faa2e0d044b3f5f0879be2920e0a711c97744c42cf1c295cb183668933e"
 dependencies = [
  "itertools 0.13.0",
  "once_cell",

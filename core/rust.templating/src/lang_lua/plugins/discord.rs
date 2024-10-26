@@ -1,5 +1,4 @@
 use crate::lang_lua::state;
-use governor::clock::Clock;
 use mlua::prelude::*;
 use std::sync::Arc;
 
@@ -41,59 +40,33 @@ pub struct StingUserAction {
 
 /// An action executor is used to execute actions such as kick/ban/timeout from Lua
 /// templates
-pub struct ActionExecutor {
+pub struct DiscordActionExecutor {
     template_data: Arc<state::TemplateData>,
     guild_id: serenity::all::GuildId,
-    pool: sqlx::PgPool,
     serenity_context: serenity::all::Context,
     cache_http: botox::cache::CacheHttpImpl,
     reqwest_client: reqwest::Client,
-    ratelimits: Arc<state::LuaActionsRatelimit>,
+    ratelimits: Arc<state::LuaRatelimits>,
 }
 
-impl ActionExecutor {
+impl DiscordActionExecutor {
     pub fn check_action(&self, action: String) -> Result<(), crate::Error> {
-        if !self.template_data.pragma.actions.contains(&action) {
-            return Err("Action not allowed in this template context".into());
+        if !self
+            .template_data
+            .pragma
+            .allowed_caps
+            .contains(&format!("discord:{}", action))
+        {
+            return Err("Discord action not allowed in this template context".into());
         }
 
-        // Check global ratelimits
-        for global_lim in self.ratelimits.global.iter() {
-            match global_lim.check_key(&()) {
-                Ok(()) => continue,
-                Err(wait) => {
-                    return Err(format!(
-                        "Global ratelimit hit for action '{}', wait time: {:?}",
-                        action,
-                        wait.wait_time_from(self.ratelimits.clock.now())
-                    )
-                    .into());
-                }
-            };
-        }
-
-        // Check per bucket ratelimits
-        if let Some(per_bucket) = self.ratelimits.per_bucket.get(&action) {
-            for lim in per_bucket.iter() {
-                match lim.check_key(&()) {
-                    Ok(()) => continue,
-                    Err(wait) => {
-                        return Err(format!(
-                            "Per bucket ratelimit hit for action '{}', wait time: {:?}",
-                            action,
-                            wait.wait_time_from(self.ratelimits.clock.now())
-                        )
-                        .into());
-                    }
-                };
-            }
-        }
+        self.ratelimits.check(&action)?;
 
         Ok(())
     }
 }
 
-impl LuaUserData for ActionExecutor {
+impl LuaUserData for DiscordActionExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
         methods.add_async_method("ban", |lua, this, data: LuaValue| async move {
             let data = lua.from_value::<BanAction>(data)?;
@@ -270,25 +243,6 @@ impl LuaUserData for ActionExecutor {
                 Ok(())
             },
         );
-
-        methods.add_async_method(
-            "create_user_sting",
-            |lua, this, data: LuaValue| async move {
-                let data = lua.from_value::<StingUserAction>(data)?;
-
-                this.check_action("sting_user".to_string())
-                    .map_err(LuaError::external)?;
-
-                let sting = data.sting;
-
-                let sting = sting
-                    .create_and_dispatch_returning_id(this.serenity_context.clone(), &this.pool)
-                    .await
-                    .map_err(LuaError::external)?;
-
-                Ok(sting.to_string())
-            },
-        );
     }
 }
 
@@ -307,14 +261,13 @@ pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
                 .get(&token)
                 .ok_or_else(|| LuaError::external("Template not found"))?;
 
-            let executor = ActionExecutor {
+            let executor = DiscordActionExecutor {
                 template_data: template_data.clone(),
                 guild_id: data.guild_id,
                 cache_http: botox::cache::CacheHttpImpl::from_ctx(&data.serenity_context),
                 serenity_context: data.serenity_context.clone(),
                 reqwest_client: data.reqwest_client.clone(),
                 ratelimits: data.actions_ratelimits.clone(),
-                pool: data.pool.clone(),
             };
 
             Ok(executor)

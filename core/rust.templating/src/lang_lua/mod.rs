@@ -161,10 +161,13 @@ async fn create_lua_vm(
         kv_constraints: state::LuaKVConstraints::default(),
         per_template: scc::HashMap::new(),
         kv_ratelimits: Arc::new(
-            state::LuaKvRatelimit::new().map_err(|e| LuaError::external(e.to_string()))?,
+            state::LuaRatelimits::new_kv_rl().map_err(|e| LuaError::external(e.to_string()))?,
         ),
         actions_ratelimits: Arc::new(
-            state::LuaActionsRatelimit::new().map_err(|e| LuaError::external(e.to_string()))?,
+            state::LuaRatelimits::new_action_rl().map_err(|e| LuaError::external(e.to_string()))?,
+        ),
+        sting_ratelimits: Arc::new(
+            state::LuaRatelimits::new_stings_rl().map_err(|e| LuaError::external(e.to_string()))?,
         ),
         last_execution_time: last_execution_time.clone(),
         vm_bytecode_cache: bytecode_cache.clone(),

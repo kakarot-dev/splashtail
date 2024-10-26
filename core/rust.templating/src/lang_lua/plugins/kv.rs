@@ -1,5 +1,4 @@
 use crate::lang_lua::state;
-use governor::clock::Clock;
 use mlua::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -11,7 +10,7 @@ pub struct KvExecutor {
     guild_id: serenity::all::GuildId,
     pool: sqlx::PgPool,
     kv_constraints: state::LuaKVConstraints,
-    ratelimits: Arc<state::LuaKvRatelimit>,
+    ratelimits: Arc<state::LuaRatelimits>,
 }
 
 /// Represents a full record complete with metadata
@@ -25,42 +24,28 @@ pub struct KvRecord {
 }
 
 impl KvExecutor {
-    pub fn base_check(&self, action: String) -> Result<(), crate::Error> {
-        if self.template_data.pragma.kv_ops.is_empty() {
-            return Err("Key-value operations are disabled on this template".into());
+    pub fn check(&self, action: String, key: String) -> Result<(), crate::Error> {
+        if !self.template_data
+        .pragma
+        .allowed_caps
+        .contains(&"kv:*".to_string()) // KV:* means all KV operations are allowed
+        && !self.template_data
+        .pragma
+        .allowed_caps
+        .contains(&format!("kv:{}:*", action)) // kv:{action}:* means that the action can be performed on any key
+        && !self.template_data
+        .pragma
+        .allowed_caps
+        .contains(&format!("kv:{}:{}", action, key)) // kv:{action}:{key} means that the action can only be performed on said key
+        && !self.template_data
+        .pragma
+        .allowed_caps
+        .contains(&format!("kv:*:{}", key))  // kv:*:{key} means that any action can be performed on said key
+        {
+            return Err(format!("KV operation `{}` not allowed in this template context for key '{}'", action, key).into());
         }
 
-        // Check global ratelimits
-        for global_lim in self.ratelimits.global.iter() {
-            match global_lim.check_key(&()) {
-                Ok(()) => continue,
-                Err(wait) => {
-                    return Err(format!(
-                        "Global ratelimit hit for action '{}', wait time: {:?}",
-                        action,
-                        wait.wait_time_from(self.ratelimits.clock.now())
-                    )
-                    .into());
-                }
-            };
-        }
-
-        // Check per bucket ratelimits
-        if let Some(per_bucket) = self.ratelimits.per_bucket.get(&action) {
-            for lim in per_bucket.iter() {
-                match lim.check_key(&()) {
-                    Ok(()) => continue,
-                    Err(wait) => {
-                        return Err(format!(
-                            "Per bucket ratelimit hit for action '{}', wait time: {:?}",
-                            action,
-                            wait.wait_time_from(self.ratelimits.clock.now())
-                        )
-                        .into());
-                    }
-                };
-            }
-        }
+        self.ratelimits.check(&action)?; // Check rate limits
 
         Ok(())
     }
@@ -69,22 +54,8 @@ impl KvExecutor {
 impl LuaUserData for KvExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
         methods.add_async_method("get", |lua, this, key: String| async move {
-            this.base_check("get".to_string())
+            this.check("get".to_string(), key.clone())
                 .map_err(LuaError::external)?;
-
-            if !this.template_data.pragma.kv_ops.contains(&"*".to_string())
-                && this
-                    .template_data
-                    .pragma
-                    .kv_ops
-                    .contains(&format!("get:{}", key))
-                && this.template_data.pragma.kv_ops.contains(&"get:*".to_string())
-                && this.template_data.pragma.kv_ops.contains(&key)
-            {
-                return Err(LuaError::external(
-                    format!("Operation `get` not allowed in this template context for key '{}'", key),
-                ));
-            }
 
             // Check key length
             if key.len() > this.kv_constraints.max_key_length {
@@ -116,22 +87,8 @@ impl LuaUserData for KvExecutor {
         });
 
         methods.add_async_method("getrecord", |lua, this, key: String| async move {
-            this.base_check("get".to_string())
+            this.check("get".to_string(), key.clone())
                 .map_err(LuaError::external)?;
-
-            if !this.template_data.pragma.kv_ops.contains(&"*".to_string())
-                && this
-                    .template_data
-                    .pragma
-                    .kv_ops
-                    .contains(&format!("get:{}", key))
-                && this.template_data.pragma.kv_ops.contains(&"get:*".to_string())
-                && this.template_data.pragma.kv_ops.contains(&key)
-            {
-                return Err(LuaError::external(
-                    format!("Operation `getrecord` [`get` variant] not allowed in this template context for key '{}'", key),
-                ));
-            }
 
             // Check key length
             if key.len() > this.kv_constraints.max_key_length {
@@ -169,25 +126,11 @@ impl LuaUserData for KvExecutor {
         });
 
         methods.add_async_method("set", |lua, this, (key, value): (String, LuaValue)| async move {
+            this.check("set".to_string(), key.clone())
+            .map_err(LuaError::external)?;
+            
             let data = lua.from_value::<serde_json::Value>(value)?;
             
-            this.base_check("set".to_string())
-                .map_err(LuaError::external)?;
-
-            if !this.template_data.pragma.kv_ops.contains(&"*".to_string())
-                && this
-                    .template_data
-                    .pragma
-                    .kv_ops
-                    .contains(&format!("set:{}", key))
-                && this.template_data.pragma.kv_ops.contains(&"set:*".to_string())
-                && this.template_data.pragma.kv_ops.contains(&key)
-            {
-                return Err(LuaError::external(
-                    format!("Operation `set` not allowed in this template context for key '{}'", key),
-                ));
-            }
-
             // Check key length
             if key.len() > this.kv_constraints.max_key_length {
                 return Err(LuaError::external("Key length too long"));
@@ -233,23 +176,9 @@ impl LuaUserData for KvExecutor {
         });
 
         methods.add_async_method("delete", |_lua, this, key: String| async move {            
-            this.base_check("delete".to_string())
-                .map_err(LuaError::external)?;
-
-            if !this.template_data.pragma.kv_ops.contains(&"*".to_string())
-                && this
-                    .template_data
-                    .pragma
-                    .kv_ops
-                    .contains(&format!("delete:{}", key))
-                && this.template_data.pragma.kv_ops.contains(&"delete:*".to_string())
-                && this.template_data.pragma.kv_ops.contains(&key)
-            {
-                return Err(LuaError::external(
-                    format!("Operation `delete` not allowed in this template context for key '{}'", key),
-                ));
-            }
-
+            this.check("delete".to_string(), key.clone())
+            .map_err(LuaError::external)?;
+            
             // Check key length
             if key.len() > this.kv_constraints.max_key_length {
                 return Err(LuaError::external("Key length too long"));

@@ -8,8 +8,7 @@ type Error = Box<dyn std::error::Error + Send + Sync>; // This is constant and s
 
 use std::str::FromStr;
 
-const MAX_ACTIONS: usize = 50;
-const MAX_KV_OPS: usize = 50;
+const MAX_CAPS: usize = 50;
 const MAX_PRAGMA_SIZE: usize = 2048;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize, Default)]
@@ -17,10 +16,7 @@ pub struct TemplatePragma {
     pub lang: TemplateLanguage,
 
     #[serde(default)]
-    pub actions: Vec<String>,
-
-    #[serde(default)]
-    pub kv_ops: Vec<String>,
+    pub allowed_caps: Vec<String>,
 
     #[serde(flatten)]
     pub extra_info: indexmap::IndexMap<String, serde_json::Value>,
@@ -49,12 +45,8 @@ impl TemplatePragma {
 
         let pragma: TemplatePragma = serde_json::from_str(&first_line)?;
 
-        if pragma.actions.len() > MAX_ACTIONS {
-            return Err("Too many actions specified".into());
-        }
-
-        if pragma.kv_ops.len() > MAX_KV_OPS {
-            return Err("Too many kv ops specified".into());
+        if pragma.allowed_caps.len() > MAX_CAPS {
+            return Err("Too many allowed capabilities specified".into());
         }
 
         Ok((rest, pragma))

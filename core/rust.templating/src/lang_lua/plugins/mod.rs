@@ -1,10 +1,11 @@
-pub mod actions;
 pub mod r#async;
+pub mod discord;
 pub mod interop;
 pub mod kv;
 pub mod lune;
 pub mod message;
 pub mod permissions;
+pub mod stings;
 
 use crate::lang_lua::state;
 use mlua::prelude::*;
@@ -13,13 +14,14 @@ use std::sync::LazyLock;
 // Modules can load their own plugins
 pub static PLUGINS: LazyLock<indexmap::IndexMap<String, ModuleFn>> = LazyLock::new(|| {
     indexmap::indexmap! {
-        "@antiraid/actions".to_string() => actions::init_plugin as ModuleFn,
         "@antiraid/async".to_string() => r#async::init_plugin as ModuleFn,
         "@antiraid/builtins".to_string() => builtins as ModuleFn,
+        "@antiraid/discord".to_string() => discord::init_plugin as ModuleFn,
         "@antiraid/interop".to_string() => interop::init_plugin as ModuleFn,
         "@antiraid/kv".to_string() => kv::init_plugin as ModuleFn,
         "@antiraid/message".to_string() => message::init_plugin as ModuleFn,
         "@antiraid/permissions".to_string() => permissions::init_plugin as ModuleFn,
+        "@antiraid/stings".to_string() => stings::init_plugin as ModuleFn,
         "@lune/datetime".to_string() => lune::datetime::init_plugin as ModuleFn,
         "@lune/regex".to_string() => lune::regex::init_plugin as ModuleFn,
         "@lune/serde".to_string() => lune::serde::init_plugin as ModuleFn,

@@ -108,3 +108,27 @@ pub struct SettingsOperationRequest {
     pub module: String,
     pub setting: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecuteTemplateRequest {
+    pub args: serde_json::Value,
+    pub template: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ExecuteTemplateResponse {
+    Ok { result: Option<serde_json::Value> },
+    ExecErr { error: String },
+    PermissionError { res: PermissionResult },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RpcExecuteTemplateContext {
+    #[serde(flatten)]
+    pub args: serde_json::Value,
+    pub guild_id: serenity::all::GuildId,
+    pub user_id: serenity::all::UserId,
+}
+
+#[typetag::serde]
+impl templating::Context for RpcExecuteTemplateContext {}

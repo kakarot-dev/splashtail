@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/infinitybotlist/eureka/uapi"
 	"go.api/api"
+	"go.api/routes/guilds/endpoints/execute_template"
 	"go.api/routes/guilds/endpoints/get_all_command_configurations"
 	"go.api/routes/guilds/endpoints/get_module_configurations"
 	"go.api/routes/guilds/endpoints/get_staff_team"
@@ -116,6 +117,22 @@ func (b Router) Routes(r *chi.Mux) {
 		Method:  uapi.POST,
 		Docs:    settings_execute.Docs,
 		Handler: settings_execute.Route,
+		Auth: []uapi.AuthType{
+			{
+				Type: splashcore.TargetTypeUser,
+			},
+		},
+		ExtData: map[string]any{
+			api.PERMISSION_CHECK_KEY: nil, // Authz is performed in the handler itself
+		},
+	}.Route(r)
+
+	uapi.Route{
+		Pattern: "/guilds/{guild_id}/execute-template",
+		OpId:    "execute_template",
+		Method:  uapi.POST,
+		Docs:    execute_template.Docs,
+		Handler: execute_template.Route,
 		Auth: []uapi.AuthType{
 			{
 				Type: splashcore.TargetTypeUser,

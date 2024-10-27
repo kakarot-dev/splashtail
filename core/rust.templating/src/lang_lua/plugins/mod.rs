@@ -1,9 +1,9 @@
 pub mod r#async;
 pub mod discord;
+pub mod formatters;
 pub mod interop;
 pub mod kv;
 pub mod lune;
-pub mod message;
 pub mod permissions;
 pub mod stings;
 
@@ -17,9 +17,9 @@ pub static PLUGINS: LazyLock<indexmap::IndexMap<String, ModuleFn>> = LazyLock::n
         "@antiraid/async".to_string() => r#async::init_plugin as ModuleFn,
         "@antiraid/builtins".to_string() => builtins as ModuleFn,
         "@antiraid/discord".to_string() => discord::init_plugin as ModuleFn,
+        "@antiraid/formatters".to_string() => formatters::init_plugin as ModuleFn,
         "@antiraid/interop".to_string() => interop::init_plugin as ModuleFn,
         "@antiraid/kv".to_string() => kv::init_plugin as ModuleFn,
-        "@antiraid/message".to_string() => message::init_plugin as ModuleFn,
         "@antiraid/permissions".to_string() => permissions::init_plugin as ModuleFn,
         "@antiraid/stings".to_string() => stings::init_plugin as ModuleFn,
         "@lune/datetime".to_string() => lune::datetime::init_plugin as ModuleFn,

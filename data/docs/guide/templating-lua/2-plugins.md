@@ -63,61 +63,21 @@ print(interop.memusage())
 
 This function returns the memory usage of the VM in bytes.
 
-## Message
+- ``guild_id() -> string``
+
+This function returns the guilq id of the current context for templating.
+
+## Formatters
+
+**Module Name:** ``@antiraid/formatters``
 
 Functions for creating templated messages
 
 ### Functions
 
-- ``new_message() -> table<message.Message>``
-
-Creates a new message table
-
-- ``new_message_embed() -> table<message.MessageEmbed>``
-
-Creates a new message embed table
-
-- ``new_message_embed_field() -> table<message.MessageEmbedField>``
-
-Creates a new message embed field table
-
 - ``format_gwevent_field(field: table<gwevent.field.Field>) -> String``
 
 Formats a gwevent field into a string. These are exposed in places such as Audit Logs and other areas.
-
-### Types
-
-The following rust types are exposed in this module
-
-```rust
-/// Represents an embed field
-pub struct MessageEmbedField {
-    /// The name of the field
-    pub name: String,
-    /// The value of the field
-    pub value: String,
-    /// Whether the field is inline
-    pub inline: bool,
-}
-
-/// Represents a message embed
-pub struct MessageEmbed {
-    /// The title set by the template
-    pub title: Option<String>,
-    /// The description set by the template
-    pub description: Option<String>,
-    /// The fields that were set by the template
-    pub fields: Vec<MessageEmbedField>,
-}
-
-/// Represents a message that can be created by templates
-pub struct Message {
-    /// Embeds [current_index, embeds]
-    pub embeds: Vec<MessageEmbed>,
-    /// What content to set on the message
-    pub content: Option<String>,
-}
-```
 
 ## Permissions
 
@@ -165,7 +125,7 @@ Checks a set of permission checks. This corresponds to ``permissions::eval_check
 
 ### Types
 
-The following rust types are exposed in this module
+The following rust types are exposed to Lua:
 
 ```rust
 pub struct LuaPermissionResult {
@@ -216,5 +176,33 @@ pub enum PermissionChecks {
         /// The template string to use
         template: String,
     },
+}
+
+/// Represents an embed field
+pub struct MessageEmbedField {
+    /// The name of the field
+    pub name: String,
+    /// The value of the field
+    pub value: String,
+    /// Whether the field is inline
+    pub inline: bool,
+}
+
+/// Represents a message embed
+pub struct MessageEmbed {
+    /// The title set by the template
+    pub title: Option<String>,
+    /// The description set by the template
+    pub description: Option<String>,
+    /// The fields that were set by the template
+    pub fields: Vec<MessageEmbedField>,
+}
+
+/// Represents a message that can be created by templates
+pub struct Message {
+    /// Embeds [current_index, embeds]
+    pub embeds: Vec<MessageEmbed>,
+    /// What content to set on the message
+    pub content: Option<String>,
 }
 ```

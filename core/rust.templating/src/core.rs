@@ -47,7 +47,7 @@ pub mod messages {
         /// The description set by the template
         pub description: Option<String>,
         /// The fields that were set by the template
-        pub fields: Vec<MessageEmbedField>,
+        pub fields: Option<Vec<MessageEmbedField>>,
     }
 
     /// Represents a message that can be created by templates
@@ -99,39 +99,41 @@ pub mod messages {
                 set = true;
             }
 
-            if !template_embed.fields.is_empty() {
-                set = true;
-            }
-
-            for (count, field) in template_embed.fields.into_iter().enumerate() {
-                if count >= embed_limits::EMBED_FIELDS_MAX_COUNT {
-                    break;
+            if let Some(fields) = template_embed.fields {
+                if !fields.is_empty() {
+                    set = true;
                 }
 
-                let name = field.name.trim();
-                let value = field.value.trim();
+                for (count, field) in fields.into_iter().enumerate() {
+                    if count >= embed_limits::EMBED_FIELDS_MAX_COUNT {
+                        break;
+                    }
 
-                if name.is_empty() || value.is_empty() {
-                    continue;
+                    let name = field.name.trim();
+                    let value = field.value.trim();
+
+                    if name.is_empty() || value.is_empty() {
+                        continue;
+                    }
+
+                    // Slice field name to EMBED_FIELD_NAME_LIMIT
+                    let name = slice_chars(
+                        name,
+                        &mut total_chars,
+                        embed_limits::EMBED_FIELD_NAME_LIMIT,
+                        embed_limits::EMBED_TOTAL_LIMIT,
+                    );
+
+                    // Slice field value to EMBED_FIELD_VALUE_LIMIT
+                    let value = slice_chars(
+                        value,
+                        &mut total_chars,
+                        embed_limits::EMBED_FIELD_VALUE_LIMIT,
+                        embed_limits::EMBED_TOTAL_LIMIT,
+                    );
+
+                    embed = embed.field(name, value, field.inline);
                 }
-
-                // Slice field name to EMBED_FIELD_NAME_LIMIT
-                let name = slice_chars(
-                    name,
-                    &mut total_chars,
-                    embed_limits::EMBED_FIELD_NAME_LIMIT,
-                    embed_limits::EMBED_TOTAL_LIMIT,
-                );
-
-                // Slice field value to EMBED_FIELD_VALUE_LIMIT
-                let value = slice_chars(
-                    value,
-                    &mut total_chars,
-                    embed_limits::EMBED_FIELD_VALUE_LIMIT,
-                    embed_limits::EMBED_TOTAL_LIMIT,
-                );
-
-                embed = embed.field(name, value, field.inline);
             }
 
             if set {

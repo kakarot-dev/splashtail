@@ -119,3 +119,35 @@ type JobserverSpawn struct {
 type JobserverSpawnResponse struct {
 	ID string `json:"id"`
 }
+
+/*
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecuteTemplateRequest {
+    pub args: serde_json::Value,
+    pub template: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ExecuteTemplateResponse {
+    Ok { result: Option<serde_json::Value> },
+    ExecErr { error: String },
+    PermissionError { res: PermissionResult },
+}
+*/
+
+type ExecuteTemplateRequest struct {
+	Args     any    `json:"args"`
+	Template string `json:"template"`
+}
+
+type ExecuteTemplateResponse struct {
+	Ok *struct {
+		Result any `json:"result"`
+	} `json:"Ok,omitempty"`
+	ExecErr *struct {
+		Error string `json:"error"`
+	} `json:"ExecErr,omitempty"`
+	PermissionError *struct {
+		Res silverpelt.PermissionResult `json:"res"`
+	} `json:"PermissionError,omitempty"`
+}

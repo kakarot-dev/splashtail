@@ -3997,6 +3997,7 @@ dependencies = [
  "indexmap",
  "kittycat",
  "module_settings",
+ "moka",
  "permission_checks",
  "permissions",
  "rust_rpc_server",
@@ -4006,6 +4007,8 @@ dependencies = [
  "serenity",
  "silverpelt",
  "splashcore_rs",
+ "templating",
+ "typetag",
 ]
 
 [[package]]

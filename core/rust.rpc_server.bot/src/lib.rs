@@ -1,4 +1,5 @@
 pub mod settings_execute;
+pub mod templating_exec;
 pub mod types;
 
 use axum::{
@@ -37,6 +38,11 @@ pub fn create_bot_rpc_server(
         .route(
             "/dispatch-trusted-web-event",
             post(dispatch_trusted_web_event),
+        )
+        // Executes a template on a Lua VM
+        .route(
+            "/template-exec/:guild_id/:user_id",
+            post(templating_exec::execute_template),
         )
         // Executes an operation on a setting [SettingsOperation]
         .route(

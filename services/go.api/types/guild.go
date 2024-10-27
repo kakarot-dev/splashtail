@@ -1,6 +1,9 @@
 package types
 
-import "github.com/infinitybotlist/eureka/dovewing/dovetypes"
+import (
+	"github.com/infinitybotlist/eureka/dovewing/dovetypes"
+	"go.std/silverpelt"
+)
 
 type DashboardGuild struct {
 	ID          string `json:"id" description:"The ID of the guild"`
@@ -33,4 +36,21 @@ type GuildStaffMember struct {
 	User   *dovetypes.PlatformUser `json:"user" description:"The user object of the staff member"`
 	Role   []string                `json:"role" description:"The role of the staff member"`
 	Public bool                    `json:"public" description:"Whether the staff member is public"`
+}
+
+type ExecuteTemplateRequest struct {
+	Args     any    `json:"args"`
+	Template string `json:"template"`
+}
+
+type ExecuteTemplateResponse struct {
+	Ok *struct {
+		Result any `json:"result"`
+	} `json:"Ok,omitempty"`
+	ExecErr *struct {
+		Error string `json:"error"`
+	} `json:"ExecErr,omitempty"`
+	PermissionError *struct {
+		Res silverpelt.PermissionResult `json:"res"`
+	} `json:"PermissionError,omitempty"`
 }

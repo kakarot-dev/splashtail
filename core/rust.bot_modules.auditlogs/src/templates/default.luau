@@ -1,12 +1,14 @@
 -- @pragma {"lang":"lua","allowed_caps":["discord:sendmessage_channel"]}
 local args, token = ...
-local message_plugin = require "@antiraid/message"
 local discord = require "@antiraid/discord"
+local interop = require "@antiraid/interop"
+local formatter = require "@antiraid/formatters"
 
 -- Make the embed
-local embed = message_plugin.new_message_embed()
-embed.title = args.event_titlename
-embed.description = "" -- Start with an empty description
+local embed = {
+    title = args.event_titlename, 
+    description = "", -- Start with empty description
+}
 
 -- Add the event data to the description
 for key, value in pairs(args.event_data) do
@@ -17,12 +19,13 @@ for key, value in pairs(args.event_data) do
     end
 
     if should_set then
-        local formatted_value = message_plugin.format_gwevent_field(value)
+        local formatted_value = formatter.format_gwevent_field(value)
         embed.description = embed.description .. "**" .. key:gsub("_", " "):upper() .. "**: " .. formatted_value .. "\n"
     end
 end
 
-local message = message_plugin.new_message()
+local message = { embeds = {} }
+setmetatable(message.embeds, interop.array_metatable)
 
 table.insert(message.embeds, embed)
 

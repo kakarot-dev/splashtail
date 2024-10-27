@@ -20,7 +20,7 @@ func Docs() *docs.Doc {
 	return &docs.Doc{
 		Summary:     "Eexecute Template",
 		Description: "This endpoint will execute a Lua template and return the result.",
-		Resp:        types.GuildStaffTeam{},
+		Resp:        types.ExecuteTemplateResponse{},
 		Params: []docs.Parameter{
 			{
 				Name:        "guild_id",
@@ -82,6 +82,10 @@ func Route(d uapi.RouteData, r *http.Request) uapi.HttpResponse {
 	}
 
 	return uapi.HttpResponse{
-		Json: resp,
+		Json: types.ExecuteTemplateResponse{
+			Ok:              resp.Ok,
+			ExecErr:         resp.ExecErr,
+			PermissionError: resp.PermissionError,
+		},
 	}
 }

@@ -55,6 +55,8 @@ gwevent = { path = "../rust.gwevent" }
 config = { path = "../rust.config" }
 limits = { path = "../rust.limits" }
 silverpelt = { path = "../rust.silverpelt" }
+captcha = { git = "https://github.com/Anti-Raid/captcha", branch = "master" }
+fred = { version = "9.3", features = ["serde-json"] }
 
 # Template language support
 mlua = { version = "0.10.0", features = ["async", "luau", "serialize", "macros", "send"], optional = true } # Supported by default

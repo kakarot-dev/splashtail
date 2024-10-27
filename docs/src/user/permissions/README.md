@@ -36,4 +36,4 @@ See the [templating guide](../templating-lua/1-intro.md) for more information on
 
 ## TIP
 
-For best results, consider limiting server permissions of other users to the minimum required. Then, use AntiRaid for actual moderation. That's better than giving everyone admin permissions and then trying to restrict them with AntiRaid.
+For best results, consider limiting server permissions of other users to the minimum required. Then, use AntiRaid for actual moderation. That's better than giving everyone admin permissions and then trying to restrict them with AntiRaid and also allows AntiRaid to work fully!

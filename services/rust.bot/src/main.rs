@@ -442,6 +442,16 @@ async fn main() {
         shard_manager: Arc::new(RwLock::new(None)),
     });
 
+    let redis = fred::clients::RedisPool::new(
+        fred::prelude::RedisConfig::from_url(&config::CONFIG.meta.redis_url)
+            .expect("Could not parse Redis URL"),
+        None,
+        None,
+        Some(fred::prelude::ReconnectPolicy::default()),
+        10,
+    )
+    .expect("Could not initialize Redis connection");
+
     let data = Data {
         object_store: Arc::new(
             config::CONFIG
@@ -449,6 +459,7 @@ async fn main() {
                 .build()
                 .expect("Could not initialize object store"),
         ),
+        redis,
         pool: pg_pool.clone(),
         reqwest,
         extra_data: dashmap::DashMap::new(),

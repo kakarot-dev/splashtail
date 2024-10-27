@@ -1,5 +1,4 @@
 mod cmds;
-mod consts;
 mod settings;
 mod templater;
 

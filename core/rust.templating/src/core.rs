@@ -166,3 +166,12 @@ pub mod messages {
         pub embeds: Vec<serenity::all::CreateEmbed<'a>>,
     }
 }
+
+pub mod captcha {
+    #[derive(serde::Serialize, serde::Deserialize)]
+    pub struct Captcha {
+        pub text: String,
+        pub content: Option<String>, // Message content
+        pub image: Option<Vec<u8>>,  // Image data
+    }
+}

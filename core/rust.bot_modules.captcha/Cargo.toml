@@ -15,8 +15,8 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 futures-util = "0.3"
 indexmap = { version = "2", features = ["serde"] }
 async-trait = "0.1"
-captcha = { git = "https://github.com/Anti-Raid/captcha", branch = "master" }
 typetag = "0.2"
+limits = { path = "../rust.limits" }
 
 # Anti-Raid specific
 silverpelt = { path = "../rust.silverpelt" }

@@ -2,8 +2,6 @@ use serenity::all::CreateAttachment;
 use silverpelt::Context;
 use silverpelt::Error;
 
-const TEST_CAPTCHA_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(3);
-
 /// Test the captcha system
 #[poise::command(slash_command)]
 pub async fn captcha_test(ctx: Context<'_>, use_sample: Option<bool>) -> Result<(), Error> {
@@ -37,7 +35,7 @@ pub async fn captcha_test(ctx: Context<'_>, use_sample: Option<bool>) -> Result<
         .into_message()
         .await?;
 
-    let captcha_config = templating::execute::<_, super::templater::CaptchaConfig>(
+    let captcha = templating::execute::<_, templating::core::captcha::Captcha>(
         guild_id,
         template,
         ctx.data().pool.clone(),
@@ -51,18 +49,16 @@ pub async fn captcha_test(ctx: Context<'_>, use_sample: Option<bool>) -> Result<
     )
     .await?;
 
-    let captcha = captcha_config.create_captcha(TEST_CAPTCHA_TIMEOUT).await?;
+    let mut em = serenity::all::EditMessage::new().content(format!("Answer: {}", captcha.text));
 
-    msg.edit(
-        ctx,
-        serenity::all::EditMessage::new()
-            .content(format!("Answer: {}", captcha.0))
-            .new_attachment(CreateAttachment::bytes(
-                captcha.1,
-                botox::crypto::gen_random(64) + ".png",
-            )),
-    )
-    .await?;
+    if let Some(image) = captcha.image {
+        em = em.new_attachment(CreateAttachment::bytes(
+            image,
+            botox::crypto::gen_random(64) + ".png",
+        ));
+    }
+
+    msg.edit(ctx, em).await?;
 
     Ok(())
 }
@@ -96,7 +92,7 @@ pub async fn verify(ctx: Context<'_>) -> Result<(), Error> {
         .into_message()
         .await?;
 
-    let captcha_config = templating::execute::<_, super::templater::CaptchaConfig>(
+    let captcha = templating::execute::<_, templating::core::captcha::Captcha>(
         guild_id,
         templating::Template::Named(template.clone()),
         ctx.data().pool.clone(),
@@ -110,22 +106,30 @@ pub async fn verify(ctx: Context<'_>) -> Result<(), Error> {
     )
     .await?;
 
-    let captcha = captcha_config
-        .create_captcha(super::consts::CAPTCHA_CREATE_TIMEOUT)
-        .await?;
+    let mut em = serenity::all::EditMessage::new();
+
+    if let Some(ref content) = captcha.content {
+        if content.len() > limits::message_limits::MESSAGE_CONTENT_LIMIT {
+            return Err("Captcha content exceeds the limit".into());
+        }
+
+        em = em.content(content);
+    }
+
+    if let Some(image) = captcha.image {
+        em = em.new_attachment(CreateAttachment::bytes(
+            image,
+            botox::crypto::gen_random(64) + ".png",
+        ));
+    }
 
     msg.edit(
         ctx,
-        serenity::all::EditMessage::new()
-            .new_attachment(CreateAttachment::bytes(
-                captcha.1,
-                botox::crypto::gen_random(64) + ".png",
-            ))
-            .components(vec![serenity::all::CreateActionRow::Buttons(vec![
-                serenity::all::CreateButton::new("captcha_verify")
-                    .label("Answer")
-                    .style(serenity::all::ButtonStyle::Primary),
-            ])]),
+        em.components(vec![serenity::all::CreateActionRow::Buttons(vec![
+            serenity::all::CreateButton::new("captcha_verify")
+                .label("Answer")
+                .style(serenity::all::ButtonStyle::Primary),
+        ])]),
     )
     .await?;
 
@@ -151,7 +155,7 @@ pub async fn verify(ctx: Context<'_>) -> Result<(), Error> {
         return Err("You took too long to answer the captcha".into());
     };
 
-    if response.inputs[0] != captcha.0 {
+    if response.inputs[0] != captcha.text {
         response
             .interaction
             .create_response(
@@ -185,7 +189,7 @@ pub async fn verify(ctx: Context<'_>) -> Result<(), Error> {
                 ctx.author().id,
                 serde_json::json!({
                     "method": "captcha",
-                    "captcha_answer": captcha.0,
+                    "captcha_answer": captcha.text,
                     "captcha_answer_given": response.inputs[0],
                 }),
             )),

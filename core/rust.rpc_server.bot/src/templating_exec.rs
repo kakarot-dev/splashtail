@@ -17,7 +17,7 @@ pub(crate) async fn execute_template(
 ) -> Json<ExecuteTemplateResponse> {
     let perm_res = permission_checks::check_command(
         &data.silverpelt_cache,
-        "templating.exec_template",
+        "exec_template",
         guild_id,
         user_id,
         &data.pool,

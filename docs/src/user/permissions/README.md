@@ -4,7 +4,7 @@ Imagine. Imagine a discord bot which you could completely control. You could dec
 
 *Thats AntiRaid...*
 
-AntiRaid has a customizable permission system with Discord native permissions for ease of use and [kittycat](https://github.com/InfinityBotList/kittycat) for more complex use cases. For more unique cases, AntiRaid provides support for Lua script templating that can be used to extend AntiRaid with more complex/unique systems dedicated to your server.
+AntiRaid has a customizable permission system which uses both Discord permissions for simplicity and [kittycat](https://github.com/InfinityBotList/kittycat) permissions for more specific requirements. For more complex cases, AntiRaid provides support for Lua scripting, which can be used to extend Antiraid with arbitrarily complex permission systems, among other things.
 
 The idea is simple: All roles have permissions attached to them and members can have special permission overrides on top of that. The permissions are then checked when a command is run.
 

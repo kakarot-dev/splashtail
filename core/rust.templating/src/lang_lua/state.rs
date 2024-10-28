@@ -26,7 +26,7 @@ impl LuaRatelimits {
     pub fn new_action_rl() -> Result<Self, crate::Error> {
         // Create the global limit
         let global_quota =
-            Self::create_quota(NonZeroU32::new(10).unwrap(), Duration::from_secs(60))?;
+            Self::create_quota(NonZeroU32::new(10).unwrap(), Duration::from_secs(10))?;
         let global1 = DefaultKeyedRateLimiter::keyed(global_quota);
         let global = vec![global1];
 
@@ -47,11 +47,6 @@ impl LuaRatelimits {
             Self::create_quota(NonZeroU32::new(15).unwrap(), Duration::from_secs(20))?;
         let sendmessage_channel_lim1 = DefaultKeyedRateLimiter::keyed(sendmessage_channel_quota1);
 
-        // Sting user limits (are even smaller to allow for even more actions)
-        let sting_user_quota1 =
-            Self::create_quota(NonZeroU32::new(30).unwrap(), Duration::from_secs(20))?;
-        let sting_user_lim1 = DefaultKeyedRateLimiter::keyed(sting_user_quota1);
-
         // Create the clock
         let clock = QuantaClock::default();
 
@@ -61,7 +56,6 @@ impl LuaRatelimits {
                 "ban".to_string() => vec![ban_lim1, ban_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
                 "kick".to_string() => vec![kick_lim1, kick_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
                 "sendmessage_channel".to_string() => vec![sendmessage_channel_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
-                "sting_user".to_string() => vec![sting_user_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
             ),
             clock,
         })

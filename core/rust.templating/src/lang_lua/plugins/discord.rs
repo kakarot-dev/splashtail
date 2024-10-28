@@ -1,42 +1,7 @@
 use crate::lang_lua::state;
+use futures_util::StreamExt;
 use mlua::prelude::*;
 use std::sync::Arc;
-
-/// A ban action
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct BanAction {
-    user_id: serenity::all::UserId,
-    reason: String,
-    delete_message_days: Option<u8>,
-}
-
-/// A kick action
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct KickAction {
-    user_id: serenity::all::UserId,
-    reason: String,
-}
-
-/// A timeout action
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct TimeoutAction {
-    user_id: serenity::all::UserId,
-    reason: String,
-    duration_seconds: u64,
-}
-
-/// A kick action
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct SendMessageChannelAction {
-    channel_id: serenity::all::ChannelId, // Channel *must* be in the same guild
-    message: crate::core::messages::CreateMessage,
-}
-
-/// A sting user action
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct StingUserAction {
-    pub sting: silverpelt::stings::StingCreate,
-}
 
 /// An action executor is used to execute actions such as kick/ban/timeout from Lua
 /// templates
@@ -64,11 +29,82 @@ impl DiscordActionExecutor {
 
         Ok(())
     }
+
+    pub async fn check_permissions(
+        &self,
+        user_id: serenity::all::UserId,
+        needed_permissions: serenity::all::Permissions,
+    ) -> Result<(), crate::Error> {
+        let guild =
+            sandwich_driver::guild(&self.cache_http, &self.reqwest_client, self.guild_id).await?; // Get the guild
+
+        let Some(member) = sandwich_driver::member_in_guild(
+            &self.cache_http,
+            &self.reqwest_client,
+            self.guild_id,
+            user_id,
+        )
+        .await?
+        else {
+            return Err("Bot user not found in guild".into());
+        }; // Get the bot user
+
+        if !guild
+            .member_permissions(&member)
+            .contains(needed_permissions)
+        {
+            return Err(format!(
+                "Bot does not have the required permissions: {:?}",
+                needed_permissions
+            )
+            .into());
+        }
+
+        Ok(())
+    }
 }
 
 impl LuaUserData for DiscordActionExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
+        // Audit logs
+        methods.add_async_method("get_audit_logs", |lua, this, data: LuaValue| async move {
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct GetAuditLogOptions {
+                action_type: Option<serenity::all::audit_log::Action>,
+                user_id: Option<serenity::all::UserId>,
+                before: Option<serenity::all::AuditLogEntryId>,
+                limit: Option<serenity::nonmax::NonMaxU8>,
+            }
+
+            let data = lua.from_value::<GetAuditLogOptions>(data)?;
+
+            this.check_action("get_audit_logs".to_string())
+                .map_err(LuaError::external)?;
+
+            this.serenity_context
+                .http
+                .get_audit_logs(
+                    this.guild_id,
+                    data.action_type,
+                    data.user_id,
+                    data.before,
+                    data.limit,
+                )
+                .await
+                .map_err(LuaError::external)?;
+
+            Ok(())
+        });
+
         methods.add_async_method("ban", |lua, this, data: LuaValue| async move {
+            /// A ban action
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct BanAction {
+                user_id: serenity::all::UserId,
+                reason: String,
+                delete_message_days: Option<u8>,
+            }
+
             let data = lua.from_value::<BanAction>(data)?;
 
             this.check_action("ban".to_string())
@@ -94,6 +130,12 @@ impl LuaUserData for DiscordActionExecutor {
                 ));
             }
 
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.check_permissions(bot_userid, serenity::all::Permissions::BAN_MEMBERS)
+                .await
+                .map_err(LuaError::external)?;
+
             this.serenity_context
                 .http
                 .ban_user(
@@ -109,6 +151,13 @@ impl LuaUserData for DiscordActionExecutor {
         });
 
         methods.add_async_method("kick", |lua, this, data: LuaValue| async move {
+            /// A kick action
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct KickAction {
+                user_id: serenity::all::UserId,
+                reason: String,
+            }
+
             let data = lua.from_value::<KickAction>(data)?;
 
             this.check_action("kick".to_string())
@@ -120,6 +169,12 @@ impl LuaUserData for DiscordActionExecutor {
                 ));
             }
 
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.check_permissions(bot_userid, serenity::all::Permissions::KICK_MEMBERS)
+                .await
+                .map_err(LuaError::external)?;
+
             this.serenity_context
                 .http
                 .kick_member(this.guild_id, data.user_id, Some(data.reason.as_str()))
@@ -130,6 +185,14 @@ impl LuaUserData for DiscordActionExecutor {
         });
 
         methods.add_async_method("timeout", |lua, this, data: LuaValue| async move {
+            /// A timeout action
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct TimeoutAction {
+                user_id: serenity::all::UserId,
+                reason: String,
+                duration_seconds: u64,
+            }
+
             let data = lua.from_value::<TimeoutAction>(data)?;
 
             this.check_action("timeout".to_string())
@@ -146,6 +209,12 @@ impl LuaUserData for DiscordActionExecutor {
                     "Timeout duration must be less than 28 days",
                 ));
             }
+
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.check_permissions(bot_userid, serenity::all::Permissions::KICK_MEMBERS)
+                .await
+                .map_err(LuaError::external)?;
 
             let communication_disabled_until =
                 chrono::Utc::now() + std::time::Duration::from_secs(data.duration_seconds);
@@ -167,6 +236,13 @@ impl LuaUserData for DiscordActionExecutor {
         methods.add_async_method(
             "sendmessage_channel",
             |lua, this, data: LuaValue| async move {
+                /// A kick action
+                #[derive(serde::Serialize, serde::Deserialize)]
+                pub struct SendMessageChannelAction {
+                    channel_id: serenity::all::ChannelId, // Channel *must* be in the same guild
+                    message: crate::core::messages::CreateMessage,
+                }
+
                 let data = lua.from_value::<SendMessageChannelAction>(data)?;
 
                 this.check_action("sendmessage_channel".to_string())
@@ -229,14 +305,60 @@ impl LuaUserData for DiscordActionExecutor {
 
                 let cm = msg.to_create_message();
 
-                guild_channel
+                let msg = guild_channel
                     .send_message(&this.serenity_context.http, cm)
                     .await
                     .map_err(LuaError::external)?;
 
-                Ok(())
+                Ok(MessageHandle {
+                    message: msg,
+                    serenity_context: this.serenity_context.clone(),
+                })
             },
         );
+    }
+}
+
+pub struct MessageHandle {
+    pub message: serenity::all::Message,
+    pub serenity_context: serenity::all::Context,
+}
+
+impl LuaUserData for MessageHandle {
+    fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("data", |lua, this, _: ()| {
+            let v = lua.to_value(&this.message)?;
+            Ok(v)
+        });
+
+        methods.add_method("await_component_interaction", |_, this, _: ()| {
+            let stream = crate::lang_lua::stream::LuaStream::new(
+                this.message
+                    .await_component_interaction(this.serenity_context.shard.clone())
+                    .timeout(std::time::Duration::from_secs(60))
+                    .stream()
+                    .map(|interaction| MessageComponentHandle { interaction }),
+            );
+
+            Ok(stream)
+        });
+    }
+}
+
+pub struct MessageComponentHandle {
+    pub interaction: serenity::all::ComponentInteraction,
+}
+
+impl LuaUserData for MessageComponentHandle {
+    fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("custom_id", |_, this, _: ()| {
+            Ok(this.interaction.data.custom_id.to_string())
+        });
+
+        methods.add_method("data", |lua, this, _: ()| {
+            let v = lua.to_value(&this.interaction)?;
+            Ok(v)
+        });
     }
 }
 

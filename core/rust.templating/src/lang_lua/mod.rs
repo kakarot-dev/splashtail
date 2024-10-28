@@ -2,6 +2,7 @@
 mod perthreadpanichook;
 mod plugins;
 pub(crate) mod state;
+pub(crate) mod stream;
 
 use crate::atomicinstant;
 use mlua::prelude::*;

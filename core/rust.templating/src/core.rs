@@ -30,7 +30,7 @@ pub mod messages {
 
     /// Represents an embed field
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-    pub struct MessageEmbedField {
+    pub struct CreateMessageEmbedField {
         /// The name of the field
         pub name: String,
         /// The value of the field
@@ -39,22 +39,56 @@ pub mod messages {
         pub inline: bool,
     }
 
+    /// Represents an embed author
+    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    pub struct CreateMessageEmbedAuthor {
+        /// The name of the author
+        pub name: String,
+        /// The URL of the author, must be a valid URL
+        pub url: Option<String>,
+        /// The icon URL of the author, must be a valid URL
+        pub icon_url: Option<String>,
+    }
+
+    /// Represents an embed footer
+    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    pub struct CreateMessageEmbedFooter {
+        /// The text of the footer
+        pub text: String,
+        /// The icon URL of the footer, must be a valid URL
+        pub icon_url: Option<String>,
+    }
+
     /// Represents a message embed
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-    pub struct MessageEmbed {
+    pub struct CreateMessageEmbed {
         /// The title set by the template
         pub title: Option<String>,
         /// The description set by the template
         pub description: Option<String>,
+        /// The URL the embed should link to
+        pub url: Option<String>,
+        /// The timestamp to display on the embed
+        pub timestamp: Option<String>,
+        /// The color of the embed
+        pub color: Option<serenity::all::Color>,
+        /// The footer of the embed
+        pub footer: Option<CreateMessageEmbedFooter>,
+        /// The image URL for the embed
+        pub image: Option<String>,
+        /// The thumbnail URL for the embed
+        pub thumbnail: Option<String>,
+        /// The author of the embed
+        pub author: Option<CreateMessageEmbedAuthor>,
         /// The fields that were set by the template
-        pub fields: Option<Vec<MessageEmbedField>>,
+        pub fields: Option<Vec<CreateMessageEmbedField>>,
     }
 
     /// Represents a message that can be created by templates
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-    pub struct Message {
+    pub struct CreateMessage {
         /// Embeds [current_index, embeds]
-        pub embeds: Vec<MessageEmbed>,
+        pub embeds: Vec<CreateMessageEmbed>,
         /// What content to set on the message
         pub content: Option<String>,
     }
@@ -62,7 +96,7 @@ pub mod messages {
     /// Converts a templated message to a discord reply
     ///
     /// This method also handles all of the various discord message+embed limits as well, returning an error if unable to comply
-    pub fn to_discord_reply<'a>(message: Message) -> Result<DiscordReply<'a>, crate::Error> {
+    pub fn to_discord_reply<'a>(message: CreateMessage) -> Result<DiscordReply<'a>, crate::Error> {
         let mut total_chars = 0;
         let mut total_content_chars = 0;
         let mut embeds = Vec::new();
@@ -96,6 +130,125 @@ pub mod messages {
                     )
                     .to_string(),
                 );
+                set = true;
+            }
+
+            if let Some(url) = &template_embed.url {
+                if url.is_empty() {
+                    return Err("URL cannot be empty".into());
+                }
+
+                if !url.starts_with("http://") && !url.starts_with("https://") {
+                    return Err("URL must start with http:// or https://".into());
+                }
+
+                embed = embed.url(url.clone());
+                set = true;
+            }
+
+            if let Some(timestamp) = &template_embed.timestamp {
+                let timestamp = chrono::DateTime::parse_from_rfc3339(timestamp)
+                    .map_err(|e| format!("Invalid timestamp provided to embed: {}", e))?;
+                embed = embed.timestamp(timestamp.clone());
+                set = true;
+            }
+
+            if let Some(color) = template_embed.color {
+                embed = embed.color(color);
+                set = true;
+            }
+
+            if let Some(footer) = &template_embed.footer {
+                let text = slice_chars(
+                    &footer.text,
+                    &mut total_chars,
+                    embed_limits::EMBED_FOOTER_TEXT_LIMIT,
+                    embed_limits::EMBED_TOTAL_LIMIT,
+                );
+
+                let mut cef = serenity::all::CreateEmbedFooter::new(text);
+
+                if let Some(footer_icon_url) = &footer.icon_url {
+                    if footer_icon_url.is_empty() {
+                        return Err("Footer icon URL cannot be empty".into());
+                    }
+
+                    if !footer_icon_url.starts_with("http://")
+                        && !footer_icon_url.starts_with("https://")
+                    {
+                        return Err("Footer icon URL must start with http:// or https://".into());
+                    }
+
+                    cef = cef.icon_url(footer_icon_url.clone());
+                }
+
+                embed = embed.footer(cef);
+
+                set = true;
+            }
+
+            if let Some(image) = &template_embed.image {
+                if image.is_empty() {
+                    return Err("Image URL cannot be empty".into());
+                }
+
+                if !image.starts_with("http://") && !image.starts_with("https://") {
+                    return Err("Image URL must start with http:// or https://".into());
+                }
+
+                embed = embed.image(image.clone());
+                set = true;
+            }
+
+            if let Some(thumbnail) = &template_embed.thumbnail {
+                if thumbnail.is_empty() {
+                    return Err("Thumbnail URL cannot be empty".into());
+                }
+
+                if !thumbnail.starts_with("http://") && !thumbnail.starts_with("https://") {
+                    return Err("Thumbnail URL must start with http:// or https://".into());
+                }
+
+                embed = embed.thumbnail(thumbnail.clone());
+                set = true;
+            }
+
+            if let Some(author) = &template_embed.author {
+                let name = slice_chars(
+                    &author.name,
+                    &mut total_chars,
+                    embed_limits::EMBED_AUTHOR_NAME_LIMIT,
+                    embed_limits::EMBED_TOTAL_LIMIT,
+                );
+
+                let mut cea = serenity::all::CreateEmbedAuthor::new(name);
+
+                if let Some(url) = &author.url {
+                    if url.is_empty() {
+                        return Err("Author URL cannot be empty".into());
+                    }
+
+                    if !url.starts_with("http://") && !url.starts_with("https://") {
+                        return Err("Author URL must start with http:// or https://".into());
+                    }
+
+                    cea = cea.url(url.clone());
+                }
+
+                if let Some(icon_url) = &author.icon_url {
+                    if icon_url.is_empty() {
+                        return Err("Author icon URL cannot be empty".into());
+                    }
+
+                    if !icon_url.starts_with("http://") && !icon_url.starts_with("https://") {
+                        return Err("Author icon URL must start with http:// or https://".into());
+                    }
+
+                    cea = cea.icon_url(icon_url.clone());
+                }
+
+                embed = embed.author(cea);
+
                 set = true;
             }
 
@@ -164,6 +317,32 @@ pub mod messages {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub content: Option<String>,
         pub embeds: Vec<serenity::all::CreateEmbed<'a>>,
+    }
+
+    impl<'a> DiscordReply<'a> {
+        pub fn to_create_message(self) -> serenity::all::CreateMessage<'a> {
+            let mut message = serenity::all::CreateMessage::default();
+
+            if let Some(content) = self.content {
+                message = message.content(content);
+            }
+
+            message = message.embeds(self.embeds);
+
+            message
+        }
+
+        pub fn to_edit_message(self) -> serenity::all::EditMessage<'a> {
+            let mut message = serenity::all::EditMessage::default();
+
+            if let Some(content) = self.content {
+                message = message.content(content);
+            }
+
+            message = message.embeds(self.embeds);
+
+            message
+        }
     }
 }
 

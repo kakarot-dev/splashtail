@@ -82,20 +82,21 @@ pub async fn tag(
         .into_message()
         .await?;
 
-    let discord_reply = templating::execute::<_, Option<templating::core::messages::Message>>(
-        guild_id,
-        templating::Template::Named(template),
-        ctx.data().pool.clone(),
-        ctx.serenity_context().clone(),
-        ctx.data().reqwest.clone(),
-        TagContext {
-            user: ctx.author().clone(),
+    let discord_reply =
+        templating::execute::<_, Option<templating::core::messages::CreateMessage>>(
             guild_id,
-            channel_id: Some(msg.channel_id),
-            args,
-        },
-    )
-    .await;
+            templating::Template::Named(template),
+            ctx.data().pool.clone(),
+            ctx.serenity_context().clone(),
+            ctx.data().reqwest.clone(),
+            TagContext {
+                user: ctx.author().clone(),
+                guild_id,
+                channel_id: Some(msg.channel_id),
+                args,
+            },
+        )
+        .await;
 
     let discord_reply = match discord_reply {
         Ok(reply) => {
@@ -133,13 +134,7 @@ pub async fn tag(
         }
     };
 
-    let mut message = serenity::all::EditMessage::default()
-        .content("")
-        .embeds(discord_reply.embeds);
-
-    if let Some(content) = discord_reply.content {
-        message = message.content(content);
-    }
+    let message = discord_reply.to_edit_message();
 
     msg.edit(ctx, message).await?;
 

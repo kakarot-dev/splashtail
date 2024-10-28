@@ -51,11 +51,11 @@ pub async fn exec_template(
     let discord_reply = match discord_reply {
         Ok(reply) => {
             if let Some(reply) = reply {
-                let reply = match serde_json::from_value::<templating::core::messages::Message>(
+                let reply = match serde_json::from_value::<templating::core::messages::CreateMessage>(
                     reply.clone(),
                 ) {
                     Ok(templated_reply) => templated_reply,
-                    Err(_) => templating::core::messages::Message {
+                    Err(_) => templating::core::messages::CreateMessage {
                         content: Some(reply.to_string()),
                         embeds: vec![],
                     },
@@ -94,13 +94,7 @@ pub async fn exec_template(
         }
     };
 
-    let mut message = serenity::all::EditMessage::default()
-        .content("")
-        .embeds(discord_reply.embeds);
-
-    if let Some(content) = discord_reply.content {
-        message = message.content(content);
-    }
+    let message = discord_reply.to_edit_message();
 
     msg.edit(ctx, message).await?;
 

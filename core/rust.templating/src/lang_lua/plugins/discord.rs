@@ -29,7 +29,7 @@ pub struct TimeoutAction {
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct SendMessageChannelAction {
     channel_id: serenity::all::ChannelId, // Channel *must* be in the same guild
-    message: crate::core::messages::Message,
+    message: crate::core::messages::CreateMessage,
 }
 
 /// A sting user action
@@ -227,13 +227,7 @@ impl LuaUserData for DiscordActionExecutor {
                     ));
                 }
 
-                let mut cm = serenity::all::CreateMessage::new();
-
-                if let Some(content) = msg.content {
-                    cm = cm.content(content);
-                }
-
-                cm = cm.embeds(msg.embeds);
+                let cm = msg.to_create_message();
 
                 guild_channel
                     .send_message(&this.serenity_context.http, cm)

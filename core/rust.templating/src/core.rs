@@ -84,6 +84,14 @@ pub mod messages {
         pub fields: Option<Vec<CreateMessageEmbedField>>,
     }
 
+    /// Message attachment
+    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    pub struct CreateMessageAttachment {
+        pub filename: String,
+        pub description: Option<String>,
+        pub content: Vec<u8>,
+    }
+
     /// Represents a message that can be created by templates
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
     pub struct CreateMessage {
@@ -91,6 +99,8 @@ pub mod messages {
         pub embeds: Vec<CreateMessageEmbed>,
         /// What content to set on the message
         pub content: Option<String>,
+        /// The attachments
+        pub attachments: Option<Vec<CreateMessageAttachment>>,
     }
 
     /// Converts a templated message to a discord reply
@@ -304,19 +314,68 @@ pub mod messages {
             )
         });
 
-        if content.is_none() && embeds.is_empty() {
-            return Err("No content or embeds set".into());
+        // Lastly handle attachments
+        let mut attachments = Vec::new();
+
+        if let Some(attach) = message.attachments {
+            if attach.len() > message_limits::MESSAGE_MAX_ATTACHMENT_COUNT {
+                return Err(format!(
+                    "Too many attachments, limit is {}",
+                    message_limits::MESSAGE_MAX_ATTACHMENT_COUNT
+                )
+                .into());
+            }
+
+            for attachment in attach {
+                let desc = attachment.description.unwrap_or_default();
+                if desc.len() > message_limits::MESSAGE_ATTACHMENT_DESCRIPTION_LIMIT {
+                    return Err(format!(
+                        "Attachment description exceeds limit of {}",
+                        message_limits::MESSAGE_ATTACHMENT_DESCRIPTION_LIMIT
+                    )
+                    .into());
+                }
+
+                let content = attachment.content;
+
+                if content.is_empty() {
+                    return Err("Attachment content cannot be empty".into());
+                }
+
+                if content.len() > message_limits::MESSAGE_ATTACHMENT_CONTENT_BYTES_LIMIT {
+                    return Err(format!(
+                        "Attachment content exceeds limit of {} bytes",
+                        message_limits::MESSAGE_ATTACHMENT_CONTENT_BYTES_LIMIT
+                    )
+                    .into());
+                }
+
+                let mut ca = serenity::all::CreateAttachment::bytes(content, attachment.filename);
+
+                if !desc.is_empty() {
+                    ca = ca.description(desc);
+                }
+
+                attachments.push(ca);
+            }
         }
 
-        Ok(DiscordReply { embeds, content })
+        if content.is_none() && embeds.is_empty() && attachments.is_empty() {
+            return Err("No content/embeds/attachments set".into());
+        }
+
+        Ok(DiscordReply {
+            embeds,
+            content,
+            attachments,
+        })
     }
 
-    #[derive(Default, serde::Serialize)]
-    /// A DiscordReply is guaranteed to map 1-1 to discords API
+    #[derive(Default)]
     pub struct DiscordReply<'a> {
-        #[serde(skip_serializing_if = "Option::is_none")]
         pub content: Option<String>,
         pub embeds: Vec<serenity::all::CreateEmbed<'a>>,
+        pub attachments: Vec<serenity::all::CreateAttachment<'a>>,
     }
 
     impl<'a> DiscordReply<'a> {
@@ -329,6 +388,10 @@ pub mod messages {
 
             message = message.embeds(self.embeds);
 
+            for attachment in self.attachments {
+                message = message.add_file(attachment);
+            }
+
             message
         }
 
@@ -340,6 +403,11 @@ pub mod messages {
             }
 
             message = message.embeds(self.embeds);
+
+            // NOTE: This resets old attachments
+            for attachment in self.attachments {
+                message = message.new_attachment(attachment);
+            }
 
             message
         }

@@ -12,4 +12,7 @@ pub mod embed_limits {
 
 pub mod message_limits {
     pub const MESSAGE_CONTENT_LIMIT: usize = 2000;
+    pub const MESSAGE_ATTACHMENT_DESCRIPTION_LIMIT: usize = 1024;
+    pub const MESSAGE_ATTACHMENT_CONTENT_BYTES_LIMIT: usize = 8 * 1024 * 1024; // 8 MB
+    pub const MESSAGE_MAX_ATTACHMENT_COUNT: usize = 3;
 }

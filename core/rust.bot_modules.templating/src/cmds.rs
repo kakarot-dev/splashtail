@@ -58,6 +58,7 @@ pub async fn exec_template(
                     Err(_) => templating::core::messages::CreateMessage {
                         content: Some(reply.to_string()),
                         embeds: vec![],
+                        attachments: None,
                     },
                 };
 

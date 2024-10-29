@@ -365,6 +365,14 @@ impl silverpelt::data::Props for Props {
         Ok(vec![])
     }
 
+    /// Returns the shard messenger given the shard id
+    async fn shard_messenger(
+        &self,
+        _shard_id: serenity::all::ShardId,
+    ) -> Result<serenity::all::ShardMessenger, silverpelt::Error> {
+        Err("Not implemented in test environment".into())
+    }
+
     async fn shard_count(&self) -> Result<u16, Error> {
         Ok(0)
     }

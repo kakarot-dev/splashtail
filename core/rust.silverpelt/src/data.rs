@@ -84,6 +84,12 @@ where
     /// If applicable, the shard count
     async fn shard_count(&self) -> Result<u16, crate::Error>;
 
+    /// Returns the shard messenger given the shard id
+    async fn shard_messenger(
+        &self,
+        shard_id: serenity::all::ShardId,
+    ) -> Result<serenity::all::ShardMessenger, crate::Error>;
+
     /// Total number of guilds
     ///
     /// Note that this statistic may not always be available, in such cases, 0 will be returned

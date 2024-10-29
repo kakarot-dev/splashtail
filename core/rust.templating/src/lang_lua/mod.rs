@@ -20,7 +20,8 @@ static VMS: LazyLock<Cache<GuildId, ArLua>> =
 pub const MAX_TEMPLATE_MEMORY_USAGE: usize = 1024 * 1024 * 3; // 3MB maximum memory
 pub const MAX_VM_THREAD_STACK_SIZE: usize = 1024 * 1024 * 4; // 4MB maximum memory
 pub const MAX_TEMPLATE_LIFETIME: std::time::Duration = std::time::Duration::from_secs(60 * 15); // 15 minutes maximum lifetime
-pub const MAX_TEMPLATES_EXECUTION_TIME: std::time::Duration = std::time::Duration::from_secs(30); // 30 seconds maximum execution time
+pub const MAX_TEMPLATES_EXECUTION_TIME: std::time::Duration =
+    std::time::Duration::from_secs(60 * 5); // 5 minute maximum execution time
 
 struct LoadLuaTemplate {
     content: String,
@@ -158,6 +159,9 @@ async fn create_lua_vm(
     let user_data = state::LuaUserData {
         pool,
         guild_id,
+        shard_messenger: shard_messenger_for_guild(&serenity_context, guild_id)
+            .await
+            .map_err(|e| LuaError::external(e.to_string()))?,
         serenity_context,
         reqwest_client,
         kv_constraints: state::LuaKVConstraints::default(),
@@ -388,7 +392,7 @@ async fn get_lua_vm(
     }
 }
 
-pub(crate) struct ParseCompileState {
+pub struct ParseCompileState {
     pub serenity_context: serenity::all::Context,
     pub reqwest_client: reqwest::Client,
     pub guild_id: GuildId,
@@ -480,4 +484,23 @@ pub async fn render_template<Request: serde::Serialize, Response: serde::de::Des
             Ok(v)
         }
     }
+}
+
+async fn shard_messenger_for_guild(
+    serenity_context: &serenity::all::Context,
+    guild_id: serenity::all::GuildId,
+) -> Result<serenity::all::ShardMessenger, crate::Error> {
+    let data = serenity_context.data::<silverpelt::data::Data>();
+
+    let guild_shard_count = data.props.shard_count().await?;
+    let guild_shard_count =
+        std::num::NonZeroU16::new(guild_shard_count).ok_or("No shards available")?;
+    let guild_shard_id = serenity::all::utils::shard_id(guild_id, guild_shard_count);
+    let guild_shard_id = serenity::all::ShardId(guild_shard_id);
+
+    if serenity_context.shard_id != guild_shard_id {
+        return Ok(data.props.shard_messenger(guild_shard_id).await?);
+    }
+
+    Ok(serenity_context.shard.clone())
 }

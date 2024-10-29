@@ -9,6 +9,7 @@ pub struct DiscordActionExecutor {
     template_data: Arc<state::TemplateData>,
     guild_id: serenity::all::GuildId,
     serenity_context: serenity::all::Context,
+    shard_messenger: serenity::all::ShardMessenger,
     cache_http: botox::cache::CacheHttpImpl,
     reqwest_client: reqwest::Client,
     ratelimits: Arc<state::LuaRatelimits>,
@@ -312,7 +313,7 @@ impl LuaUserData for DiscordActionExecutor {
 
                 Ok(MessageHandle {
                     message: msg,
-                    serenity_context: this.serenity_context.clone(),
+                    shard_messenger: this.shard_messenger.clone(),
                 })
             },
         );
@@ -320,8 +321,8 @@ impl LuaUserData for DiscordActionExecutor {
 }
 
 pub struct MessageHandle {
-    pub message: serenity::all::Message,
-    pub serenity_context: serenity::all::Context,
+    message: serenity::all::Message,
+    shard_messenger: serenity::all::ShardMessenger,
 }
 
 impl LuaUserData for MessageHandle {
@@ -334,7 +335,7 @@ impl LuaUserData for MessageHandle {
         methods.add_method("await_component_interaction", |_, this, _: ()| {
             let stream = crate::lang_lua::stream::LuaStream::new(
                 this.message
-                    .await_component_interaction(this.serenity_context.shard.clone())
+                    .await_component_interaction(this.shard_messenger.clone())
                     .timeout(std::time::Duration::from_secs(60))
                     .stream()
                     .map(|interaction| MessageComponentHandle { interaction }),
@@ -382,6 +383,7 @@ pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
                 guild_id: data.guild_id,
                 cache_http: botox::cache::CacheHttpImpl::from_ctx(&data.serenity_context),
                 serenity_context: data.serenity_context.clone(),
+                shard_messenger: data.shard_messenger.clone(),
                 reqwest_client: data.reqwest_client.clone(),
                 ratelimits: data.actions_ratelimits.clone(),
             };

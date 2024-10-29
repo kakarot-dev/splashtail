@@ -165,6 +165,7 @@ pub struct LuaUserData {
     pub pool: sqlx::PgPool,
     pub guild_id: serenity::all::GuildId,
     pub serenity_context: serenity::all::Context,
+    pub shard_messenger: serenity::all::ShardMessenger,
     pub reqwest_client: reqwest::Client,
     pub kv_constraints: LuaKVConstraints,
 

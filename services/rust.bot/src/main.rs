@@ -88,6 +88,25 @@ impl silverpelt::data::Props for Props {
         }
     }
 
+    /// Returns the shard messenger given the shard id
+    async fn shard_messenger(
+        &self,
+        shard_id: serenity::all::ShardId,
+    ) -> Result<serenity::all::ShardMessenger, crate::Error> {
+        let guard = self.shard_manager.read().await;
+
+        if let Some(shard_manager) = guard.as_ref() {
+            let runners = shard_manager.runners.lock().await;
+            let runner = runners
+                .get(&shard_id)
+                .ok_or_else(|| Error::from(format!("Shard {} not found", shard_id)))?;
+
+            Ok(runner.runner_tx.clone())
+        } else {
+            Err("Shard manager not initialized".into())
+        }
+    }
+
     async fn total_guilds(&self) -> Result<u64, Error> {
         let guard = self.cache_http.read().await;
 

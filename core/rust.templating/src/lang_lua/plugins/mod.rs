@@ -7,6 +7,7 @@ pub mod kv;
 pub mod lune;
 pub mod permissions;
 pub mod stings;
+pub mod typesext;
 
 use crate::lang_lua::state;
 use mlua::prelude::*;
@@ -24,6 +25,7 @@ pub static PLUGINS: LazyLock<indexmap::IndexMap<String, ModuleFn>> = LazyLock::n
         "@antiraid/kv".to_string() => kv::init_plugin as ModuleFn,
         "@antiraid/permissions".to_string() => permissions::init_plugin as ModuleFn,
         "@antiraid/stings".to_string() => stings::init_plugin as ModuleFn,
+        "@antiraid/typesext".to_string() => typesext::init_plugin as ModuleFn,
         "@lune/datetime".to_string() => lune::datetime::init_plugin as ModuleFn,
         "@lune/regex".to_string() => lune::regex::init_plugin as ModuleFn,
         "@lune/serde".to_string() => lune::serde::init_plugin as ModuleFn,

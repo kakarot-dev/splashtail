@@ -148,7 +148,7 @@ pub async fn get_global_config(
         let row = sqlx::query!(
             "SELECT fake_bot_detection, guild_protection, auto_response_memberjoin, hoist_detection, minimum_account_age, maximum_account_age FROM inspector__global_options WHERE guild_id = $1",
             guild_id.to_string(),
-        )require "@antiraid/interop"
+        )
         .fetch_optional(pool)
         .await?;
 

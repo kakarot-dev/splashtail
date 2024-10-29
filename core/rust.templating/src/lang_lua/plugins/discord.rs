@@ -82,7 +82,14 @@ impl LuaUserData for DiscordActionExecutor {
             this.check_action("get_audit_logs".to_string())
                 .map_err(LuaError::external)?;
 
-            this.serenity_context
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.check_permissions(bot_userid, serenity::all::Permissions::VIEW_AUDIT_LOG)
+                .await
+                .map_err(LuaError::external)?;
+
+            let logs = this
+                .serenity_context
                 .http
                 .get_audit_logs(
                     this.guild_id,
@@ -94,7 +101,9 @@ impl LuaUserData for DiscordActionExecutor {
                 .await
                 .map_err(LuaError::external)?;
 
-            Ok(())
+            let v = lua.to_value(&logs)?;
+
+            Ok(v)
         });
 
         methods.add_async_method("ban", |lua, this, data: LuaValue| async move {

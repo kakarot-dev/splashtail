@@ -101,22 +101,35 @@ pub async fn require(lua: Lua, (plugin_name, args): (String, LuaValue)) -> LuaRe
             return Ok(table);
         }
 
-        let rec = sqlx::query!(
-            "
-            SELECT content FROM guild_templates WHERE guild_id = $1 AND name = $2",
-            guild_id.to_string(),
-            resolved_path
-        )
-        .fetch_optional(&pool)
-        .await
-        .map_err(|_| LuaError::external("Failed to fetch template"))?;
+        // Get template content
+        let template_content = {
+            if resolved_path.starts_with("@antiraid_samples") {
+                // Load embedded template
+                crate::lang_lua::samples::load_embedded_template(
+                    resolved_path.replace("@antiraid_samples/", "").as_str(),
+                )
+                .map_err(mlua::Error::external)?
+            } else {
+                let rec = sqlx::query!(
+                    "
+                    SELECT content FROM guild_templates WHERE guild_id = $1 AND name = $2",
+                    guild_id.to_string(),
+                    resolved_path
+                )
+                .fetch_optional(&pool)
+                .await
+                .map_err(|_| LuaError::external("Failed to fetch template"))?;
 
-        let Some(rec) = rec else {
-            return Err(LuaError::external("Template not found"));
+                let Some(rec) = rec else {
+                    return Err(LuaError::external("Template not found"));
+                };
+
+                rec.content
+            }
         };
 
         let template_bytecode = crate::lang_lua::resolve_template_to_bytecode(
-            rec.content,
+            template_content,
             crate::Template::Named(resolved_path.clone()),
             &vm_bytecode_cache,
             &compiler,

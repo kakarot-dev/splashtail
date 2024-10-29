@@ -155,14 +155,14 @@ impl Snapshot {
                     guild_id: self.guild_id,
                     data: data.clone().into(),
                     event: silverpelt::ar_event::AntiraidEvent::Custom(
-                        Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                        silverpelt::ar_event::CustomEvent {
                             event_name: "AR/Inspector_GuildProtectRevert".to_string(),
                             event_titlename: "(Anti-Raid) Guild Protection: Revert Changes".to_string(),
                             event_data: indexmap::indexmap! {
                                 "name".to_string() => self.name.clone().into(),
                                 "triggered_flags".to_string() => triggered_protections.iter_names().map(|(flag, _)| flag.to_string()).collect::<Vec<String>>().join(", ").into(),
                             }
-                        })
+                        }
                     ),
                     serenity_context: ctx.clone(),
                 }),

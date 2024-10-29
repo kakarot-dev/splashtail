@@ -12,18 +12,15 @@ silverpelt = { path = "../rust.silverpelt" }
 # Modules
 bot_modules_acl = { path = "../../core/rust.bot_modules.acl" }
 bot_modules_afk = { path = "../../core/rust.bot_modules.afk" }
-bot_modules_auditlogs = { path = "../../core/rust.bot_modules.auditlogs" }
-bot_modules_captcha = { path = "../../core/rust.bot_modules.captcha" }
+bot_modules_hooks = { path = "../../core/rust.bot_modules.hooks" }
 bot_modules_core = { path = "../../core/rust.bot_modules.core" }
 bot_modules_gitlogs = { path = "../../core/rust.bot_modules.gitlogs" }
 bot_modules_inspector = { path = "../../core/rust.bot_modules.inspector" }
 bot_modules_lockdown = { path = "../../core/rust.bot_modules.lockdown" }
-bot_modules_member_verify_autotriggers = { path = "../../core/rust.bot_modules.member_verify_autotriggers" }
 bot_modules_moderation = { path = "../../core/rust.bot_modules.moderation" }
 bot_modules_punishment_autotriggers = { path = "../../core/rust.bot_modules.punishment_autotriggers" }
 bot_modules_root = { path = "../../core/rust.bot_modules.root" }
 bot_modules_server_backups = { path = "../../core/rust.bot_modules.server_backups" }
-bot_modules_server_member_backups = { path = "../../core/rust.bot_modules.server_member_backups" }
 bot_modules_settings = { path = "../../core/rust.bot_modules.settings" }
 bot_modules_tags = { path = "../../core/rust.bot_modules.tags" }
 bot_modules_templating = { path = "../../core/rust.bot_modules.templating" }

@@ -26,7 +26,6 @@ splashcore_text = { path = "../rust.text" }
 module_settings = { path = "../rust.module_settings" }
 gwevent = { path = "../rust.gwevent" }
 sandwich_driver = { path = "../rust.sandwich_driver" }
-std_events = { path = "../rust.stdevents" }
 modules_ext = { path = "../rust.modules_ext" }
 
 [dependencies.serenity]

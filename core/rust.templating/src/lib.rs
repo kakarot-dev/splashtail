@@ -2,6 +2,7 @@ mod atomicinstant;
 pub mod core;
 
 mod lang_lua;
+pub use lang_lua::samples;
 pub use lang_lua::state::LuaKVConstraints;
 
 type Error = Box<dyn std::error::Error + Send + Sync>; // This is constant and should be copy pasted

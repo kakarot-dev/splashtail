@@ -205,13 +205,13 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                                 guild_id: ectx.guild_id,
                                                 data: ectx.data.clone(),
                                                 event: silverpelt::ar_event::AntiraidEvent::Custom(
-                                                    Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                                                    silverpelt::ar_event::CustomEvent {
                                                         event_name: "AR/Inspector_AutoResponseMemberJoin.KickNewMembers".to_string(),
                                                         event_titlename: "(Anti-Raid) Auto Response: Kick New Members".to_string(),
                                                         event_data: indexmap::indexmap! {
                                                             "member".to_string() => new_member.user.clone().into(),
                                                         }
-                                                    })
+                                                    }
                                                 ),
                                                 serenity_context: ctx.clone(),
                                             }),
@@ -240,13 +240,13 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                                 guild_id: ectx.guild_id,
                                                 data: ectx.data.clone(),
                                                 event: silverpelt::ar_event::AntiraidEvent::Custom(
-                                                    Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                                                    silverpelt::ar_event::CustomEvent {
                                                         event_name: "AR/Inspector_AutoResponseMemberJoin.BanNewMembers".to_string(),
                                                         event_titlename: "(Anti-Raid) Auto Response Ban New Members".to_string(),
                                                         event_data: indexmap::indexmap! {
                                                             "member".to_string() => new_member.user.clone().into(),
                                                         }
-                                                    })
+                                                    }
                                                 ),
                                                 serenity_context: ctx.clone(),
                                             }),
@@ -440,14 +440,14 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                 guild_id: ectx.guild_id,
                                 data: ectx.data.clone(),
                                 event: silverpelt::ar_event::AntiraidEvent::Custom(
-                                    Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                                    silverpelt::ar_event::CustomEvent {
                                         event_name: "AR/Inspector_MemberJoinInspectionFailed".to_string(),
                                         event_titlename: "(Anti-Raid) Member Join Inspection Failed".to_string(),
                                         event_data: indexmap::indexmap! {
                                             "member".to_string() => new_member.user.clone().into(),
                                             "triggered_flags".to_string() => triggered_flags.iter_names().map(|(flag, _)| flag.to_string()).collect::<Vec<String>>().join(", ").into(),
                                         }
-                                    })
+                                    }
                                 ),
                                 serenity_context: ctx.clone(),
                             }),
@@ -505,7 +505,7 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                     guild_id: ectx.guild_id,
                                     data: ectx.data.clone(),
                                     event: silverpelt::ar_event::AntiraidEvent::Custom(
-                                        Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                                        silverpelt::ar_event::CustomEvent {
                                             event_name: "AR/Inspector_MemberJoinHoistAttempt".to_string(),
                                             event_titlename: "(Anti-Raid) Member Join Hoist Attempt".to_string(),
                                             event_data: indexmap::indexmap! {
@@ -513,7 +513,7 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                                 "old_display_name".to_string() => display_name.into(),
                                                 "new_nickname".to_string() => new.into(),
                                             }
-                                        })
+                                        }
                                     ),
                                     serenity_context: ctx.clone(),
                                 }),
@@ -675,7 +675,7 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                     guild_id: ectx.guild_id,
                                     data: ectx.data.clone(),
                                     event: silverpelt::ar_event::AntiraidEvent::Custom(
-                                        Box::new(std_events::auditlog::AuditLogDispatchEvent {
+                                        silverpelt::ar_event::CustomEvent {
                                             event_name: "AR/Inspector_MemberUpdateHoistAttempt".to_string(),
                                             event_titlename: "(Anti-Raid) Member Update Hoist Attempt".to_string(),
                                             event_data: indexmap::indexmap! {
@@ -683,7 +683,7 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                                 "old_display_name".to_string() => display_name.into(),
                                                 "new_nickname".to_string() => new.into(),
                                             }
-                                        })
+                                        }
                                     ),
                                     serenity_context: ctx.clone(),
                                 }),

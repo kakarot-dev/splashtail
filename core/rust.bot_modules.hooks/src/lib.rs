@@ -6,15 +6,15 @@ pub struct Module;
 
 impl silverpelt::module::Module for Module {
     fn id(&self) -> &'static str {
-        "auditlogs"
+        "hooks"
     }
 
     fn name(&self) -> &'static str {
-        "Audit Logs"
+        "Hooks"
     }
 
     fn description(&self) -> &'static str {
-        "Customizable and comprehensive audit logging module supporting 72+ discord events"
+        "Hooks allow for running a Lua template when a specific set of events occur."
     }
 
     fn event_listeners(&self) -> Option<Box<dyn silverpelt::module::ModuleEventListeners>> {
@@ -43,13 +43,9 @@ impl silverpelt::module::ModuleEventListeners for EventHandler {
 
     fn event_handler_filter(&self, event: &silverpelt::ar_event::AntiraidEvent) -> bool {
         match event {
-            silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((event_name, _)) => {
-                event_name == "checkAllEvents"
-            } // We need trusted web events
+            silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((_event_name, _)) => true, // We need trusted web events
             silverpelt::ar_event::AntiraidEvent::Discord(_) => true,
-            silverpelt::ar_event::AntiraidEvent::Custom(ref ce) => {
-                ce.target() == std_events::auditlog::AUDITLOG_TARGET_ID
-            }
+            silverpelt::ar_event::AntiraidEvent::Custom(_) => true,
             silverpelt::ar_event::AntiraidEvent::StingCreate(_) => true,
             silverpelt::ar_event::AntiraidEvent::PunishmentCreate(_) => true,
             silverpelt::ar_event::AntiraidEvent::MemberVerify(_) => true,

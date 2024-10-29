@@ -1,8 +1,8 @@
-use crate::field::Field;
 use crate::Error;
 use indexmap::IndexMap;
 use log::warn;
 use serenity::all::{FullEvent, GuildId, UserId};
+use splashcore_rs::field::Field;
 use strum::VariantNames;
 
 /// Returns all events

@@ -10,10 +10,10 @@ use std::sync::LazyLock;
 
 pub static SINK: LazyLock<ConfigOption> = LazyLock::new(|| {
     ConfigOption {
-        id: "auditlog_sinks",
-        name: "Audit Log Sinks",
-        description: "A sink is a place where audit logs are sent to. This can be a channel or a webhook at this time. More sink types may be added in the future.",
-        table: "auditlogs__sinks",
+        id: "sinks",
+        name: "Sinks",
+        description: "Sinks are triggered on given events and can be used for a customizable and flexible automoderation system",
+        table: "hooks__sinks;",
         common_filters: indexmap::indexmap! {},
         default_common_filters: indexmap::indexmap! {
             "guild_id" => "{__guild_id}"
@@ -63,11 +63,11 @@ pub static SINK: LazyLock<ConfigOption> = LazyLock::new(|| {
             Column {
                 id: "template",
                 name: "Template",
-                description: "The custom template for the embed. This template will be executed when an event is sent to the sink. If empty, falls back to default handling",
-                column_type: ColumnType::new_scalar(InnerColumnType::String { min_length: None, max_length: None, allowed_values: vec![], kind: InnerColumnTypeStringKind::TemplateRef { kind: "message", ctx: "AuditLogContext" }}),
+                description: "The template for the embed. This template will be executed when an event is sent to the sink. If empty, falls back to default handling",
+                column_type: ColumnType::new_scalar(InnerColumnType::String { min_length: None, max_length: None, allowed_values: vec![], kind: InnerColumnTypeStringKind::TemplateRef { kind: "message", ctx: "HookContext" }}),
                 ignored_for: vec![],
                 secret: false,
-                nullable: true,
+                nullable: false,
                 default: None,
                 unique: false,
                 suggestions: ColumnSuggestion::None {},

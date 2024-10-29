@@ -14,16 +14,12 @@ pub struct EventHandlerContext {
     pub serenity_context: serenity::all::Context,
 }
 
-#[typetag::serde(tag = "type")]
-pub trait AntiraidCustomEvent: Send + Sync + std::fmt::Debug {
-    /// Returns the expected target class for the event
-    fn target(&self) -> u64;
-
-    /// Returns the event name
-    fn event_name(&self) -> &'static str;
-
-    /// Downcasts the event to Any
-    fn as_any(&self) -> &dyn std::any::Any;
+/// This can be used to trigger a custom event
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct CustomEvent {
+    pub event_name: String,
+    pub event_titlename: String,
+    pub event_data: indexmap::IndexMap<String, splashcore_rs::field::Field>,
 }
 
 #[derive(Debug)]
@@ -50,7 +46,7 @@ pub enum AntiraidEvent {
     MemberVerify((serenity::all::UserId, serde_json::Value)),
 
     /// A custom event
-    Custom(Box<dyn AntiraidCustomEvent>),
+    Custom(CustomEvent),
 }
 
 /// Dispatches an event to all modules asynchronously

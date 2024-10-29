@@ -19,7 +19,7 @@ for key, value in pairs(args.event_data) do
     end
 
     if should_set then
-        local formatted_value = formatter.format_gwevent_field(value)
+        local formatted_value = formatter.format_field(value)
         embed.description = embed.description .. "**" .. key:gsub("_", " "):upper() .. "**: " .. formatted_value .. "\n"
     end
 end

@@ -18,10 +18,6 @@ Silverpelt provides concrete structures, utilities and special events for handli
 
 Silverpelt provides concrete structures, utilities and special events for handling punishments.
 
-## STDEvents
-
-See the ``rust.stdevent`` crate first if there's a existing standardized custom event for you to use directly.
-
 ## Some extra misc points
 
 - A command is the base unit for access control. This means that all operations with differing access controls must have commands associated with them.

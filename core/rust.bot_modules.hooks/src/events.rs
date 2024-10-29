@@ -1,26 +1,6 @@
-use gwevent::field::Field;
-use include_dir::{include_dir, Dir};
 use poise::serenity_prelude::FullEvent;
 use silverpelt::ar_event::{AntiraidEvent, EventHandlerContext};
-use std_events::auditlog::AuditLogDispatchEvent;
-
-static DEFAULT_TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/templates");
-
-fn load_embedded_event_template(event: &str) -> Result<String, silverpelt::Error> {
-    let template = match DEFAULT_TEMPLATES.get_file(format!("{}.art", event)) {
-        Some(template) => template,
-        None => {
-            // Load default.art
-            DEFAULT_TEMPLATES
-                .get_file("default.luau")
-                .ok_or("Failed to load default template")?
-        }
-    };
-
-    let template_str = template.contents_utf8().ok_or("Failed to load template")?;
-
-    Ok(template_str.to_string())
-}
+use splashcore_rs::field::Field;
 
 #[inline]
 pub(crate) const fn not_audit_loggable_event() -> &'static [&'static str] {
@@ -38,10 +18,6 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 
     match ectx.event {
         silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((ref event_name, ref data)) => {
-            if event_name != "checkAllEvents" {
-                return Ok(()); // Ignore unknown events
-            }
-
             dispatch_audit_log(
                 ctx,
                 &ectx.data,
@@ -109,25 +85,15 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
         }
 
         AntiraidEvent::Custom(ref event) => {
-            if event.target() == std_events::auditlog::AUDITLOG_TARGET_ID
-                && event.event_name() == "AuditLog:DispatchEvent"
-            {
-                let Some(event) = event.as_any().downcast_ref::<AuditLogDispatchEvent>() else {
-                    return Ok(()); // Ignore unknown events
-                };
-
-                dispatch_audit_log(
-                    ctx,
-                    &ectx.data,
-                    &event.event_name,
-                    &event.event_titlename,
-                    event.event_data.clone(),
-                    ectx.guild_id,
-                )
-                .await
-            } else {
-                Ok(())
-            }
+            dispatch_audit_log(
+                ctx,
+                &ectx.data,
+                &event.event_name,
+                &event.event_titlename,
+                event.event_data.clone(),
+                ectx.guild_id,
+            )
+            .await
         }
         AntiraidEvent::StingCreate(ref sting) => {
             let sting_val = serde_json::to_value(sting)?;
@@ -205,14 +171,10 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 pub(crate) async fn should_dispatch_event(
     event_name: &str,
     filters: &[String],
-    uses_custom_template: bool,
 ) -> Result<bool, silverpelt::Error> {
     if event_name == "MESSAGE" {
+        // Message should only be fired if the template explicitly wants MESSAGE events
         if !filters.contains(&event_name.to_string()) {
-            return Ok(false);
-        }
-
-        if !uses_custom_template {
             return Ok(false);
         }
 
@@ -243,50 +205,27 @@ async fn dispatch_audit_log(
 
     for sink in sinks.iter() {
         // Verify event dispatch
-        if !should_dispatch_event(
-            event_name,
-            {
-                // False positive, unwrap_or_default cannot be used here as it moves the event out of the sink
-                #[allow(clippy::manual_unwrap_or_default)]
-                if let Some(ref events) = sink.events {
-                    events
-                } else {
-                    &[]
-                }
-            },
-            {
-                if let Some(ref template) = sink.template {
-                    !template.is_empty()
-                } else {
-                    false
-                }
-            },
-        )
+        if !should_dispatch_event(event_name, {
+            // False positive, unwrap_or_default cannot be used here as it moves the event out of the sink
+            #[allow(clippy::manual_unwrap_or_default)]
+            if let Some(ref events) = sink.events {
+                events
+            } else {
+                &[]
+            }
+        })
         .await?
         {
             continue;
         }
 
-        let template = {
-            if let Some(ref template) = sink.template {
-                if !template.is_empty() {
-                    templating::Template::Named(template.clone())
-                } else {
-                    // Load default template
-                    templating::Template::Raw(load_embedded_event_template(event_name)?)
-                }
-            } else {
-                templating::Template::Raw(load_embedded_event_template(event_name)?)
-            }
-        };
-
         templating::execute::<_, Option<()>>(
             guild_id,
-            template,
+            templating::Template::Named(sink.template.clone()),
             data.pool.clone(),
             ctx.clone(),
             data.reqwest.clone(),
-            AuditLogContext {
+            HookContext {
                 event_titlename: event_titlename.to_string(),
                 event_name: event_name.to_string(),
                 event_data: event_data.clone(),
@@ -300,10 +239,10 @@ async fn dispatch_audit_log(
     Ok(())
 }
 
-/// A AuditLogContext is a context for message templates
-/// that can be accessed in audit log templates
+/// A HookContext is a context for message templates
+/// that can be accessed in hook templates
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-struct AuditLogContext {
+struct HookContext {
     pub event_titlename: String,
     pub event_name: String,
     pub event_data: indexmap::IndexMap<String, Field>,
@@ -312,4 +251,4 @@ struct AuditLogContext {
 }
 
 #[typetag::serde]
-impl templating::Context for AuditLogContext {}
+impl templating::Context for HookContext {}

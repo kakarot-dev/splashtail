@@ -542,66 +542,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bot_modules_auditlogs"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "botox",
- "futures-util",
- "gwevent",
- "include_dir",
- "indexmap",
- "log",
- "module_settings",
- "modules_ext",
- "moka",
- "permissions",
- "poise",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
- "std_events",
- "templating",
- "tokio",
- "typetag",
- "url",
-]
-
-[[package]]
-name = "bot_modules_captcha"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "botox",
- "chrono",
- "config",
- "futures-util",
- "indexmap",
- "limits",
- "module_settings",
- "modules_ext",
- "permissions",
- "poise",
- "reqwest",
- "rust_buildstats",
- "sandwich_driver",
- "serde",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
- "templating",
- "tokio",
- "typetag",
-]
-
-[[package]]
 name = "bot_modules_core"
 version = "0.1.0"
 dependencies = [
@@ -630,18 +570,15 @@ version = "0.1.0"
 dependencies = [
  "bot_modules_acl",
  "bot_modules_afk",
- "bot_modules_auditlogs",
- "bot_modules_captcha",
  "bot_modules_core",
  "bot_modules_gitlogs",
+ "bot_modules_hooks",
  "bot_modules_inspector",
  "bot_modules_lockdown",
- "bot_modules_member_verify_autotriggers",
  "bot_modules_moderation",
  "bot_modules_punishment_autotriggers",
  "bot_modules_root",
  "bot_modules_server_backups",
- "bot_modules_server_member_backups",
  "bot_modules_settings",
  "bot_modules_tags",
  "bot_modules_templating",
@@ -669,6 +606,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot_modules_hooks"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "botox",
+ "futures-util",
+ "gwevent",
+ "indexmap",
+ "log",
+ "module_settings",
+ "modules_ext",
+ "moka",
+ "permissions",
+ "poise",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serenity",
+ "silverpelt",
+ "splashcore_rs",
+ "sqlx",
+ "templating",
+ "tokio",
+ "typetag",
+ "url",
+]
+
+[[package]]
 name = "bot_modules_inspector"
 version = "0.1.0"
 dependencies = [
@@ -693,7 +659,6 @@ dependencies = [
  "splashcore_rs",
  "splashcore_text",
  "sqlx",
- "std_events",
 ]
 
 [[package]]
@@ -723,31 +688,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bot_modules_member_verify_autotriggers"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "botox",
- "chrono",
- "dashmap 6.1.0",
- "indexmap",
- "log",
- "module_settings",
- "modules_ext",
- "poise",
- "reqwest",
- "sandwich_driver",
- "serde",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
- "strum",
- "strum_macros",
-]
-
-[[package]]
 name = "bot_modules_moderation"
 version = "0.1.0"
 dependencies = [
@@ -768,7 +708,6 @@ dependencies = [
  "silverpelt",
  "splashcore_rs",
  "sqlx",
- "std_events",
  "tokio",
 ]
 
@@ -830,14 +769,6 @@ dependencies = [
  "silverpelt",
  "splashcore_rs",
  "sqlx",
-]
-
-[[package]]
-name = "bot_modules_server_member_backups"
-version = "0.1.0"
-dependencies = [
- "modules_ext",
- "silverpelt",
 ]
 
 [[package]]
@@ -1913,6 +1844,7 @@ dependencies = [
  "serde_json",
  "serenity",
  "small-fixed-array",
+ "splashcore_rs",
  "strum",
  "walkdir",
 ]
@@ -4555,6 +4487,7 @@ dependencies = [
  "dashmap 6.1.0",
  "fred",
  "futures-util",
+ "gwevent",
  "indexmap",
  "kittycat",
  "log",
@@ -4929,30 +4862,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
-name = "std_events"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "futures-util",
- "gwevent",
- "indexmap",
- "log",
- "permissions",
- "reqwest",
- "serde",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
- "strum",
- "strum_macros",
- "templating",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "stringprep"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5101,6 +5010,7 @@ dependencies = [
  "governor",
  "gwevent",
  "hmac",
+ "include_dir",
  "indexmap",
  "kittycat",
  "limits",
@@ -5124,6 +5034,7 @@ dependencies = [
  "sha2",
  "sha3",
  "silverpelt",
+ "splashcore_rs",
  "sqlx",
  "thiserror",
  "tokio",

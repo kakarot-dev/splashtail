@@ -1,6 +1,7 @@
-use crate::lang_lua::state;
+use crate::lang_lua::{multioption::MultiOption, state};
 use futures_util::StreamExt;
 use mlua::prelude::*;
+use serenity::all::Mentionable;
 use std::sync::Arc;
 
 /// An action executor is used to execute actions such as kick/ban/timeout from Lua
@@ -31,6 +32,25 @@ impl DiscordActionExecutor {
         Ok(())
     }
 
+    pub async fn user_in_guild(&self, user_id: serenity::all::UserId) -> Result<(), crate::Error> {
+        let Some(member) = sandwich_driver::member_in_guild(
+            &self.cache_http,
+            &self.reqwest_client,
+            self.guild_id,
+            user_id,
+        )
+        .await?
+        else {
+            return Err("User not found in guild".into());
+        };
+
+        if member.user.id != user_id {
+            return Err("User not found in guild".into());
+        }
+
+        Ok(())
+    }
+
     pub async fn check_permissions(
         &self,
         user_id: serenity::all::UserId,
@@ -57,6 +77,68 @@ impl DiscordActionExecutor {
             return Err(format!(
                 "Bot does not have the required permissions: {:?}",
                 needed_permissions
+            )
+            .into());
+        }
+
+        Ok(())
+    }
+
+    pub async fn check_permissions_and_hierarchy(
+        &self,
+        user_id: serenity::all::UserId,
+        target_id: serenity::all::UserId,
+        needed_permissions: serenity::all::Permissions,
+    ) -> Result<(), crate::Error> {
+        let guild =
+            sandwich_driver::guild(&self.cache_http, &self.reqwest_client, self.guild_id).await?; // Get the guild
+
+        let Some(member) = sandwich_driver::member_in_guild(
+            &self.cache_http,
+            &self.reqwest_client,
+            self.guild_id,
+            user_id,
+        )
+        .await?
+        else {
+            return Err(format!("User not found in guild: {}", user_id.mention()).into());
+        }; // Get the bot user
+
+        if !guild
+            .member_permissions(&member)
+            .contains(needed_permissions)
+        {
+            return Err(format!(
+                "User does not have the required permissions: {:?}: {}",
+                needed_permissions, user_id
+            )
+            .into());
+        }
+
+        let Some(target_member) = sandwich_driver::member_in_guild(
+            &self.cache_http,
+            &self.reqwest_client,
+            self.guild_id,
+            target_id,
+        )
+        .await?
+        else {
+            return Err("Target user not found in guild".into());
+        }; // Get the target user
+
+        let higher_id = guild
+            .greater_member_hierarchy(&member, &target_member)
+            .ok_or_else(|| {
+                format!(
+                    "User does not have a higher role than the target user: {}",
+                    user_id.mention()
+                )
+            })?;
+
+        if higher_id != member.user.id {
+            return Err(format!(
+                "User does not have a higher role than the target user: {}",
+                user_id.mention()
             )
             .into());
         }
@@ -106,6 +188,192 @@ impl LuaUserData for DiscordActionExecutor {
             Ok(v)
         });
 
+        // Channel actions
+        methods.add_async_method("get_channel", |lua, this, data: LuaValue| async move {
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct GetChannelOptions {
+                channel_id: serenity::all::ChannelId,
+            }
+
+            let data = lua.from_value::<GetChannelOptions>(data)?;
+
+            this.check_action("get_channel".to_string())
+                .map_err(LuaError::external)?;
+
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.user_in_guild(bot_userid)
+                .await
+                .map_err(LuaError::external)?;
+
+            let channel = this
+                .serenity_context
+                .http
+                .get_channel(data.channel_id)
+                .await
+                .map_err(LuaError::external)?;
+
+            let v = lua.to_value(&channel)?;
+
+            Ok(v)
+        });
+
+        methods.add_async_method("edit_channel", |lua, this, data: LuaValue| async move {
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct EditChannelOptions {
+                channel_id: serenity::all::ChannelId,
+                reason: String,
+
+                // Fields that can be edited
+                name: Option<String>,                                     // done
+                r#type: Option<serenity::all::ChannelType>,               // done
+                position: Option<u16>,                                    // done
+                topic: Option<String>,                                    // done
+                nsfw: Option<bool>,                                       // done
+                rate_limit_per_user: Option<serenity::nonmax::NonMaxU16>, // done
+                bitrate: Option<u32>,                                     // done
+                permission_overwrites: Option<Vec<serenity::all::PermissionOverwrite>>, // done
+                parent_id: MultiOption<serenity::all::ChannelId>,         // done
+                rtc_region: MultiOption<String>,                          // done
+                video_quality_mode: Option<serenity::all::VideoQualityMode>, // done
+                default_auto_archive_duration: Option<serenity::all::AutoArchiveDuration>, // done
+                flags: Option<serenity::all::ChannelFlags>,               // done
+                available_tags: Option<Vec<serenity::all::ForumTag>>,     // done
+                default_reaction_emoji: MultiOption<serenity::all::ForumEmoji>, // done
+                default_thread_rate_limit_per_user: Option<serenity::nonmax::NonMaxU16>, // done
+                default_sort_order: Option<serenity::all::SortOrder>,     // done
+                default_forum_layout: Option<serenity::all::ForumLayoutType>, // done
+            }
+
+            let data = lua.from_value::<EditChannelOptions>(data)?;
+
+            this.check_action("edit_channel".to_string())
+                .map_err(LuaError::external)?;
+
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.check_permissions(bot_userid, serenity::all::Permissions::MANAGE_CHANNELS)
+                .await
+                .map_err(LuaError::external)?;
+
+            let mut ec = serenity::all::EditChannel::default(); // Create a new EditChannel struct
+
+            if let Some(name) = data.name {
+                ec = ec.name(name);
+            }
+
+            if let Some(r#type) = data.r#type {
+                ec = ec.kind(r#type);
+            }
+
+            if let Some(position) = data.position {
+                ec = ec.position(position);
+            }
+
+            if let Some(topic) = data.topic {
+                if topic.len() > 1024 {
+                    return Err(LuaError::external(
+                        "Topic must be less than 1024 characters",
+                    ));
+                }
+                ec = ec.topic(topic);
+            }
+
+            if let Some(nsfw) = data.nsfw {
+                ec = ec.nsfw(nsfw);
+            }
+
+            if let Some(rate_limit_per_user) = data.rate_limit_per_user {
+                if rate_limit_per_user.get() > 21600 {
+                    return Err(LuaError::external(
+                        "Rate limit per user must be less than 21600 seconds",
+                    ));
+                }
+
+                ec = ec.rate_limit_per_user(rate_limit_per_user);
+            }
+
+            if let Some(bitrate) = data.bitrate {
+                ec = ec.bitrate(bitrate);
+            }
+
+            // TODO: Handle permission overwrites permissions
+            if let Some(permission_overwrites) = data.permission_overwrites {
+                ec = ec.permissions(permission_overwrites);
+            }
+
+            if let Some(parent_id) = data.parent_id.inner {
+                ec = ec.category(parent_id);
+            }
+
+            if let Some(rtc_region) = data.rtc_region.inner {
+                ec = ec.voice_region(rtc_region.map(|x| x.into()));
+            }
+
+            if let Some(video_quality_mode) = data.video_quality_mode {
+                ec = ec.video_quality_mode(video_quality_mode);
+            }
+
+            if let Some(default_auto_archive_duration) = data.default_auto_archive_duration {
+                ec = ec.default_auto_archive_duration(default_auto_archive_duration);
+            }
+
+            if let Some(flags) = data.flags {
+                ec = ec.flags(flags);
+            }
+
+            if let Some(available_tags) = data.available_tags {
+                let mut cft = Vec::new();
+
+                for tag in available_tags {
+                    if tag.name.len() > 20 {
+                        return Err(LuaError::external(
+                            "Tag name must be less than 20 characters",
+                        ));
+                    }
+
+                    let cftt =
+                        serenity::all::CreateForumTag::new(tag.name).moderated(tag.moderated);
+
+                    // TODO: Emoji support
+
+                    cft.push(cftt);
+                }
+
+                ec = ec.available_tags(cft);
+            }
+
+            if let Some(default_reaction_emoji) = data.default_reaction_emoji.inner {
+                ec = ec.default_reaction_emoji(default_reaction_emoji);
+            }
+
+            if let Some(default_thread_rate_limit_per_user) =
+                data.default_thread_rate_limit_per_user
+            {
+                ec = ec.default_thread_rate_limit_per_user(default_thread_rate_limit_per_user);
+            }
+
+            if let Some(default_sort_order) = data.default_sort_order {
+                ec = ec.default_sort_order(default_sort_order);
+            }
+
+            if let Some(default_forum_layout) = data.default_forum_layout {
+                ec = ec.default_forum_layout(default_forum_layout);
+            }
+
+            let channel = this
+                .serenity_context
+                .http
+                .edit_channel(data.channel_id, &ec, Some(data.reason.as_str()))
+                .await
+                .map_err(LuaError::external)?;
+
+            let v = lua.to_value(&channel)?;
+
+            Ok(v)
+        });
+
+        // Members
         methods.add_async_method("ban", |lua, this, data: LuaValue| async move {
             /// A ban action
             #[derive(serde::Serialize, serde::Deserialize)]
@@ -142,9 +410,13 @@ impl LuaUserData for DiscordActionExecutor {
 
             let bot_userid = this.serenity_context.cache.current_user().id;
 
-            this.check_permissions(bot_userid, serenity::all::Permissions::BAN_MEMBERS)
-                .await
-                .map_err(LuaError::external)?;
+            this.check_permissions_and_hierarchy(
+                bot_userid,
+                data.user_id,
+                serenity::all::Permissions::BAN_MEMBERS,
+            )
+            .await
+            .map_err(LuaError::external)?;
 
             this.serenity_context
                 .http
@@ -181,9 +453,13 @@ impl LuaUserData for DiscordActionExecutor {
 
             let bot_userid = this.serenity_context.cache.current_user().id;
 
-            this.check_permissions(bot_userid, serenity::all::Permissions::KICK_MEMBERS)
-                .await
-                .map_err(LuaError::external)?;
+            this.check_permissions_and_hierarchy(
+                bot_userid,
+                data.user_id,
+                serenity::all::Permissions::KICK_MEMBERS,
+            )
+            .await
+            .map_err(LuaError::external)?;
 
             this.serenity_context
                 .http
@@ -222,9 +498,13 @@ impl LuaUserData for DiscordActionExecutor {
 
             let bot_userid = this.serenity_context.cache.current_user().id;
 
-            this.check_permissions(bot_userid, serenity::all::Permissions::KICK_MEMBERS)
-                .await
-                .map_err(LuaError::external)?;
+            this.check_permissions_and_hierarchy(
+                bot_userid,
+                data.user_id,
+                serenity::all::Permissions::MODERATE_MEMBERS,
+            )
+            .await
+            .map_err(LuaError::external)?;
 
             let communication_disabled_until =
                 chrono::Utc::now() + std::time::Duration::from_secs(data.duration_seconds);

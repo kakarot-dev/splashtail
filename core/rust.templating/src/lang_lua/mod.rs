@@ -1,4 +1,5 @@
 // Work in progress
+pub(crate) mod multioption;
 mod perthreadpanichook;
 mod plugins;
 pub(crate) mod state;

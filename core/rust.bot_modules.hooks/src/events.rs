@@ -56,7 +56,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 },
             }
 
-            let event_data = event.serialize_args()?;
+            let event_data = serde_json::to_value(event)?;
 
             // Convert to titlecase by capitalizing the first letter of each word
             let event_titlename = event

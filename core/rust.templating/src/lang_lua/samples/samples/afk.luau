@@ -2,15 +2,14 @@
 local args, token = ...
 local discord = require "@antiraid/discord"
 local interop = require "@antiraid/interop"
-local formatter = require "@antiraid/formatters"
 
 if args.event_name ~= "MESSAGE" then
     return -- Early return if not a message event
 end
 
 -- Get the user ID from the event data
-local user_id = args.event_data["new_message"].field["user"]["id"]
-local channel_id = args.event_data["new_message"].field["channel"]["id"]
+local user_id = args.event_data["new_message"]["user"]["id"]
+local channel_id = args.event_data["new_message"]["channel_id"]
 
 -- Send message using action executor
 local discord_executor = discord.new(token);

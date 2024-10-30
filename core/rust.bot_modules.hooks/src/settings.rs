@@ -13,7 +13,7 @@ pub static SINK: LazyLock<ConfigOption> = LazyLock::new(|| {
         id: "sinks",
         name: "Sinks",
         description: "Sinks are triggered on given events and can be used for a customizable and flexible automoderation system",
-        table: "hooks__sinks;",
+        table: "hooks__sinks",
         common_filters: indexmap::indexmap! {},
         default_common_filters: indexmap::indexmap! {
             "guild_id" => "{__guild_id}"

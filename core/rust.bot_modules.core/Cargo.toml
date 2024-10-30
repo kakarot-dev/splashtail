@@ -13,6 +13,8 @@ chrono = { version = "0.4", features = ["serde"]}
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "rustls-tls-native-roots"] }
 futures-util = "0.3"
 async-trait = "0.1"
+serde_json = "1.0"
+indexmap = { version = "2", features = ["serde"] }
 
 # Anti-Raid specific
 silverpelt = { path = "../rust.silverpelt" }
@@ -22,6 +24,10 @@ config = { path = "../rust.config" }
 sandwich_driver = { path = "../rust.sandwich_driver" }
 rust_buildstats = { path = "../rust.buildstats" }
 modules_ext = { path = "../rust.modules_ext" }
+module_settings = { path = "../rust.module_settings" }
+splashcore_rs = { path = "../rust.std" }
+templating = { path = "../rust.templating" }
+log = "0.4"
 
 [dependencies.serenity]
 git = "https://github.com/Anti-Raid/serenity"
@@ -30,6 +36,10 @@ features = ["model", "http", "cache", "rustls_backend", "unstable"]
 
 [dependencies.botox]
 git = "https://github.com/Anti-Raid/botox"
+branch = "main"
+
+[dependencies.kittycat]
+git = "https://github.com/infinitybotlist/kittycat"
 branch = "main"
 
 [dependencies.tokio]

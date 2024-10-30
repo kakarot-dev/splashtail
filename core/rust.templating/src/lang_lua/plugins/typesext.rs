@@ -322,7 +322,7 @@ impl LuaUserData for I64 {
     }
 }
 
-/// Aim is to all functions from https://luau.org/library#bit32-library but for 64 bit integers
+/// Aim is to implement as many functions from https://luau.org/library#bit32-library as possible but for 64 bit unsigned integers
 ///
 /// arshift, band, bnot, bor, bxor, btest, extract, lrotate, lshift, replace, rrotate, rshift, countlz
 /// countrz, byteswap
@@ -345,7 +345,7 @@ impl LuaUserData for I64 {
 ///
 /// Not yet implemented due to spec difficulties:
 /// - arshift
-pub fn bit64(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn bitu64(lua: &Lua) -> LuaResult<LuaTable> {
     let submodule = lua.create_table()?;
 
     submodule.set(
@@ -622,7 +622,7 @@ pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
         })?,
     )?;
 
-    module.set("bit64", bit64(lua)?)?;
+    module.set("bitu64", bitu64(lua)?)?;
 
     module.set_readonly(true); // Block any attempt to modify this table
 

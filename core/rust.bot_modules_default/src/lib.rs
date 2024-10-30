@@ -4,7 +4,6 @@ use silverpelt::module::Module;
 pub fn modules() -> Vec<Box<dyn Module>> {
     // List of base modules (wrapped in an Box::new, not a macro)
     let base_modules: Vec<Box<dyn Module>> = vec![
-        Box::new(bot_modules_afk::Module),
         Box::new(bot_modules_core::Module),
         Box::new(bot_modules_gitlogs::Module),
         Box::new(bot_modules_hooks::Module),
@@ -13,7 +12,6 @@ pub fn modules() -> Vec<Box<dyn Module>> {
         Box::new(bot_modules_moderation::Module),
         Box::new(bot_modules_punishment_autotriggers::Module),
         Box::new(bot_modules_server_backups::Module),
-        Box::new(bot_modules_settings::Module),
         Box::new(bot_modules_tags::Module),
         Box::new(bot_modules_templating::Module),
         Box::new(bot_modules_temporary_punishments::Module),

@@ -96,7 +96,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
             .await
         }
         AntiraidEvent::StingCreate(ref sting) => {
-            let sting_val = serde_json::to_value(sting)?;
+            let sting = serde_json::to_value(sting)?;
 
             dispatch_audit_log(
                 ctx,
@@ -104,19 +104,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 "AR/StingCreate",
                 "(Anti Raid) Created Sting For User",
                 indexmap::indexmap! {
-                    "target".to_string() =>
-                        match &sting.target {
-                            silverpelt::stings::StingTarget::User(user_id) => (*user_id).into(),
-                            silverpelt::stings::StingTarget::System => "System".to_string().into(),
-                        },
-                    "reason".to_string() =>
-                        match &sting.reason {
-                            Some(reason) => reason.clone().into(),
-                            None => Field::None,
-                        },
-                    "stings".to_string() => sting.stings.into(),
-                    "state".to_string() => sting.state.to_string().into(),
-                    "sting_val".to_string() => sting_val.into(),
+                    "sting".to_string() => sting.into(),
                 },
                 ectx.guild_id,
             )

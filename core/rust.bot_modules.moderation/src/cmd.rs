@@ -9,7 +9,6 @@ use silverpelt::jobserver::{embed as embed_job, get_icon_of_state};
 use silverpelt::punishments::PunishmentAction;
 use silverpelt::Context;
 use silverpelt::Error;
-use splashcore_rs::field::Field;
 use splashcore_rs::jobserver;
 use splashcore_rs::utils::{
     create_special_allocation_from_str, parse_duration_string, parse_numeric_list_to_str, Unit,
@@ -283,15 +282,15 @@ pub async fn prune_user(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/PruneUser".to_string(),
                 event_titlename: "(Anti-Raid) Prune User".to_string(),
-                event_data: indexmap::indexmap! {
-                    "log".to_string() => to_log_format(&author.user, &user, &reason).into(),
-                    "prune_opts".to_string() => prune_opts.clone().into(),
-                    "channels".to_string() => if let Some(ref channels) = prune_channels {
-                        parse_numeric_list_to_str::<ChannelId>(channels, &REPLACE_CHANNEL)?.into()
+                event_data: serde_json::json!({
+                    "log": to_log_format(&author.user, &user, &reason),
+                    "prune_opts": prune_opts,
+                    "channels": if let Some(ref channels) = prune_channels {
+                        parse_numeric_list_to_str::<ChannelId>(channels, &REPLACE_CHANNEL)?
                     } else {
-                        Field::None
+                        Vec::new()
                     },
-                },
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -418,13 +417,13 @@ pub async fn kick(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/KickMember/Start".to_string(),
                 event_titlename: "(Anti-Raid) Kick Member (Pre-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.user.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member.clone(),
+                    "moderator": author,
+                    "reason": reason.clone(),
+                    "stings": stings,
+                    "log": to_log_format(&author.user, &member.user, &reason),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -502,13 +501,13 @@ pub async fn kick(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/KickMember/End".to_string(),
                 event_titlename: "(Anti-Raid) Kick Member (Post-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.user.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author,
+                    "reason": reason.clone(),
+                    "stings": stings,
+                    "log": to_log_format(&author.user, &member.user, &reason),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -587,14 +586,14 @@ pub async fn ban(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/BanMember/Start".to_string(),
                 event_titlename: "(Anti-Raid) Ban Member (Pre-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "prune_dmd".to_string() => dmd.into(),
-                    "log".to_string() => to_log_format(&author.user, &member, &reason).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "prune_dmd": dmd,
+                    "log": to_log_format(&author.user, &member, &reason),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -673,14 +672,14 @@ pub async fn ban(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/BanMember/End".to_string(),
                 event_titlename: "(Anti-Raid) Ban Member (Post-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "prune_dmd".to_string() => dmd.into(),
-                    "log".to_string() => to_log_format(&author.user, &member, &reason).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "prune_dmd": dmd,
+                    "log": to_log_format(&author.user, &member, &reason),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -762,15 +761,15 @@ pub async fn tempban(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/BanMemberTemporary/Start".to_string(),
                 event_titlename: "(Anti-Raid) Ban Member (Temporary) (Pre-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "prune_dmd".to_string() => dmd.into(),
-                    "log".to_string() => to_log_format(&author.user, &member, &reason).into(),
-                    "duration".to_string() => (duration.0 * duration.1.to_seconds()).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "prune_dmd": dmd,
+                    "log": to_log_format(&author.user, &member, &reason),
+                    "duration": (duration.0 * duration.1.to_seconds()),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -853,15 +852,15 @@ pub async fn tempban(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/BanMemberTemporary/End".to_string(),
                 event_titlename: "(Anti-Raid) Ban Member (Temporary) (Post-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "prune_dmd".to_string() => dmd.into(),
-                    "log".to_string() => to_log_format(&author.user, &member, &reason).into(),
-                    "duration".to_string() => (duration.0 * duration.1.to_seconds()).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "prune_dmd": dmd,
+                    "log": to_log_format(&author.user, &member, &reason),
+                    "duration": (duration.0 * duration.1.to_seconds()),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -932,13 +931,13 @@ pub async fn unban(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/UnbanMember/Start".to_string(),
                 event_titlename: "(Anti-Raid) Unban Member (Pre-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => user.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "log".to_string() => to_log_format(&author.user, &user, &reason).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": user,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "log": to_log_format(&author.user, &user, &reason),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -1000,13 +999,13 @@ pub async fn unban(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/UnbanMember/End".to_string(),
                 event_titlename: "(Anti-Raid) Unban Member (Post-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => user.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "log".to_string() => to_log_format(&author.user, &user, &reason).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": user,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "log": to_log_format(&author.user, &user, &reason),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -1101,14 +1100,14 @@ pub async fn timeout(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/TimeoutMember/Start".to_string(),
                 event_titlename: "(Anti-Raid) Timeout Member (Pre-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
-                    "duration".to_string() => (duration.0 * duration.1.to_seconds()).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author.user,
+                    "reason": reason,
+                    "stings": stings,
+                    "log": to_log_format(&author.user, &member.user, &reason),
+                    "duration": (duration.0 * duration.1.to_seconds()),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },
@@ -1199,14 +1198,14 @@ pub async fn timeout(
             event: silverpelt::ar_event::AntiraidEvent::Custom(silverpelt::ar_event::CustomEvent {
                 event_name: "AR/TimeoutMember/End".to_string(),
                 event_titlename: "(Anti-Raid) Timeout Member (Post-Warning)".to_string(),
-                event_data: indexmap::indexmap! {
-                    "target".to_string() => member.clone().into(),
-                    "moderator".to_string() => author.user.clone().into(),
-                    "reason".to_string() => reason.clone().into(),
-                    "stings".to_string() => stings.into(),
-                    "log".to_string() => to_log_format(&author.user, &member.user, &reason).into(),
-                    "duration".to_string() => (duration.0 * duration.1.to_seconds()).into(),
-                },
+                event_data: serde_json::json!({
+                    "target": member,
+                    "moderator": author,
+                    "reason": reason,
+                    "stings": stings,
+                    "log": to_log_format(&author.user, &member.user, &reason),
+                    "duration": (duration.0 * duration.1.to_seconds()),
+                }),
             }),
             serenity_context: ctx.serenity_context().clone(),
         },

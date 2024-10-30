@@ -96,7 +96,7 @@ pub mod messages {
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
     pub struct CreateMessage {
         /// Embeds [current_index, embeds]
-        pub embeds: Vec<CreateMessageEmbed>,
+        pub embeds: Option<Vec<CreateMessageEmbed>>,
         /// What content to set on the message
         pub content: Option<String>,
         /// The attachments
@@ -110,197 +110,204 @@ pub mod messages {
         let mut total_chars = 0;
         let mut total_content_chars = 0;
         let mut embeds = Vec::new();
-        for template_embed in message.embeds {
-            if embeds.len() >= embed_limits::EMBED_MAX_COUNT {
-                break;
-            }
 
-            let mut set = false; // Is something set on the embed?
-            let mut embed = serenity::all::CreateEmbed::default();
+        if let Some(t_embeds) = message.embeds {
+            for template_embed in t_embeds {
+                if embeds.len() >= embed_limits::EMBED_MAX_COUNT {
+                    break;
+                }
 
-            if let Some(title) = &template_embed.title {
-                // Slice title to EMBED_TITLE_LIMIT
-                embed = embed.title(slice_chars(
-                    title,
-                    &mut total_chars,
-                    embed_limits::EMBED_TITLE_LIMIT,
-                    embed_limits::EMBED_TOTAL_LIMIT,
-                ));
-                set = true;
-            }
+                let mut set = false; // Is something set on the embed?
+                let mut embed = serenity::all::CreateEmbed::default();
 
-            if let Some(description) = &template_embed.description {
-                // Slice description to EMBED_DESCRIPTION_LIMIT
-                embed = embed.description(
-                    slice_chars(
-                        description,
+                if let Some(title) = &template_embed.title {
+                    // Slice title to EMBED_TITLE_LIMIT
+                    embed = embed.title(slice_chars(
+                        title,
                         &mut total_chars,
-                        embed_limits::EMBED_DESCRIPTION_LIMIT,
+                        embed_limits::EMBED_TITLE_LIMIT,
                         embed_limits::EMBED_TOTAL_LIMIT,
-                    )
-                    .to_string(),
-                );
-                set = true;
-            }
-
-            if let Some(url) = &template_embed.url {
-                if url.is_empty() {
-                    return Err("URL cannot be empty".into());
-                }
-
-                if !url.starts_with("http://") && !url.starts_with("https://") {
-                    return Err("URL must start with http:// or https://".into());
-                }
-
-                embed = embed.url(url.clone());
-                set = true;
-            }
-
-            if let Some(timestamp) = &template_embed.timestamp {
-                let timestamp = chrono::DateTime::parse_from_rfc3339(timestamp)
-                    .map_err(|e| format!("Invalid timestamp provided to embed: {}", e))?;
-                embed = embed.timestamp(timestamp.clone());
-                set = true;
-            }
-
-            if let Some(color) = template_embed.color {
-                embed = embed.color(color);
-                set = true;
-            }
-
-            if let Some(footer) = &template_embed.footer {
-                let text = slice_chars(
-                    &footer.text,
-                    &mut total_chars,
-                    embed_limits::EMBED_FOOTER_TEXT_LIMIT,
-                    embed_limits::EMBED_TOTAL_LIMIT,
-                );
-
-                let mut cef = serenity::all::CreateEmbedFooter::new(text);
-
-                if let Some(footer_icon_url) = &footer.icon_url {
-                    if footer_icon_url.is_empty() {
-                        return Err("Footer icon URL cannot be empty".into());
-                    }
-
-                    if !footer_icon_url.starts_with("http://")
-                        && !footer_icon_url.starts_with("https://")
-                    {
-                        return Err("Footer icon URL must start with http:// or https://".into());
-                    }
-
-                    cef = cef.icon_url(footer_icon_url.clone());
-                }
-
-                embed = embed.footer(cef);
-
-                set = true;
-            }
-
-            if let Some(image) = &template_embed.image {
-                if image.is_empty() {
-                    return Err("Image URL cannot be empty".into());
-                }
-
-                if !image.starts_with("http://") && !image.starts_with("https://") {
-                    return Err("Image URL must start with http:// or https://".into());
-                }
-
-                embed = embed.image(image.clone());
-                set = true;
-            }
-
-            if let Some(thumbnail) = &template_embed.thumbnail {
-                if thumbnail.is_empty() {
-                    return Err("Thumbnail URL cannot be empty".into());
-                }
-
-                if !thumbnail.starts_with("http://") && !thumbnail.starts_with("https://") {
-                    return Err("Thumbnail URL must start with http:// or https://".into());
-                }
-
-                embed = embed.thumbnail(thumbnail.clone());
-                set = true;
-            }
-
-            if let Some(author) = &template_embed.author {
-                let name = slice_chars(
-                    &author.name,
-                    &mut total_chars,
-                    embed_limits::EMBED_AUTHOR_NAME_LIMIT,
-                    embed_limits::EMBED_TOTAL_LIMIT,
-                );
-
-                let mut cea = serenity::all::CreateEmbedAuthor::new(name);
-
-                if let Some(url) = &author.url {
-                    if url.is_empty() {
-                        return Err("Author URL cannot be empty".into());
-                    }
-
-                    if !url.starts_with("http://") && !url.starts_with("https://") {
-                        return Err("Author URL must start with http:// or https://".into());
-                    }
-
-                    cea = cea.url(url.clone());
-                }
-
-                if let Some(icon_url) = &author.icon_url {
-                    if icon_url.is_empty() {
-                        return Err("Author icon URL cannot be empty".into());
-                    }
-
-                    if !icon_url.starts_with("http://") && !icon_url.starts_with("https://") {
-                        return Err("Author icon URL must start with http:// or https://".into());
-                    }
-
-                    cea = cea.icon_url(icon_url.clone());
-                }
-
-                embed = embed.author(cea);
-
-                set = true;
-            }
-
-            if let Some(fields) = template_embed.fields {
-                if !fields.is_empty() {
+                    ));
                     set = true;
                 }
 
-                for (count, field) in fields.into_iter().enumerate() {
-                    if count >= embed_limits::EMBED_FIELDS_MAX_COUNT {
-                        break;
-                    }
-
-                    let name = field.name.trim();
-                    let value = field.value.trim();
-
-                    if name.is_empty() || value.is_empty() {
-                        continue;
-                    }
-
-                    // Slice field name to EMBED_FIELD_NAME_LIMIT
-                    let name = slice_chars(
-                        name,
-                        &mut total_chars,
-                        embed_limits::EMBED_FIELD_NAME_LIMIT,
-                        embed_limits::EMBED_TOTAL_LIMIT,
+                if let Some(description) = &template_embed.description {
+                    // Slice description to EMBED_DESCRIPTION_LIMIT
+                    embed = embed.description(
+                        slice_chars(
+                            description,
+                            &mut total_chars,
+                            embed_limits::EMBED_DESCRIPTION_LIMIT,
+                            embed_limits::EMBED_TOTAL_LIMIT,
+                        )
+                        .to_string(),
                     );
-
-                    // Slice field value to EMBED_FIELD_VALUE_LIMIT
-                    let value = slice_chars(
-                        value,
-                        &mut total_chars,
-                        embed_limits::EMBED_FIELD_VALUE_LIMIT,
-                        embed_limits::EMBED_TOTAL_LIMIT,
-                    );
-
-                    embed = embed.field(name, value, field.inline);
+                    set = true;
                 }
-            }
 
-            if set {
-                embeds.push(embed);
+                if let Some(url) = &template_embed.url {
+                    if url.is_empty() {
+                        return Err("URL cannot be empty".into());
+                    }
+
+                    if !url.starts_with("http://") && !url.starts_with("https://") {
+                        return Err("URL must start with http:// or https://".into());
+                    }
+
+                    embed = embed.url(url.clone());
+                    set = true;
+                }
+
+                if let Some(timestamp) = &template_embed.timestamp {
+                    let timestamp = chrono::DateTime::parse_from_rfc3339(timestamp)
+                        .map_err(|e| format!("Invalid timestamp provided to embed: {}", e))?;
+                    embed = embed.timestamp(timestamp.clone());
+                    set = true;
+                }
+
+                if let Some(color) = template_embed.color {
+                    embed = embed.color(color);
+                    set = true;
+                }
+
+                if let Some(footer) = &template_embed.footer {
+                    let text = slice_chars(
+                        &footer.text,
+                        &mut total_chars,
+                        embed_limits::EMBED_FOOTER_TEXT_LIMIT,
+                        embed_limits::EMBED_TOTAL_LIMIT,
+                    );
+
+                    let mut cef = serenity::all::CreateEmbedFooter::new(text);
+
+                    if let Some(footer_icon_url) = &footer.icon_url {
+                        if footer_icon_url.is_empty() {
+                            return Err("Footer icon URL cannot be empty".into());
+                        }
+
+                        if !footer_icon_url.starts_with("http://")
+                            && !footer_icon_url.starts_with("https://")
+                        {
+                            return Err(
+                                "Footer icon URL must start with http:// or https://".into()
+                            );
+                        }
+
+                        cef = cef.icon_url(footer_icon_url.clone());
+                    }
+
+                    embed = embed.footer(cef);
+
+                    set = true;
+                }
+
+                if let Some(image) = &template_embed.image {
+                    if image.is_empty() {
+                        return Err("Image URL cannot be empty".into());
+                    }
+
+                    if !image.starts_with("http://") && !image.starts_with("https://") {
+                        return Err("Image URL must start with http:// or https://".into());
+                    }
+
+                    embed = embed.image(image.clone());
+                    set = true;
+                }
+
+                if let Some(thumbnail) = &template_embed.thumbnail {
+                    if thumbnail.is_empty() {
+                        return Err("Thumbnail URL cannot be empty".into());
+                    }
+
+                    if !thumbnail.starts_with("http://") && !thumbnail.starts_with("https://") {
+                        return Err("Thumbnail URL must start with http:// or https://".into());
+                    }
+
+                    embed = embed.thumbnail(thumbnail.clone());
+                    set = true;
+                }
+
+                if let Some(author) = &template_embed.author {
+                    let name = slice_chars(
+                        &author.name,
+                        &mut total_chars,
+                        embed_limits::EMBED_AUTHOR_NAME_LIMIT,
+                        embed_limits::EMBED_TOTAL_LIMIT,
+                    );
+
+                    let mut cea = serenity::all::CreateEmbedAuthor::new(name);
+
+                    if let Some(url) = &author.url {
+                        if url.is_empty() {
+                            return Err("Author URL cannot be empty".into());
+                        }
+
+                        if !url.starts_with("http://") && !url.starts_with("https://") {
+                            return Err("Author URL must start with http:// or https://".into());
+                        }
+
+                        cea = cea.url(url.clone());
+                    }
+
+                    if let Some(icon_url) = &author.icon_url {
+                        if icon_url.is_empty() {
+                            return Err("Author icon URL cannot be empty".into());
+                        }
+
+                        if !icon_url.starts_with("http://") && !icon_url.starts_with("https://") {
+                            return Err(
+                                "Author icon URL must start with http:// or https://".into()
+                            );
+                        }
+
+                        cea = cea.icon_url(icon_url.clone());
+                    }
+
+                    embed = embed.author(cea);
+
+                    set = true;
+                }
+
+                if let Some(fields) = template_embed.fields {
+                    if !fields.is_empty() {
+                        set = true;
+                    }
+
+                    for (count, field) in fields.into_iter().enumerate() {
+                        if count >= embed_limits::EMBED_FIELDS_MAX_COUNT {
+                            break;
+                        }
+
+                        let name = field.name.trim();
+                        let value = field.value.trim();
+
+                        if name.is_empty() || value.is_empty() {
+                            continue;
+                        }
+
+                        // Slice field name to EMBED_FIELD_NAME_LIMIT
+                        let name = slice_chars(
+                            name,
+                            &mut total_chars,
+                            embed_limits::EMBED_FIELD_NAME_LIMIT,
+                            embed_limits::EMBED_TOTAL_LIMIT,
+                        );
+
+                        // Slice field value to EMBED_FIELD_VALUE_LIMIT
+                        let value = slice_chars(
+                            value,
+                            &mut total_chars,
+                            embed_limits::EMBED_FIELD_VALUE_LIMIT,
+                            embed_limits::EMBED_TOTAL_LIMIT,
+                        );
+
+                        embed = embed.field(name, value, field.inline);
+                    }
+                }
+
+                if set {
+                    embeds.push(embed);
+                }
             }
         }
 

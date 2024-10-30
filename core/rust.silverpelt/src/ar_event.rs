@@ -19,7 +19,7 @@ pub struct EventHandlerContext {
 pub struct CustomEvent {
     pub event_name: String,
     pub event_titlename: String,
-    pub event_data: indexmap::IndexMap<String, splashcore_rs::field::Field>,
+    pub event_data: serde_json::Value,
 }
 
 #[derive(Debug)]

@@ -1,6 +1,5 @@
 use poise::serenity_prelude::FullEvent;
 use silverpelt::ar_event::{AntiraidEvent, EventHandlerContext};
-use splashcore_rs::field::Field;
 
 #[inline]
 pub(crate) const fn not_audit_loggable_event() -> &'static [&'static str] {
@@ -23,9 +22,14 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 &ectx.data,
                 "AR/TrustedWebEvent",
                 "(Anti Raid) Trusted Web Event",
-                indexmap::indexmap! {
-                    "event_name".to_string() => event_name.clone().into(),
-                    "data".to_string() => data.clone().into(),
+                {
+                    let mut m = serde_json::Map::new();
+                    m.insert(
+                        "event_name".to_string(),
+                        serde_json::Value::String(event_name.to_string()),
+                    );
+                    m.insert("data".to_string(), data.clone());
+                    serde_json::Value::Object(m)
                 },
                 ectx.guild_id,
             )
@@ -52,10 +56,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 },
             }
 
-            let Some(event_data) = gwevent::core::expand_event(event.clone()) else {
-                // Event cannot be expanded, ignore
-                return Ok(());
-            };
+            let event_data = event.serialize_args()?;
 
             // Convert to titlecase by capitalizing the first letter of each word
             let event_titlename = event
@@ -103,9 +104,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 &ectx.data,
                 "AR/StingCreate",
                 "(Anti Raid) Created Sting For User",
-                indexmap::indexmap! {
-                    "sting".to_string() => sting.into(),
-                },
+                serde_json::to_value(sting)?,
                 ectx.guild_id,
             )
             .await?;
@@ -120,9 +119,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 &ectx.data,
                 "AR/PunishmentCreate",
                 "(Anti Raid) Created Punishment",
-                indexmap::indexmap! {
-                    "punishment".to_string() => punishment.into(),
-                },
+                serde_json::to_value(punishment)?,
                 ectx.guild_id,
             )
             .await?;
@@ -135,9 +132,14 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 &ectx.data,
                 "AR/MemberVerify",
                 "(Anti Raid) Member Verify",
-                indexmap::indexmap! {
-                    "user_id".to_string() => user_id.into(),
-                    "data".to_string() => data.clone().into(),
+                {
+                    let mut m = serde_json::Map::new();
+                    m.insert(
+                        "user_id".to_string(),
+                        serde_json::Value::String(user_id.to_string()),
+                    );
+                    m.insert("data".to_string(), data.clone());
+                    serde_json::Value::Object(m)
                 },
                 ectx.guild_id,
             )
@@ -182,7 +184,7 @@ async fn dispatch_audit_log(
     data: &silverpelt::data::Data,
     event_name: &str,
     event_titlename: &str,
-    event_data: indexmap::IndexMap<String, Field>,
+    event_data: serde_json::Value,
     guild_id: serenity::model::id::GuildId,
 ) -> Result<(), silverpelt::Error> {
     let sinks = super::cache::get_sinks(guild_id, &data.pool).await?;
@@ -233,7 +235,7 @@ async fn dispatch_audit_log(
 struct HookContext {
     pub event_titlename: String,
     pub event_name: String,
-    pub event_data: indexmap::IndexMap<String, Field>,
+    pub event_data: serde_json::Value,
     pub sink_id: String,
     pub sink: String,
 }

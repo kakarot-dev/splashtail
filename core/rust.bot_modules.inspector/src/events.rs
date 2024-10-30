@@ -208,9 +208,7 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                                     silverpelt::ar_event::CustomEvent {
                                                         event_name: "AR/Inspector_AutoResponseMemberJoin.KickNewMembers".to_string(),
                                                         event_titlename: "(Anti-Raid) Auto Response: Kick New Members".to_string(),
-                                                        event_data: indexmap::indexmap! {
-                                                            "member".to_string() => new_member.user.clone().into(),
-                                                        }
+                                                        event_data: serde_json::to_value(new_member)?,
                                                     }
                                                 ),
                                                 serenity_context: ctx.clone(),
@@ -243,9 +241,7 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                                     silverpelt::ar_event::CustomEvent {
                                                         event_name: "AR/Inspector_AutoResponseMemberJoin.BanNewMembers".to_string(),
                                                         event_titlename: "(Anti-Raid) Auto Response Ban New Members".to_string(),
-                                                        event_data: indexmap::indexmap! {
-                                                            "member".to_string() => new_member.user.clone().into(),
-                                                        }
+                                                        event_data: serde_json::to_value(new_member)?,
                                                     }
                                                 ),
                                                 serenity_context: ctx.clone(),
@@ -441,13 +437,29 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                 data: ectx.data.clone(),
                                 event: silverpelt::ar_event::AntiraidEvent::Custom(
                                     silverpelt::ar_event::CustomEvent {
-                                        event_name: "AR/Inspector_MemberJoinInspectionFailed".to_string(),
-                                        event_titlename: "(Anti-Raid) Member Join Inspection Failed".to_string(),
-                                        event_data: indexmap::indexmap! {
-                                            "member".to_string() => new_member.user.clone().into(),
-                                            "triggered_flags".to_string() => triggered_flags.iter_names().map(|(flag, _)| flag.to_string()).collect::<Vec<String>>().join(", ").into(),
-                                        }
-                                    }
+                                        event_name: "AR/Inspector_MemberJoinInspectionFailed"
+                                            .to_string(),
+                                        event_titlename:
+                                            "(Anti-Raid) Member Join Inspection Failed".to_string(),
+                                        event_data: {
+                                            let mut map = serde_json::map::Map::new();
+                                            map.insert(
+                                                "member".to_string(),
+                                                serde_json::to_value(new_member)?,
+                                            );
+                                            map.insert(
+                                                "triggered_flags".to_string(),
+                                                triggered_flags
+                                                    .iter_names()
+                                                    .map(|(flag, _)| flag.to_string())
+                                                    .collect::<Vec<String>>()
+                                                    .join(", ")
+                                                    .into(),
+                                            );
+
+                                            serde_json::Value::Object(map)
+                                        },
+                                    },
                                 ),
                                 serenity_context: ctx.clone(),
                             }),
@@ -506,14 +518,24 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                     data: ectx.data.clone(),
                                     event: silverpelt::ar_event::AntiraidEvent::Custom(
                                         silverpelt::ar_event::CustomEvent {
-                                            event_name: "AR/Inspector_MemberJoinHoistAttempt".to_string(),
-                                            event_titlename: "(Anti-Raid) Member Join Hoist Attempt".to_string(),
-                                            event_data: indexmap::indexmap! {
-                                                "member".to_string() => new_member.user.clone().into(),
-                                                "old_display_name".to_string() => display_name.into(),
-                                                "new_nickname".to_string() => new.into(),
-                                            }
-                                        }
+                                            event_name: "AR/Inspector_MemberJoinHoistAttempt"
+                                                .to_string(),
+                                            event_titlename:
+                                                "(Anti-Raid) Member Join Hoist Attempt".to_string(),
+                                            event_data: {
+                                                let mut map = serde_json::map::Map::new();
+                                                map.insert(
+                                                    "member".to_string(),
+                                                    serde_json::to_value(&new_member)?,
+                                                );
+                                                map.insert(
+                                                    "old_display_name".to_string(),
+                                                    display_name.into(),
+                                                );
+                                                map.insert("new_nickname".to_string(), new.into());
+                                                map.into()
+                                            },
+                                        },
                                     ),
                                     serenity_context: ctx.clone(),
                                 }),
@@ -676,14 +698,25 @@ pub async fn event_listener(ectx: &EventHandlerContext) -> Result<(), Error> {
                                     data: ectx.data.clone(),
                                     event: silverpelt::ar_event::AntiraidEvent::Custom(
                                         silverpelt::ar_event::CustomEvent {
-                                            event_name: "AR/Inspector_MemberUpdateHoistAttempt".to_string(),
-                                            event_titlename: "(Anti-Raid) Member Update Hoist Attempt".to_string(),
-                                            event_data: indexmap::indexmap! {
-                                                "member".to_string() => event.user.clone().into(),
-                                                "old_display_name".to_string() => display_name.into(),
-                                                "new_nickname".to_string() => new.into(),
-                                            }
-                                        }
+                                            event_name: "AR/Inspector_MemberUpdateHoistAttempt"
+                                                .to_string(),
+                                            event_titlename:
+                                                "(Anti-Raid) Member Update Hoist Attempt"
+                                                    .to_string(),
+                                            event_data: {
+                                                let mut map = serde_json::map::Map::new();
+                                                map.insert(
+                                                    "user".to_string(),
+                                                    serde_json::to_value(&event.user)?,
+                                                );
+                                                map.insert(
+                                                    "old_display_name".to_string(),
+                                                    display_name.into(),
+                                                );
+                                                map.insert("new_nickname".to_string(), new.into());
+                                                map.into()
+                                            },
+                                        },
                                     ),
                                     serenity_context: ctx.clone(),
                                 }),

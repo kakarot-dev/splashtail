@@ -1,6 +1,5 @@
 pub mod r#async;
 pub mod discord;
-pub mod formatters;
 pub mod img_captcha;
 pub mod interop;
 pub mod kv;
@@ -19,7 +18,6 @@ pub static PLUGINS: LazyLock<indexmap::IndexMap<String, ModuleFn>> = LazyLock::n
         "@antiraid/async".to_string() => r#async::init_plugin as ModuleFn,
         "@antiraid/builtins".to_string() => builtins as ModuleFn,
         "@antiraid/discord".to_string() => discord::init_plugin as ModuleFn,
-        "@antiraid/formatters".to_string() => formatters::init_plugin as ModuleFn,
         "@antiraid/interop".to_string() => interop::init_plugin as ModuleFn,
         "@antiraid/img_captcha".to_string() => img_captcha::init_plugin as ModuleFn,
         "@antiraid/kv".to_string() => kv::init_plugin as ModuleFn,

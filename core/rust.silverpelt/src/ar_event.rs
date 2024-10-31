@@ -39,11 +39,14 @@ pub enum AntiraidEvent {
     /// A sting create event. Dispatched when a sting is created
     StingCreate(super::stings::Sting),
 
+    /// A sting expiry event. Dispatched when a sting expires
+    StingExpire(super::stings::Sting),
+
     /// A punishment create event. Dispatched when a punishment is created
-    PunishmentCreate(super::punishments::GuildPunishment),
+    PunishmentCreate(super::punishments::Punishment),
 
     /// A punishment expiration event. Dispatched when a punishment expires
-    PunishmentExpire(super::punishments::GuildPunishment),
+    PunishmentExpire(super::punishments::Punishment),
 
     /// A custom event
     Custom(CustomEvent),

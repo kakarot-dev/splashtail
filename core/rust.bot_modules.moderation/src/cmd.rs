@@ -470,7 +470,7 @@ pub async fn kick(
     }
 
     // Create new punishment
-    silverpelt::punishments::PunishmentCreate {
+    let p = silverpelt::punishments::PunishmentCreate {
         module: "moderation".to_string(),
         src: Some("kick".to_string()),
         guild_id,
@@ -482,7 +482,7 @@ pub async fn kick(
         reason: reason.clone(),
         data: None,
     }
-    .create(&mut *tx)
+    .create_without_dispatch(&mut *tx)
     .await?;
 
     member
@@ -514,6 +514,7 @@ pub async fn kick(
     ))
     .await?;
 
+    p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
             .dispatch_event(ctx.serenity_context().clone())
@@ -639,7 +640,7 @@ pub async fn ban(
     }
 
     // Create new punishment
-    silverpelt::punishments::PunishmentCreate {
+    let p = silverpelt::punishments::PunishmentCreate {
         module: "moderation".to_string(),
         src: Some("ban".to_string()),
         guild_id,
@@ -651,7 +652,7 @@ pub async fn ban(
         reason: reason.clone(),
         data: None,
     }
-    .create(&mut *tx)
+    .create_without_dispatch(&mut *tx)
     .await?;
 
     guild_id
@@ -686,6 +687,7 @@ pub async fn ban(
     ))
     .await?;
 
+    p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
             .dispatch_event(ctx.serenity_context().clone())
@@ -817,7 +819,7 @@ pub async fn tempban(
     }
 
     // Create new punishment
-    silverpelt::punishments::PunishmentCreate {
+    let p = silverpelt::punishments::PunishmentCreate {
         module: "moderation".to_string(),
         src: Some("tempban".to_string()),
         guild_id,
@@ -831,7 +833,7 @@ pub async fn tempban(
         reason: reason.clone(),
         data: None,
     }
-    .create(&mut *tx)
+    .create_without_dispatch(&mut *tx)
     .await?;
 
     guild_id
@@ -867,6 +869,7 @@ pub async fn tempban(
     ))
     .await?;
 
+    p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
             .dispatch_event(ctx.serenity_context().clone())
@@ -1155,7 +1158,7 @@ pub async fn timeout(
     }
 
     // Create new punishment
-    silverpelt::punishments::PunishmentCreate {
+    let p = silverpelt::punishments::PunishmentCreate {
         module: "moderation".to_string(),
         src: Some("timeout".to_string()),
         guild_id,
@@ -1169,7 +1172,7 @@ pub async fn timeout(
         reason: reason.clone(),
         data: None,
     }
-    .create(&mut *tx)
+    .create_without_dispatch(&mut *tx)
     .await?;
 
     member
@@ -1185,6 +1188,7 @@ pub async fn timeout(
 
     tx.commit().await?;
 
+    p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
             .dispatch_event(ctx.serenity_context().clone())

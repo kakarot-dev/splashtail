@@ -6,6 +6,7 @@ mod punishment_expiry_task;
 mod sandwich_status_task;
 mod settings;
 mod stats;
+mod stings_expiry_task;
 mod whois;
 
 use futures_util::future::FutureExt;
@@ -97,7 +98,7 @@ impl silverpelt::module::Module for Module {
                 },
                 |_ctx| (true, "Sandwich HTTP API is enabled".to_string()),
             ),
-            ((
+            (
                 botox::taskman::Task {
                     name: "Punishment Expiry Task",
                     description: "Check for and dispatch events for expired punishments",
@@ -108,7 +109,17 @@ impl silverpelt::module::Module for Module {
                     }),
                 },
                 |_ctx| (true, "Punishment Expiry Task is enabled".to_string()),
-            )),
+            ),
+            (
+                botox::taskman::Task {
+                    name: "Stings Expiry Task",
+                    description: "Check for and dispatch events for expired stings",
+                    duration: std::time::Duration::from_secs(20),
+                    enabled: true,
+                    run: Box::new(move |ctx| stings_expiry_task::stings_expiry_task(ctx).boxed()),
+                },
+                |_ctx| (true, "Stings Expiry Task is enabled".to_string()),
+            ),
         ]
     }
 

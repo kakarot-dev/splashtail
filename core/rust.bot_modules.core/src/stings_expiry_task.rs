@@ -1,18 +1,18 @@
-pub async fn punishment_expiry_task(
+pub async fn stings_expiry_task(
     ctx: &serenity::all::client::Context,
 ) -> Result<(), silverpelt::Error> {
     let data = ctx.data::<silverpelt::data::Data>();
     let pool = &data.pool;
 
-    let punishments = silverpelt::punishments::Punishment::get_expired(pool).await?;
+    let stings = silverpelt::stings::Sting::get_expired(pool).await?;
 
     let mut set = tokio::task::JoinSet::new();
 
     let shard_count = data.props.shard_count().await?.try_into()?;
     let shards = data.props.shards().await?;
 
-    for punishment in punishments {
-        let guild_id = punishment.guild_id;
+    for sting in stings {
+        let guild_id = sting.guild_id;
 
         // Ensure shard id
         let shard_id = serenity::utils::shard_id(guild_id, shard_count);
@@ -22,7 +22,7 @@ pub async fn punishment_expiry_task(
         }
 
         // Dispatch event
-        let event = silverpelt::ar_event::AntiraidEvent::PunishmentExpire(punishment);
+        let event = silverpelt::ar_event::AntiraidEvent::StingExpire(sting);
 
         let event_handler_context =
             std::sync::Arc::new(silverpelt::ar_event::EventHandlerContext {
@@ -42,10 +42,10 @@ pub async fn punishment_expiry_task(
         match res {
             Ok(Ok(())) => {}
             Ok(Err(e)) => {
-                log::error!("Error in punishment_expiry_task: {:?}", e);
+                log::error!("Error in sting_expiry_task: {:?}", e);
             }
             Err(e) => {
-                log::error!("Error in punishment_expiry_task: {}", e);
+                log::error!("Error in sting_expiry_task: {}", e);
             }
         }
     }

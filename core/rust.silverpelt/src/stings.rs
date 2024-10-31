@@ -31,12 +31,45 @@ pub struct Sting {
     /// When the sting was created
     pub created_at: chrono::DateTime<chrono::Utc>,
     /// When the sting expires as a chrono duration
-    pub expiry: Option<std::time::Duration>,
+    pub duration: Option<std::time::Duration>,
     /// The data/metadata present within the sting, if any
     pub sting_data: Option<serde_json::Value>,
 }
 
 impl Sting {
+    pub async fn get_expired(db: impl sqlx::PgExecutor<'_>) -> Result<Vec<Sting>, crate::Error> {
+        let rec = sqlx::query!(
+            "SELECT id, module, src, stings, reason, void_reason, guild_id, creator, target, state, sting_data, created_at, duration FROM stings WHERE duration IS NOT NULL AND (created_at + duration) < NOW()",
+        )
+        .fetch_all(db)
+        .await?;
+
+        let mut stings = Vec::new();
+
+        for row in rec {
+            stings.push(Sting {
+                id: row.id,
+                module: row.module,
+                src: row.src,
+                stings: row.stings,
+                reason: row.reason,
+                void_reason: row.void_reason,
+                guild_id: row.guild_id.parse()?,
+                creator: StingTarget::from_str(&row.creator)?,
+                target: StingTarget::from_str(&row.target)?,
+                state: StingState::from_str(&row.state)?,
+                sting_data: row.sting_data,
+                created_at: row.created_at,
+                duration: row.duration.map(|d| {
+                    let secs = splashcore_rs::utils::pg_interval_to_secs(d);
+                    std::time::Duration::from_secs(secs.try_into().unwrap())
+                }),
+            });
+        }
+
+        Ok(stings)
+    }
+
     /// Dispatch a StingCreate event
     pub async fn dispatch_event(self, ctx: serenity::all::Context) -> Result<(), crate::Error> {
         crate::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
@@ -98,7 +131,7 @@ impl StingCreate {
             target: self.target,
             state: self.state,
             created_at,
-            expiry: self.duration,
+            duration: self.duration,
             sting_data: self.sting_data,
         }
     }

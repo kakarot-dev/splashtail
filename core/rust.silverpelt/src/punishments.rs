@@ -5,7 +5,7 @@ use std::{str::FromStr, sync::Arc};
 
 /// A punishment
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GuildPunishment {
+pub struct Punishment {
     /// The ID of the applied punishment
     pub id: sqlx::types::Uuid,
     /// The module name
@@ -32,20 +32,20 @@ pub struct GuildPunishment {
     pub data: Option<serde_json::Value>,
 }
 
-impl GuildPunishment {
+impl Punishment {
     pub async fn get_expired(
         db: impl sqlx::PgExecutor<'_>,
-    ) -> Result<Vec<GuildPunishment>, crate::Error> {
+    ) -> Result<Vec<Punishment>, crate::Error> {
         let rec = sqlx::query!(
             "SELECT id, module, src, guild_id, punishment, creator, target, handle_log, created_at, duration, reason, data FROM punishments WHERE duration IS NOT NULL AND (created_at + duration) < NOW()",
         )
         .fetch_all(db)
         .await?;
 
-        let mut stings = Vec::new();
+        let mut punishments = Vec::new();
 
         for row in rec {
-            stings.push(GuildPunishment {
+            punishments.push(Punishment {
                 id: row.id,
                 module: row.module,
                 src: row.src,
@@ -64,7 +64,22 @@ impl GuildPunishment {
             });
         }
 
-        Ok(stings)
+        Ok(punishments)
+    }
+
+    /// Dispatch a PunishmentCreate event
+    pub async fn dispatch_event(self, ctx: serenity::all::Context) -> Result<(), crate::Error> {
+        crate::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
+            crate::ar_event::EventHandlerContext {
+                guild_id: self.guild_id,
+                data: ctx.data::<crate::data::Data>(),
+                event: crate::ar_event::AntiraidEvent::PunishmentCreate(self),
+                serenity_context: ctx,
+            },
+        ))
+        .await?;
+
+        Ok(())
     }
 }
 
@@ -94,10 +109,32 @@ pub struct PunishmentCreate {
 }
 
 impl PunishmentCreate {
-    pub async fn create(
+    pub fn to_punishment(
+        self,
+        id: sqlx::types::Uuid,
+        created_at: chrono::DateTime<chrono::Utc>,
+    ) -> Punishment {
+        Punishment {
+            id,
+            created_at,
+            module: self.module,
+            src: self.src,
+            guild_id: self.guild_id,
+            punishment: self.punishment,
+            creator: self.creator,
+            target: self.target,
+            handle_log: self.handle_log,
+            duration: self.duration,
+            reason: self.reason,
+            data: self.data,
+        }
+    }
+
+    /// Creates a new Punishment without dispatching it as an event
+    pub async fn create_without_dispatch(
         self,
         db: impl sqlx::PgExecutor<'_>,
-    ) -> Result<GuildPunishment, crate::Error> {
+    ) -> Result<Punishment, crate::Error> {
         let ret_data = sqlx::query!(
             r#"
             INSERT INTO punishments (module, src, guild_id, punishment, creator, target, handle_log, duration, reason, data)
@@ -117,7 +154,7 @@ impl PunishmentCreate {
         .fetch_one(db)
         .await?;
 
-        Ok(GuildPunishment {
+        Ok(Punishment {
             id: ret_data.id,
             module: self.module,
             src: self.src,
@@ -131,6 +168,33 @@ impl PunishmentCreate {
             reason: self.reason,
             data: self.data,
         })
+    }
+
+    /// Creates a new Punishment and dispatches it as an event in one go
+    pub async fn create_and_dispatch(
+        self,
+        ctx: serenity::all::Context,
+        db: impl sqlx::PgExecutor<'_>,
+    ) -> Result<(), crate::Error> {
+        let punishment = self.create_without_dispatch(db).await?;
+
+        punishment.dispatch_event(ctx).await?;
+
+        Ok(())
+    }
+
+    /// Creates a new Punishment and dispatches it as an event in one go
+    pub async fn create_and_dispatch_returning_id(
+        self,
+        ctx: serenity::all::Context,
+        db: impl sqlx::PgExecutor<'_>,
+    ) -> Result<sqlx::types::Uuid, crate::Error> {
+        let punishment = self.create_without_dispatch(db).await?;
+        let sid = punishment.id;
+
+        punishment.dispatch_event(ctx).await?;
+
+        Ok(sid)
     }
 }
 

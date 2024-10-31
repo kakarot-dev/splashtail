@@ -179,7 +179,7 @@ pub(crate) async fn autotrigger(
                 ),
                 data: None,
             }
-            .create(&data.pool)
+            .create_and_dispatch(ctx.clone(), &data.pool)
             .await?;
         }
     }

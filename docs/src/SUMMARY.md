@@ -10,6 +10,7 @@
     - [Plugins](./user/templating/2-plugins.md)
     - [A Simple Example](./user/templating/3-example.md)
     - [Ecosystem](./user/templating/4-luau-ecosystem.md)
+    - [Hooks](./user/templating/5-hooks.md)
 - [Captcha](./user/captcha/README.md)
     - [Introduction](./user/captcha/1-intro.md)
     - [Examples](./user/captcha/2-examples.md)

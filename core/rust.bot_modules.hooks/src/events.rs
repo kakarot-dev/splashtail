@@ -103,7 +103,22 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 ctx,
                 &ectx.data,
                 "AR/StingCreate",
-                "(Anti Raid) Created Sting For User",
+                "(Anti Raid) Sting Created",
+                serde_json::to_value(sting)?,
+                ectx.guild_id,
+            )
+            .await?;
+
+            Ok(())
+        }
+        AntiraidEvent::StingExpire(ref sting) => {
+            let sting = serde_json::to_value(sting)?;
+
+            dispatch_audit_log(
+                ctx,
+                &ectx.data,
+                "AR/StingExpire",
+                "(Anti Raid) Sting Expired",
                 serde_json::to_value(sting)?,
                 ectx.guild_id,
             )
@@ -118,7 +133,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 ctx,
                 &ectx.data,
                 "AR/PunishmentCreate",
-                "(Anti Raid) Created Punishment",
+                "(Anti Raid) Punishment Created",
                 serde_json::to_value(punishment)?,
                 ectx.guild_id,
             )

@@ -43,12 +43,12 @@ impl silverpelt::module::ModuleEventListeners for EventHandler {
 
     fn event_handler_filter(&self, event: &silverpelt::ar_event::AntiraidEvent) -> bool {
         match event {
-            silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((_event_name, _)) => true, // We need trusted web events
+            silverpelt::ar_event::AntiraidEvent::TrustedWebEvent(_) => true, // We need trusted web events
             silverpelt::ar_event::AntiraidEvent::Discord(_) => true,
             silverpelt::ar_event::AntiraidEvent::Custom(_) => true,
             silverpelt::ar_event::AntiraidEvent::StingCreate(_) => true,
             silverpelt::ar_event::AntiraidEvent::PunishmentCreate(_) => true,
-            silverpelt::ar_event::AntiraidEvent::MemberVerify(_) => true,
+            silverpelt::ar_event::AntiraidEvent::PunishmentExpire(_) => true,
         }
     }
 }

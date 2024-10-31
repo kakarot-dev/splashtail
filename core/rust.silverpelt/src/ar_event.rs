@@ -42,8 +42,8 @@ pub enum AntiraidEvent {
     /// A punishment create event. Dispatched when a punishment is created
     PunishmentCreate(super::punishments::GuildPunishment),
 
-    /// A guild member verification event. Dispatched with a member is verified in a guild
-    MemberVerify((serenity::all::UserId, serde_json::Value)),
+    /// A punishment expiration event. Dispatched when a punishment expires
+    PunishmentExpire(super::punishments::GuildPunishment),
 
     /// A custom event
     Custom(CustomEvent),

@@ -111,8 +111,8 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 
             Ok(())
         }
-        AntiraidEvent::PunishmentCreate(ref punishments) => {
-            let punishment = serde_json::to_value(punishments)?;
+        AntiraidEvent::PunishmentCreate(ref punishment) => {
+            let punishment = serde_json::to_value(punishment)?;
 
             dispatch_audit_log(
                 ctx,
@@ -126,21 +126,15 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 
             Ok(())
         }
-        AntiraidEvent::MemberVerify((user_id, ref data)) => {
+        AntiraidEvent::PunishmentExpire(ref punishment) => {
+            let punishment = serde_json::to_value(punishment)?;
+
             dispatch_audit_log(
                 ctx,
                 &ectx.data,
-                "AR/MemberVerify",
-                "(Anti Raid) Member Verify",
-                {
-                    let mut m = serde_json::Map::new();
-                    m.insert(
-                        "user_id".to_string(),
-                        serde_json::Value::String(user_id.to_string()),
-                    );
-                    m.insert("data".to_string(), data.clone());
-                    serde_json::Value::Object(m)
-                },
+                "AR/PunishmentExpire",
+                "(Anti Raid) Punishment Expired",
+                serde_json::to_value(punishment)?,
                 ectx.guild_id,
             )
             .await?;

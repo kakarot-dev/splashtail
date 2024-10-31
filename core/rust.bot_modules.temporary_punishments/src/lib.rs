@@ -1,6 +1,4 @@
-pub mod tasks;
-
-use futures_util::future::FutureExt;
+pub mod events;
 
 pub struct Module;
 
@@ -14,7 +12,7 @@ impl silverpelt::module::Module for Module {
     }
 
     fn description(&self) -> &'static str {
-        "Customizable setting and management of temporary punishments (tempbans/temp role removals). Most servers will not need to customize this"
+        "Simple default temporary punishment handling. Can be disabled for servers that want custom handling through e.g. hooks."
     }
 
     fn is_default_enabled(&self) -> bool {
@@ -25,20 +23,30 @@ impl silverpelt::module::Module for Module {
         vec![]
     }
 
-    fn background_tasks(&self) -> Vec<silverpelt::BackgroundTask> {
-        vec![(
-            botox::taskman::Task {
-                name: "Temporary Punishment Task",
-                description: "Handle expired punishments",
-                duration: std::time::Duration::from_secs(60),
-                enabled: true,
-                run: Box::new(move |ctx| tasks::temporary_punishment_task(ctx).boxed()),
-            },
-            |_ctx| (true, "Temporary Punishment Task is enabled".to_string()),
-        )]
+    fn event_listeners(&self) -> Option<Box<dyn silverpelt::module::ModuleEventListeners>> {
+        Some(Box::new(EventListener))
     }
 
     fn full_command_list(&self) -> Vec<silverpelt::module::CommandObj> {
         modules_ext::create_full_command_list(self)
+    }
+}
+
+struct EventListener;
+
+#[async_trait::async_trait]
+impl silverpelt::module::ModuleEventListeners for EventListener {
+    async fn event_handler(
+        &self,
+        ctx: &silverpelt::ar_event::EventHandlerContext,
+    ) -> Result<(), silverpelt::Error> {
+        events::event_listener(ctx).await
+    }
+
+    fn event_handler_filter(&self, event: &silverpelt::ar_event::AntiraidEvent) -> bool {
+        matches!(
+            event,
+            silverpelt::ar_event::AntiraidEvent::PunishmentExpire(_)
+        ) // We only care about punishment expires
     }
 }

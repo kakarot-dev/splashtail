@@ -2,6 +2,7 @@ mod commands;
 mod help;
 mod modules;
 mod ping;
+mod punishment_expiry_task;
 mod sandwich_status_task;
 mod settings;
 mod stats;
@@ -83,16 +84,32 @@ impl silverpelt::module::Module for Module {
     }
 
     fn background_tasks(&self) -> Vec<silverpelt::BackgroundTask> {
-        vec![(
-            botox::taskman::Task {
-                name: "Sandwich Status Task",
-                description: "Checks the status of the sandwich http server",
-                duration: std::time::Duration::from_secs(30),
-                enabled: true,
-                run: Box::new(move |ctx| sandwich_status_task::sandwich_status_task(ctx).boxed()),
-            },
-            |_ctx| (true, "Sandwich HTTP API is enabled".to_string()),
-        )]
+        vec![
+            (
+                botox::taskman::Task {
+                    name: "Sandwich Status Task",
+                    description: "Checks the status of the sandwich http server",
+                    duration: std::time::Duration::from_secs(30),
+                    enabled: true,
+                    run: Box::new(move |ctx| {
+                        sandwich_status_task::sandwich_status_task(ctx).boxed()
+                    }),
+                },
+                |_ctx| (true, "Sandwich HTTP API is enabled".to_string()),
+            ),
+            ((
+                botox::taskman::Task {
+                    name: "Punishment Expiry Task",
+                    description: "Check for and dispatch events for expired punishments",
+                    duration: std::time::Duration::from_secs(30),
+                    enabled: true,
+                    run: Box::new(move |ctx| {
+                        punishment_expiry_task::punishment_expiry_task(ctx).boxed()
+                    }),
+                },
+                |_ctx| (true, "Punishment Expiry Task is enabled".to_string()),
+            )),
+        ]
     }
 
     fn config_options(&self) -> Vec<module_settings::types::ConfigOption> {

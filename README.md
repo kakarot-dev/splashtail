@@ -1,6 +1,6 @@
 # splashtail
 
-Splashtail is a monorepo containing all the code needed to run and setup Anti-Raid.
+Splashtail is a monorepo containing all the code needed to run and setup Anti-Raid and its infrastructure.
 
 # Components
 

@@ -7,7 +7,6 @@ pub fn modules() -> Vec<Box<dyn Module>> {
         Box::new(bot_modules_core::Module),
         Box::new(bot_modules_gitlogs::Module),
         Box::new(bot_modules_hooks::Module),
-        Box::new(bot_modules_inspector::Module),
         Box::new(bot_modules_lockdown::Module),
         Box::new(bot_modules_moderation::Module),
         Box::new(bot_modules_punishment_autotriggers::Module),

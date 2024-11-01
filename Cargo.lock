@@ -560,7 +560,6 @@ dependencies = [
  "bot_modules_core",
  "bot_modules_gitlogs",
  "bot_modules_hooks",
- "bot_modules_inspector",
  "bot_modules_lockdown",
  "bot_modules_moderation",
  "bot_modules_punishment_autotriggers",
@@ -618,33 +617,6 @@ dependencies = [
  "tokio",
  "typetag",
  "url",
-]
-
-[[package]]
-name = "bot_modules_inspector"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bitflags 2.6.0",
- "botox",
- "chrono",
- "dashmap 6.1.0",
- "futures-util",
- "gwevent",
- "indexmap",
- "log",
- "module_settings",
- "modules_ext",
- "moka",
- "poise",
- "reqwest",
- "sandwich_driver",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "splashcore_text",
- "sqlx",
 ]
 
 [[package]]

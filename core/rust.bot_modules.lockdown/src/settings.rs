@@ -230,7 +230,12 @@ impl CreateDataStore for LockdownDataStore {
                 .create_impl(setting, guild_id, author, data, common_filters)
                 .await?,
             cache: silverpelt::data::Data::silverpelt_cache(data),
-            lockdown_data: super::core::LockdownData::from_settings_data(data),
+            lockdown_data: super::core::LockdownData {
+                cache_http: data.cache_http.clone(),
+                pool: data.pool.clone(),
+                reqwest: data.reqwest.clone(),
+                object_store: data.object_store.clone(),
+            },
         }))
     }
 }
@@ -336,32 +341,8 @@ impl DataStore for LockdownDataStoreImpl {
                 typ: "value_error".to_string(),
             })?;
 
-        let mut pg = sandwich_driver::guild(
-            &self.lockdown_data.cache_http,
-            &self.lockdown_data.reqwest,
-            self.inner.guild_id,
-        )
-        .await
-        .map_err(|e| SettingsError::Generic {
-            message: format!("Error while creating proxy guild: {}", e),
-            src: "lockdown_create_entry".to_string(),
-            typ: "value_error".to_string(),
-        })?;
-
-        let mut pgc = sandwich_driver::guild_channels(
-            &self.lockdown_data.cache_http,
-            &self.lockdown_data.reqwest,
-            self.inner.guild_id,
-        )
-        .await
-        .map_err(|e| SettingsError::Generic {
-            message: format!("Error while creating proxy guild channels: {}", e),
-            src: "lockdown_create_entry".to_string(),
-            typ: "value_error".to_string(),
-        })?;
-
         lockdowns
-            .apply(lockdown_type, &self.lockdown_data, reason, &mut pg, &mut pgc)
+            .easy_apply(lockdown_type, &self.lockdown_data, reason)
             .await
             .map_err(|e| SettingsError::Generic {
                 message: format!("Error while applying lockdown: {}", e),
@@ -455,42 +436,9 @@ impl DataStore for LockdownDataStoreImpl {
                 typ: "value_error".to_string(),
             })?;
 
-        // Find the index of the lockdown element with the given primary key
-        let index = lockdowns
-            .lockdowns
-            .iter()
-            .position(|l| l.id == primary_key)
-            .ok_or_else(|| SettingsError::RowDoesNotExist {
-                column_id: self.inner.setting_primary_key.to_string(),
-            })?;
-
-        let mut pg = sandwich_driver::guild(
-            &self.lockdown_data.cache_http,
-            &self.lockdown_data.reqwest,
-            self.inner.guild_id,
-        )
-        .await
-        .map_err(|e| SettingsError::Generic {
-            message: format!("Error while removing lockdown: {}", e),
-            src: "lockdown_delete_matching_entries".to_string(),
-            typ: "value_error".to_string(),
-        })?;
-
-        let mut pgc = sandwich_driver::guild_channels(
-            &self.lockdown_data.cache_http,
-            &self.lockdown_data.reqwest,
-            self.inner.guild_id,
-        )
-        .await
-        .map_err(|e| SettingsError::Generic {
-            message: format!("Error while removing lockdown: {}", e),
-            src: "lockdown_delete_matching_entries".to_string(),
-            typ: "value_error".to_string(),
-        })?;
-
         // Remove the lockdown
         lockdowns
-            .remove(index, &self.lockdown_data, &mut pg, &mut pgc)
+            .easy_remove(primary_key, &self.lockdown_data)
             .await
             .map_err(|e| SettingsError::Generic {
                 message: format!("Error while removing lockdown: {}", e),

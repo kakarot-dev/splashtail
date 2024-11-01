@@ -79,17 +79,6 @@ pub struct LockdownData {
     pub object_store: Arc<splashcore_rs::objectstore::ObjectStore>,
 }
 
-impl LockdownData {
-    pub fn from_settings_data(data: &module_settings::types::SettingsData) -> Self {
-        Self {
-            cache_http: data.cache_http.clone(),
-            pool: data.pool.clone(),
-            reqwest: data.reqwest.clone(),
-            object_store: data.object_store.clone(),
-        }
-    }
-}
-
 pub trait LockdownTestResult
 where
     Self: Send + Sync,
@@ -492,6 +481,33 @@ impl LockdownSet {
         Ok(handles)
     }
 
+    /// Helper method to apply a lockdown without needing to manually perform fetches
+    pub async fn easy_apply(
+        &mut self,
+        lockdown_type: Box<dyn LockdownMode>,
+        lockdown_data: &LockdownData,
+        reason: &str,
+    ) -> Result<sqlx::types::Uuid, silverpelt::Error> {
+        let mut pg = sandwich_driver::guild(
+            &lockdown_data.cache_http,
+            &lockdown_data.reqwest,
+            self.guild_id,
+        )
+        .await
+        .map_err(|e| format!("Error while creating proxy guild: {}", e))?;
+
+        let mut pgc = sandwich_driver::guild_channels(
+            &lockdown_data.cache_http,
+            &lockdown_data.reqwest,
+            self.guild_id,
+        )
+        .await
+        .map_err(|e| format!("Error while fetching guild channels from proxy: {}", e))?;
+
+        self.apply(lockdown_type, lockdown_data, reason, &mut pg, &mut pgc)
+            .await
+    }
+
     /// Adds a lockdown to the set returning the id of the created entry
     pub async fn apply(
         &mut self,
@@ -520,15 +536,6 @@ impl LockdownSet {
             .await?;
 
         let current_handles = self.get_handles(lockdown_data, pg, pgc).await?;
-
-        // TODO: Block redundant handles, this is required until we support getting underlying permissions during a lockdown
-        /*let new_handle = lockdown_type
-            .handles(lockdown_data, &pg, &pgc, &critical_roles, &data)
-            .await?;
-
-        if current_handles.is_redundant(&new_handle, lockdown_type.specificity()) {
-            return Err("Lockdown is redundant (all changes made by this lockdown handle are already locked by another handle)".into());
-        }*/
 
         let created_at = chrono::Utc::now();
 
@@ -568,17 +575,45 @@ impl LockdownSet {
         Ok(id.id)
     }
 
-    /// Removes a lockdown from the set by index
+    /// Helper method to apply a lockdown without needing to manually perform fetches
+    pub async fn easy_remove(
+        &mut self,
+        id: sqlx::types::Uuid,
+        lockdown_data: &LockdownData,
+    ) -> Result<(), silverpelt::Error> {
+        let mut pg = sandwich_driver::guild(
+            &lockdown_data.cache_http,
+            &lockdown_data.reqwest,
+            self.guild_id,
+        )
+        .await
+        .map_err(|e| format!("Error while creating proxy guild: {}", e))?;
+
+        let mut pgc = sandwich_driver::guild_channels(
+            &lockdown_data.cache_http,
+            &lockdown_data.reqwest,
+            self.guild_id,
+        )
+        .await
+        .map_err(|e| format!("Error while fetching guild channels from proxy: {}", e))?;
+
+        self.remove(id, lockdown_data, &mut pg, &mut pgc).await
+    }
+
+    /// Removes a lockdown from the set
     pub async fn remove(
         &mut self,
-        index: usize,
+        id: sqlx::types::Uuid,
         lockdown_data: &LockdownData,
         pg: &mut serenity::all::PartialGuild,
         pgc: &mut [serenity::all::GuildChannel],
     ) -> Result<(), silverpelt::Error> {
-        let lockdown = self.lockdowns.get(index).ok_or_else(|| {
-            silverpelt::Error::from("Lockdown index out of bounds (does not exist)")
-        })?;
+        let (index, lockdown) = self
+            .lockdowns
+            .iter()
+            .enumerate()
+            .find(|l| l.1.id == id)
+            .ok_or("Lockdown not found")?;
 
         let critical_roles = get_critical_roles(pg, &self.settings.member_roles)?;
 
@@ -632,54 +667,15 @@ impl LockdownSet {
     pub async fn remove_all(
         &mut self,
         lockdown_data: &LockdownData,
+        pg: &mut serenity::all::PartialGuild,
+        pgc: &mut [serenity::all::GuildChannel],
     ) -> Result<(), silverpelt::Error> {
         self.sort();
 
-        // Fetch guild+channel info to advance to avoid needing to fetch it on every interaction with the trait
-        let mut pg = sandwich_driver::guild(
-            &lockdown_data.cache_http,
-            &lockdown_data.reqwest,
-            self.guild_id,
-        )
-        .await?;
+        let ids = self.lockdowns.iter().map(|l| l.id).collect::<Vec<_>>();
 
-        let mut pgc = sandwich_driver::guild_channels(
-            &lockdown_data.cache_http,
-            &lockdown_data.reqwest,
-            self.guild_id,
-        )
-        .await?;
-
-        let critical_roles = get_critical_roles(&pg, &self.settings.member_roles)?;
-
-        let mut current_handles = self.get_handles(lockdown_data, &pg, &pgc).await?;
-
-        for lockdown in self.lockdowns.iter() {
-            // Revert the lockdown
-            lockdown
-                .r#type
-                .revert(
-                    lockdown_data,
-                    &mut pg,
-                    &mut pgc,
-                    &critical_roles,
-                    &lockdown.data,
-                    &current_handles,
-                    &self.lockdowns,
-                )
-                .await?;
-
-            // Remove the lockdown from the database
-            sqlx::query!(
-                "DELETE FROM lockdown__guild_lockdowns WHERE guild_id = $1 AND type = $2",
-                self.guild_id.to_string(),
-                lockdown.r#type.string_form(),
-            )
-            .execute(&lockdown_data.pool)
-            .await?;
-
-            // We need to re-fetch the handles after each lockdown is removed
-            current_handles = self.get_handles(lockdown_data, &pg, &pgc).await?;
+        for id in ids {
+            self.remove(id, lockdown_data, pg, pgc).await?;
         }
 
         // Update self.lockdowns

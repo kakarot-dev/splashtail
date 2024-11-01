@@ -1,5 +1,12 @@
+use module_settings::types::OperationType;
 use silverpelt::module::{CommandObj, Module};
 use silverpelt::types::CommandExtendedData;
+
+/// Base command for a virtual settings command
+#[poise::command(slash_command)]
+async fn config_opt_base_cmd(_ctx: silverpelt::Context<'_>) -> Result<(), silverpelt::Error> {
+    Ok(())
+}
 
 fn string_to_static_str(s: String) -> &'static str {
     Box::leak(s.into_boxed_str())
@@ -28,13 +35,24 @@ pub fn create_full_command_list<T: Module + ?Sized>(module: &T) -> Vec<CommandOb
         },
     ));
 
-    // Add in the settings related commands
+    // Add in the settings related commands as virtual commands to allow configuring permissions while not listing in the bot
     for config_opt in module.config_options() {
-        let created_cmd =
-            module_settings_poise::settings_autogen::create_poise_commands_from_setting(
-                module.id(),
-                &config_opt,
-            );
+        let mut created_cmd = config_opt_base_cmd();
+
+        for (operation_type, _) in config_opt.operations.iter() {
+            let mut subcmd = config_opt_base_cmd();
+            subcmd.name = operation_type.corresponding_command_suffix().to_string();
+            subcmd.qualified_name = operation_type.corresponding_command_suffix().to_string();
+            subcmd.description = {
+                match operation_type {
+                    OperationType::View => Some(format!("View {}", config_opt.id)),
+                    OperationType::Create => Some(format!("Create {}", config_opt.id)),
+                    OperationType::Update => Some(format!("Update {}", config_opt.id)),
+                    OperationType::Delete => Some(format!("Delete {}", config_opt.id)),
+                }
+            };
+            created_cmd.subcommands.push(subcmd);
+        }
 
         let mut extended_data = indexmap::IndexMap::new();
 
@@ -42,9 +60,7 @@ pub fn create_full_command_list<T: Module + ?Sized>(module: &T) -> Vec<CommandOb
         let mut command_extended_data =
             CommandExtendedData::kittycat_or_admin(module.id(), config_opt.id);
 
-        if module.root_module() {
-            command_extended_data.virtual_command = true; // Root modules should not have any settings related commands accessible by default
-        }
+        command_extended_data.virtual_command = true; // Ensure its virtual
 
         extended_data.insert("", command_extended_data);
 
@@ -52,9 +68,7 @@ pub fn create_full_command_list<T: Module + ?Sized>(module: &T) -> Vec<CommandOb
             let mut command_extended_data =
                 CommandExtendedData::kittycat_or_admin(module.id(), config_opt.id);
 
-            if module.root_module() {
-                command_extended_data.virtual_command = true; // Root modules should not have any settings related commands accessible by default
-            }
+            command_extended_data.virtual_command = true; // Ensure its virtual
 
             extended_data.insert(
                 string_to_static_str(sub.name.to_string()),

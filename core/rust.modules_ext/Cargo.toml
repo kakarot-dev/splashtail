@@ -30,7 +30,6 @@ module_settings = { path = "../rust.module_settings" }
 config = { path = "../rust.config" }
 sandwich_driver = { path = "../rust.sandwich_driver" }
 silverpelt = { path = "../rust.silverpelt" }
-module_settings_poise = { path = "../rust.module_settings.poise" }
 
 [dependencies.tokio]
 version = "1"

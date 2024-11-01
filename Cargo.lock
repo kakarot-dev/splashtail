@@ -2936,38 +2936,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "module_settings_poise"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "bitflags 2.6.0",
- "botox",
- "chrono",
- "config",
- "dashmap 6.1.0",
- "futures-util",
- "indexmap",
- "kittycat",
- "log",
- "module_settings",
- "moka",
- "permission_checks",
- "permissions",
- "poise",
- "regex",
- "reqwest",
- "sandwich_driver",
- "serde",
- "serde_json",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
- "tokio",
- "typetag",
-]
-
-[[package]]
 name = "modules_ext"
 version = "0.1.0"
 dependencies = [
@@ -2982,7 +2950,6 @@ dependencies = [
  "kittycat",
  "log",
  "module_settings",
- "module_settings_poise",
  "moka",
  "permissions",
  "poise",

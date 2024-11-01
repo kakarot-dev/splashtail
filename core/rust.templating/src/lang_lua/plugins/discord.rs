@@ -149,7 +149,7 @@ impl DiscordActionExecutor {
 
 impl LuaUserData for DiscordActionExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
-        // Audit logs
+        // Audit Log
         methods.add_async_method("get_audit_logs", |lua, this, data: LuaValue| async move {
             #[derive(serde::Serialize, serde::Deserialize)]
             pub struct GetAuditLogOptions {
@@ -188,7 +188,214 @@ impl LuaUserData for DiscordActionExecutor {
             Ok(v)
         });
 
-        // Channel actions
+        // Auto Moderation
+        methods.add_async_method(
+            "list_auto_moderation_rules",
+            |lua, this, _: ()| async move {
+                this.check_action("list_auto_moderation_rules".to_string())
+                    .map_err(LuaError::external)?;
+
+                let bot_userid = this.serenity_context.cache.current_user().id;
+
+                this.check_permissions(bot_userid, serenity::all::Permissions::MANAGE_GUILD)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let rules = this
+                    .serenity_context
+                    .http
+                    .get_automod_rules(this.guild_id)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let v = lua.to_value(&rules)?;
+
+                Ok(v)
+            },
+        );
+
+        methods.add_async_method(
+            "get_auto_moderation_rule",
+            |lua, this, data: LuaValue| async move {
+                let rule_id: serenity::all::RuleId = lua.from_value(data)?;
+
+                this.check_action("get_auto_moderation_rule".to_string())
+                    .map_err(LuaError::external)?;
+
+                let bot_userid = this.serenity_context.cache.current_user().id;
+
+                this.check_permissions(bot_userid, serenity::all::Permissions::MANAGE_GUILD)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let rule = this
+                    .serenity_context
+                    .http
+                    .get_automod_rule(this.guild_id, rule_id)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let v = lua.to_value(&rule)?;
+
+                Ok(v)
+            },
+        );
+
+        methods.add_async_method(
+            "create_auto_moderation_rule",
+            |lua, this, data: LuaValue| async move {
+                #[derive(serde::Serialize, serde::Deserialize)]
+                pub struct CreateAutoModerationRuleOptions {
+                    name: String,
+                    reason: String,
+                    event_type: serenity::all::AutomodEventType,
+                    trigger: serenity::all::Trigger,
+                    actions: Vec<serenity::all::automod::Action>,
+                    enabled: Option<bool>,
+                    exempt_roles: Option<Vec<serenity::all::RoleId>>,
+                    exempt_channels: Option<Vec<serenity::all::ChannelId>>,
+                }
+
+                let data: CreateAutoModerationRuleOptions = lua.from_value(data)?;
+
+                this.check_action("create_auto_moderation_rule".to_string())
+                    .map_err(LuaError::external)?;
+
+                let bot_userid = this.serenity_context.cache.current_user().id;
+
+                this.check_permissions(bot_userid, serenity::all::Permissions::MANAGE_GUILD)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let mut rule = serenity::all::EditAutoModRule::new();
+                rule = rule
+                    .name(data.name)
+                    .event_type(data.event_type)
+                    .trigger(data.trigger)
+                    .actions(data.actions);
+
+                if let Some(enabled) = data.enabled {
+                    rule = rule.enabled(enabled);
+                }
+
+                if let Some(exempt_roles) = data.exempt_roles {
+                    if exempt_roles.len() > 20 {
+                        return Err(LuaError::external(
+                            "A maximum of 20 exempt_roles can be provided",
+                        ));
+                    }
+
+                    rule = rule.exempt_roles(exempt_roles);
+                }
+
+                if let Some(exempt_channels) = data.exempt_channels {
+                    if exempt_channels.len() > 50 {
+                        return Err(LuaError::external(
+                            "A maximum of 50 exempt_channels can be provided",
+                        ));
+                    }
+
+                    rule = rule.exempt_channels(exempt_channels);
+                }
+
+                let rule = this
+                    .serenity_context
+                    .http
+                    .create_automod_rule(this.guild_id, &rule, Some(data.reason.as_str()))
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let v = lua.to_value(&rule)?;
+
+                Ok(v)
+            },
+        );
+
+        methods.add_async_method(
+            "edit_auto_moderation_rule",
+            |lua, this, data: LuaValue| async move {
+                #[derive(serde::Serialize, serde::Deserialize)]
+                pub struct EditAutoModerationRuleOptions {
+                    rule_id: serenity::all::RuleId,
+                    reason: String,
+                    name: Option<String>,
+                    event_type: Option<serenity::all::AutomodEventType>,
+                    trigger_metadata: Option<serenity::all::TriggerMetadata>,
+                    actions: Vec<serenity::all::automod::Action>,
+                    enabled: Option<bool>,
+                    exempt_roles: Option<Vec<serenity::all::RoleId>>,
+                    exempt_channels: Option<Vec<serenity::all::ChannelId>>,
+                }
+
+                let data: EditAutoModerationRuleOptions = lua.from_value(data)?;
+
+                this.check_action("edit_auto_moderation_rule".to_string())
+                    .map_err(LuaError::external)?;
+
+                let bot_userid = this.serenity_context.cache.current_user().id;
+
+                this.check_permissions(bot_userid, serenity::all::Permissions::MANAGE_GUILD)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let mut rule = serenity::all::EditAutoModRule::new();
+
+                if let Some(name) = data.name {
+                    rule = rule.name(name);
+                }
+
+                if let Some(event_type) = data.event_type {
+                    rule = rule.event_type(event_type);
+                }
+
+                if let Some(trigger_metadata) = data.trigger_metadata {
+                    rule = rule.trigger(trigger)
+                }
+
+                rule = rule
+                    .name(data.name)
+                    .event_type(data.event_type)
+                    .trigger(data.trigger)
+                    .actions(data.actions);
+
+                if let Some(enabled) = data.enabled {
+                    rule = rule.enabled(enabled);
+                }
+
+                if let Some(exempt_roles) = data.exempt_roles {
+                    if exempt_roles.len() > 20 {
+                        return Err(LuaError::external(
+                            "A maximum of 20 exempt_roles can be provided",
+                        ));
+                    }
+
+                    rule = rule.exempt_roles(exempt_roles);
+                }
+
+                if let Some(exempt_channels) = data.exempt_channels {
+                    if exempt_channels.len() > 50 {
+                        return Err(LuaError::external(
+                            "A maximum of 50 exempt_channels can be provided",
+                        ));
+                    }
+
+                    rule = rule.exempt_channels(exempt_channels);
+                }
+
+                let rule = this
+                    .serenity_context
+                    .http
+                    .create_automod_rule(this.guild_id, &rule, Some(data.reason.as_str()))
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let v = lua.to_value(&rule)?;
+
+                Ok(v)
+            },
+        );
+
+        // Channel
         methods.add_async_method("get_channel", |lua, this, data: LuaValue| async move {
             #[derive(serde::Serialize, serde::Deserialize)]
             pub struct GetChannelOptions {
@@ -373,7 +580,116 @@ impl LuaUserData for DiscordActionExecutor {
             Ok(v)
         });
 
-        // Members
+        methods.add_async_method("edit_thread", |lua, this, data: LuaValue| async move {
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct EditThreadOptions {
+                channel_id: serenity::all::ChannelId,
+                reason: String,
+
+                // Fields that can be edited
+                name: Option<String>,
+                archived: Option<bool>,
+                auto_archive_duration: Option<serenity::all::AutoArchiveDuration>,
+                locked: Option<bool>,
+                invitable: Option<bool>,
+                rate_limit_per_user: Option<serenity::nonmax::NonMaxU16>,
+                flags: Option<serenity::all::ChannelFlags>,
+                applied_tags: Option<Vec<serenity::all::ForumTag>>,
+            }
+
+            let data = lua.from_value::<EditThreadOptions>(data)?;
+
+            this.check_action("edit_channel".to_string())
+                .map_err(LuaError::external)?;
+
+            let bot_userid = this.serenity_context.cache.current_user().id;
+
+            this.check_permissions(
+                bot_userid,
+                serenity::all::Permissions::MANAGE_CHANNELS
+                    | serenity::all::Permissions::MANAGE_THREADS,
+            )
+            .await
+            .map_err(LuaError::external)?;
+
+            let mut ec = serenity::all::EditThread::default(); // Create a new EditThread struct
+
+            if let Some(name) = data.name {
+                ec = ec.name(name);
+            }
+
+            if let Some(archived) = data.archived {
+                ec = ec.archived(archived);
+            }
+
+            if let Some(auto_archive_duration) = data.auto_archive_duration {
+                ec = ec.auto_archive_duration(auto_archive_duration);
+            }
+
+            if let Some(locked) = data.locked {
+                ec = ec.locked(locked);
+            }
+
+            if let Some(invitable) = data.invitable {
+                ec = ec.invitable(invitable);
+            }
+
+            if let Some(rate_limit_per_user) = data.rate_limit_per_user {
+                ec = ec.rate_limit_per_user(rate_limit_per_user);
+            }
+
+            if let Some(flags) = data.flags {
+                ec = ec.flags(flags);
+            }
+
+            if let Some(applied_tags) = data.applied_tags {
+                ec = ec.applied_tags(applied_tags.iter().map(|x| x.id).collect::<Vec<_>>());
+            }
+
+            let channel = this
+                .serenity_context
+                .http
+                .edit_thread(data.channel_id, &ec, Some(data.reason.as_str()))
+                .await
+                .map_err(LuaError::external)?;
+
+            let v = lua.to_value(&channel)?;
+            Ok(v)
+        });
+
+        methods.add_async_method(
+            "delete_channel",
+            |lua, this, channel_id: LuaValue| async move {
+                #[derive(serde::Serialize, serde::Deserialize)]
+                pub struct DeleteChannelOption {
+                    channel_id: serenity::all::ChannelId,
+                    reason: String,
+                }
+
+                let data: DeleteChannelOption = lua.from_value(channel_id)?;
+
+                this.check_action("delete_channel".to_string())
+                    .map_err(LuaError::external)?;
+
+                let bot_userid = this.serenity_context.cache.current_user().id;
+
+                this.check_permissions(bot_userid, serenity::all::Permissions::MANAGE_CHANNELS)
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let channel = this
+                    .serenity_context
+                    .http
+                    .delete_channel(data.channel_id, Some(data.reason.as_str()))
+                    .await
+                    .map_err(LuaError::external)?;
+
+                let v = lua.to_value(&channel)?;
+                Ok(v)
+            },
+        );
+
+        // Extras
         methods.add_async_method("ban", |lua, this, data: LuaValue| async move {
             /// A ban action
             #[derive(serde::Serialize, serde::Deserialize)]

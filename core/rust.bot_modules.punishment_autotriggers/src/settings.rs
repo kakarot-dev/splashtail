@@ -145,26 +145,20 @@ impl SettingDataValidator for AutotriggerValidator {
             });
         };
 
-        let actions_map = silverpelt::punishments::get_punishment_actions_for_guild(
-            ctx.guild_id,
-            &ctx.data.serenity_context.data::<silverpelt::data::Data>(),
-        )
-        .await
-        .map_err(|e| SettingsError::Generic {
-            message: format!("Error getting punishment actions: {}", e),
-            src: "AutotriggerValidator".to_string(),
-            typ: "external".to_string(),
-        })?;
+        if action.is_empty() {
+            return Err(SettingsError::Generic {
+                message: "Action cannot be empty".to_string(),
+                src: "AutotriggerValidator".to_string(),
+                typ: "external".to_string(),
+            });
+        }
 
-        match silverpelt::punishments::from_punishment_action_string(&actions_map, action) {
-            Ok(_) => {}
-            Err(e) => {
-                return Err(SettingsError::Generic {
-                    message: format!("Invalid action: {}", e),
-                    src: "AutotriggerValidator".to_string(),
-                    typ: "external".to_string(),
-                });
-            }
+        if !["ban", "kick", "timeout", "removeallroles"].contains(&action.as_str()) {
+            return Err(SettingsError::Generic {
+                message: "Action must be one of ban, kick, timeout and removeallroles".to_string(),
+                src: "AutotriggerValidator".to_string(),
+                typ: "external".to_string(),
+            });
         }
 
         Ok(())

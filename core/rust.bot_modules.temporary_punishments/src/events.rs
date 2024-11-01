@@ -13,7 +13,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 
             let bot_id = ectx.serenity_context.cache.current_user().id;
 
-            let mut current_user = match sandwich_driver::member_in_guild(
+            let current_user = match sandwich_driver::member_in_guild(
                 &cache_http,
                 &ectx.data.reqwest,
                 punishment.guild_id,
@@ -57,30 +57,41 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 punishment.reason, punishment.duration
             );
 
-            let punishment_actions = silverpelt::punishments::get_punishment_actions_for_guild(
-                punishment.guild_id,
-                &ectx.data,
-            )
-            .await?;
-
-            let cpa_revert = silverpelt::punishments::from_punishment_action_string(
-                &punishment_actions,
-                &punishment.punishment,
-            )?;
-
-            cpa_revert
-                .revert(
-                    &silverpelt::punishments::PunishmentActionData {
-                        cache_http,
-                        pool: ectx.data.pool.clone(),
-                        reqwest: ectx.data.reqwest.clone(),
-                        object_store: ectx.data.object_store.clone(),
-                    },
-                    target_user_id,
-                    &mut current_user,
-                    reason,
-                )
-                .await?;
+            match punishment.punishment.as_str() {
+                "ban" => {
+                    punishment
+                        .guild_id
+                        .unban(&ectx.serenity_context.http, target_user_id, Some(&reason))
+                        .await?;
+                }
+                "timeout" => {
+                    punishment
+                        .guild_id
+                        .edit_member(
+                            &ectx.serenity_context.http,
+                            target_user_id,
+                            serenity::all::EditMember::new()
+                                .enable_communication()
+                                .audit_log_reason(&reason),
+                        )
+                        .await?;
+                }
+                "removeallroles" => {
+                    punishment
+                        .guild_id
+                        .edit_member(
+                            &ectx.serenity_context.http,
+                            target_user_id,
+                            serenity::all::EditMember::new()
+                                .roles(Vec::new())
+                                .audit_log_reason(&reason),
+                        )
+                        .await?;
+                }
+                _ => {
+                    return Ok(());
+                }
+            }
 
             Ok(())
         }

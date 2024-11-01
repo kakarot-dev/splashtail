@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 pub type CommandObj = (crate::Command, crate::CommandExtendedDataMap);
 
 /// The `Module` trait can be used to create/define modules that run on Anti-Raid
@@ -78,11 +76,6 @@ pub trait Module: Send + Sync {
     /// to a whitelist-defined set of users
     fn root_module(&self) -> bool {
         false
-    }
-
-    /// What punishment actions this module provides
-    fn punishment_actions(&self) -> Vec<Arc<dyn crate::punishments::CreatePunishmentAction>> {
-        Vec::new()
     }
 
     /// Performs any sanity/validation checks on the module

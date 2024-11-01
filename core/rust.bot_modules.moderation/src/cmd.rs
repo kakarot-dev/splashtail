@@ -1,4 +1,3 @@
-use super::core::to_log_format;
 use poise::CreateReply;
 use sandwich_driver::{guild, member_in_guild};
 use serenity::all::{
@@ -6,7 +5,6 @@ use serenity::all::{
     User, UserId,
 };
 use silverpelt::jobserver::{embed as embed_job, get_icon_of_state};
-use silverpelt::punishments::PunishmentAction;
 use silverpelt::Context;
 use silverpelt::Error;
 use splashcore_rs::jobserver;
@@ -16,6 +14,25 @@ use splashcore_rs::utils::{
 };
 use std::collections::HashMap;
 use std::sync::Arc;
+
+/// Helper method to get the username of a user
+pub fn username(m: &User) -> String {
+    if let Some(ref global_name) = m.global_name {
+        global_name.to_string()
+    } else {
+        m.tag()
+    }
+}
+
+/// Helper method to get the username of a member
+pub fn to_log_format(moderator: &User, member: &User, reason: &str) -> String {
+    format!(
+        "{} | Handled '{}' for reason '{}'",
+        username(moderator),
+        username(member),
+        reason
+    )
+}
 
 /*
 // Options that can be set when pruning a message
@@ -474,7 +491,7 @@ pub async fn kick(
         module: "moderation".to_string(),
         src: Some("kick".to_string()),
         guild_id,
-        punishment: super::core::punishment_actions::KickAction {}.string_form(),
+        punishment: "kick".to_string(),
         creator: silverpelt::punishments::PunishmentTarget::User(author.user.id),
         target: silverpelt::punishments::PunishmentTarget::User(member.user.id),
         handle_log: serde_json::json!({}),
@@ -644,7 +661,7 @@ pub async fn ban(
         module: "moderation".to_string(),
         src: Some("ban".to_string()),
         guild_id,
-        punishment: super::core::punishment_actions::BanAction {}.string_form(),
+        punishment: "ban".to_string(),
         creator: silverpelt::punishments::PunishmentTarget::User(author.user.id),
         target: silverpelt::punishments::PunishmentTarget::User(member.id),
         handle_log: serde_json::json!({}),
@@ -823,7 +840,7 @@ pub async fn tempban(
         module: "moderation".to_string(),
         src: Some("tempban".to_string()),
         guild_id,
-        punishment: super::core::punishment_actions::BanAction {}.string_form(),
+        punishment: "ban".to_string(),
         creator: silverpelt::punishments::PunishmentTarget::User(author.user.id),
         target: silverpelt::punishments::PunishmentTarget::User(member.id),
         handle_log: serde_json::json!({}),
@@ -1162,7 +1179,7 @@ pub async fn timeout(
         module: "moderation".to_string(),
         src: Some("timeout".to_string()),
         guild_id,
-        punishment: super::core::punishment_actions::BanAction {}.string_form(),
+        punishment: "timeout".to_string(),
         creator: silverpelt::punishments::PunishmentTarget::User(author.user.id),
         target: silverpelt::punishments::PunishmentTarget::User(member.user.id),
         handle_log: serde_json::json!({}),

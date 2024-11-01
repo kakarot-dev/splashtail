@@ -1,5 +1,4 @@
 mod cmd;
-mod core;
 
 use indexmap::indexmap;
 use permissions::types::{PermissionCheck, PermissionChecks};
@@ -140,17 +139,6 @@ impl silverpelt::module::Module for Module {
                     },
                 },
             ),
-        ]
-    }
-
-    fn punishment_actions(
-        &self,
-    ) -> Vec<std::sync::Arc<dyn silverpelt::punishments::CreatePunishmentAction>> {
-        vec![
-            std::sync::Arc::new(core::punishment_actions::CreateTimeoutAction),
-            std::sync::Arc::new(core::punishment_actions::CreateKickAction),
-            std::sync::Arc::new(core::punishment_actions::CreateBanAction),
-            std::sync::Arc::new(core::punishment_actions::CreateRemoveAllRolesAction),
         ]
     }
 

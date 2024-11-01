@@ -16,7 +16,7 @@ pub async fn lockdowns(_ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Lists all currently ongoing lockdowns in summary form
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, rename = "list")]
 pub async fn lockdowns_list(ctx: Context<'_>) -> Result<(), Error> {
     let Some(guild_id) = ctx.guild_id() else {
         return Err("This command can only be used in a guild".into());
@@ -55,7 +55,7 @@ pub async fn lockdowns_list(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 /// Starts a traditional server lockdown
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, rename = "tsl")]
 pub async fn lockdowns_tsl(ctx: Context<'_>, reason: String) -> Result<(), Error> {
     let Some(guild_id) = ctx.guild_id() else {
         return Err("This command can only be used in a guild".into());
@@ -78,15 +78,19 @@ pub async fn lockdowns_tsl(ctx: Context<'_>, reason: String) -> Result<(), Error
         object_store: data.object_store.clone(),
     };
 
+    ctx.defer().await?;
+
     lockdowns
         .easy_apply(Box::new(lockdown_type), &lockdown_data, &reason)
         .await
         .map_err(|e| format!("Error while applying lockdown: {}", e))?;
 
+    ctx.say("Lockdown started").await?;
+
     Ok(())
 }
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, rename = "qsl")]
 /// Starts a quick server lockdown
 pub async fn lockdowns_qsl(ctx: Context<'_>, reason: String) -> Result<(), Error> {
     let Some(guild_id) = ctx.guild_id() else {
@@ -110,15 +114,19 @@ pub async fn lockdowns_qsl(ctx: Context<'_>, reason: String) -> Result<(), Error
         object_store: data.object_store.clone(),
     };
 
+    ctx.defer().await?;
+
     lockdowns
         .easy_apply(Box::new(lockdown_type), &lockdown_data, &reason)
         .await
         .map_err(|e| format!("Error while applying lockdown: {}", e))?;
 
+    ctx.say("Lockdown started").await?;
+
     Ok(())
 }
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, rename = "scl")]
 /// Starts a single channel lockdown
 pub async fn lockdowns_scl(
     ctx: Context<'_>,
@@ -147,15 +155,19 @@ pub async fn lockdowns_scl(
         object_store: data.object_store.clone(),
     };
 
+    ctx.defer().await?;
+
     lockdowns
         .easy_apply(Box::new(lockdown_type), &lockdown_data, &reason)
         .await
         .map_err(|e| format!("Error while applying lockdown: {}", e))?;
 
+    ctx.say("Lockdown started").await?;
+
     Ok(())
 }
 
-#[poise::command(slash_command, guild_only)]
+#[poise::command(slash_command, guild_only, rename = "remove")]
 /// Remove a lockdown by ID
 pub async fn lockdowns_remove(ctx: Context<'_>, id: String) -> Result<(), Error> {
     let Some(guild_id) = ctx.guild_id() else {
@@ -176,10 +188,14 @@ pub async fn lockdowns_remove(ctx: Context<'_>, id: String) -> Result<(), Error>
         object_store: data.object_store.clone(),
     };
 
+    ctx.defer().await?;
+
     lockdowns
         .easy_remove(id.parse()?, &lockdown_data)
         .await
         .map_err(|e| format!("Error while applying lockdown: {}", e))?;
+
+    ctx.say("Lockdown removed").await?;
 
     Ok(())
 }

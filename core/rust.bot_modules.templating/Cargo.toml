@@ -23,7 +23,6 @@ module_settings = { path = "../rust.module_settings" }
 permissions = { path = "../rust.permissions" }
 config = { path = "../rust.config" }
 sandwich_driver = { path = "../rust.sandwich_driver" }
-rust_buildstats = { path = "../rust.buildstats" }
 splashcore_rs = { path = "../rust.std" }
 templating = { path = "../rust.templating" }
 modules_ext = { path = "../rust.modules_ext" }

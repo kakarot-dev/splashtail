@@ -311,7 +311,7 @@ impl LuaUserData for DiscordActionExecutor {
             },
         );
 
-        methods.add_async_method(
+        /*methods.add_async_method(
             "edit_auto_moderation_rule",
             |lua, this, data: LuaValue| async move {
                 #[derive(serde::Serialize, serde::Deserialize)]
@@ -393,7 +393,7 @@ impl LuaUserData for DiscordActionExecutor {
 
                 Ok(v)
             },
-        );
+        );*/
 
         // Channel
         methods.add_async_method("get_channel", |lua, this, data: LuaValue| async move {

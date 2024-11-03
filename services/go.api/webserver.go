@@ -22,7 +22,6 @@ import (
 	"github.com/infinitybotlist/eureka/zapchi"
 	"go.api/api"
 	"go.api/constants"
-	"go.api/integrations/gitlogs"
 	"go.api/routes/auth"
 	"go.api/routes/core"
 	"go.api/routes/guilds"
@@ -203,9 +202,6 @@ func CreateWebserver() *chi.Mux {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		_, _ = w.Write([]byte(constants.MethodNotAllowed))
 	})
-
-	// Mount integrations
-	r.Mount("/integrations/gitlogs", gitlogs.Setup())
 
 	return r
 }

@@ -22,17 +22,6 @@ Splashtail is a monorepo containing all the code needed to run and setup Anti-Ra
     - **Replaced by:** [`Sandwich-Daemon`](https://github.com/anti-raid/Sandwich-Daemon)
     - **Reason:** Sandwich-Daemon is a more stable and scalable long-term solution
 
-# Integration
-
-To increase our feature set and to ensure that we are synced with upstream, AntiRaid includes several integrations (forked/taken from other AGPL3-licensed projects that we either have permission to use or owned/made in the first place):
-
-## Current
-
-- **Git Logs** 
-    - **Folders:** ``webserver/integration/gitlogs`` and ``botv2/src/modules/gitlogs``
-    - Website: [https://gitlogs.xyz](https://gitlogs.xyz)
-    - Github: [https://github.com/Git-Logs](https://github.com/Git-Logs)
-
 # Communication
 
 All communication between the webserver, the bot and the jobserver take place over an internal RPC API and standard HTTP. This allows for easy, yet high quality integration between services on Anti-Raid.

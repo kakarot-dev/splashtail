@@ -5,7 +5,6 @@ pub fn modules() -> Vec<Box<dyn Module>> {
     // List of base modules (wrapped in an Box::new, not a macro)
     let base_modules: Vec<Box<dyn Module>> = vec![
         Box::new(bot_modules_core::Module),
-        Box::new(bot_modules_gitlogs::Module),
         Box::new(bot_modules_hooks::Module),
         Box::new(bot_modules_lockdown::Module),
         Box::new(bot_modules_moderation::Module),

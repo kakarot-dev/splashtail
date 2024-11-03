@@ -558,7 +558,6 @@ version = "0.1.0"
 dependencies = [
  "bot_modules_acl",
  "bot_modules_core",
- "bot_modules_gitlogs",
  "bot_modules_hooks",
  "bot_modules_lockdown",
  "bot_modules_moderation",
@@ -569,25 +568,6 @@ dependencies = [
  "bot_modules_templating",
  "bot_modules_temporary_punishments",
  "silverpelt",
-]
-
-[[package]]
-name = "bot_modules_gitlogs"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "botox",
- "config",
- "futures-util",
- "indexmap",
- "module_settings",
- "modules_ext",
- "permissions",
- "poise",
- "serenity",
- "silverpelt",
- "splashcore_rs",
- "sqlx",
 ]
 
 [[package]]

@@ -1,3 +1,4 @@
+use serenity::http;
 use silverpelt::ar_event::{AntiraidEvent, EventHandlerContext};
 
 /// Temporary Punishments event listener
@@ -24,7 +25,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                 Some(user) => user,
                 None => {
                     sqlx::query!(
-                        "UPDATE punishments SET duration = NULL, handle_log = $1 WHERE id = $2",
+                        "UPDATE punishments SET is_handled = true, handle_log = $1 WHERE id = $2",
                         serde_json::json!({
                             "error": "Bot not in guild",
                         }),
@@ -42,7 +43,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
             // Bot doesn't have permissions to unban
             if !permissions.ban_members() {
                 sqlx::query!(
-                    "UPDATE punishments SET duration = NULL, handle_log = $1 WHERE id = $2",
+                    "UPDATE punishments SET is_handled = true, handle_log = $1 WHERE id = $2",
                     serde_json::json!({
                         "error": "Bot doesn't have permissions to unban",
                     }),
@@ -59,10 +60,34 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 
             match punishment.punishment.as_str() {
                 "ban" => {
-                    punishment
+                    if let Err(e) = punishment
                         .guild_id
                         .unban(&ectx.serenity_context.http, target_user_id, Some(&reason))
-                        .await?;
+                        .await
+                    {
+                        match e {
+                            serenity::Error::Http(http_err) => {
+                                if [http::StatusCode::NOT_FOUND, http::StatusCode::FORBIDDEN]
+                                    .contains(
+                                        &http_err
+                                            .status_code()
+                                            .unwrap_or(http::StatusCode::NOT_ACCEPTABLE),
+                                    )
+                                {
+                                    sqlx::query!(
+                                            "UPDATE punishments SET is_handled = true, handle_log = $1 WHERE id = $2",
+                                            serde_json::json!({
+                                                "error": format!("Unable to unban: {}", http_err.status_code().unwrap_or(http::StatusCode::NOT_ACCEPTABLE)),
+                                            }),
+                                            punishment.id
+                                        )
+                                        .execute(&ectx.data.pool)
+                                        .await?;
+                                }
+                            }
+                            _ => return Err(Box::new(e)),
+                        }
+                    }
                 }
                 "timeout" => {
                     punishment
@@ -92,6 +117,16 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                     return Ok(());
                 }
             }
+
+            sqlx::query!(
+                "UPDATE punishments SET is_handled = true, handle_log = $1 WHERE id = $2",
+                serde_json::json!({
+                    "success": true,
+                }),
+                punishment.id
+            )
+            .execute(&ectx.data.pool)
+            .await?;
 
             Ok(())
         }

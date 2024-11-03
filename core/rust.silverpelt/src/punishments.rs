@@ -27,6 +27,8 @@ pub struct Punishment {
     pub duration: Option<std::time::Duration>,
     /// The reason for the punishment
     pub reason: String,
+    /// Is Handled
+    pub is_handled: bool,
     /// Extra misc data
     pub data: Option<serde_json::Value>,
 }
@@ -36,7 +38,7 @@ impl Punishment {
         db: impl sqlx::PgExecutor<'_>,
     ) -> Result<Vec<Punishment>, crate::Error> {
         let rec = sqlx::query!(
-            "SELECT id, module, src, guild_id, punishment, creator, target, handle_log, created_at, duration, reason, data FROM punishments WHERE duration IS NOT NULL AND (created_at + duration) < NOW()",
+            "SELECT id, module, src, guild_id, punishment, creator, target, is_handled, handle_log, created_at, duration, reason, data FROM punishments WHERE duration IS NOT NULL AND is_handled = false AND (created_at + duration) < NOW()",
         )
         .fetch_all(db)
         .await?;
@@ -58,6 +60,7 @@ impl Punishment {
                     let secs = splashcore_rs::utils::pg_interval_to_secs(d);
                     std::time::Duration::from_secs(secs.try_into().unwrap())
                 }),
+                is_handled: row.is_handled,
                 reason: row.reason,
                 data: row.data,
             });
@@ -112,10 +115,12 @@ impl PunishmentCreate {
         self,
         id: sqlx::types::Uuid,
         created_at: chrono::DateTime<chrono::Utc>,
+        is_handled: bool,
     ) -> Punishment {
         Punishment {
             id,
             created_at,
+            is_handled,
             module: self.module,
             src: self.src,
             guild_id: self.guild_id,
@@ -137,7 +142,7 @@ impl PunishmentCreate {
         let ret_data = sqlx::query!(
             r#"
             INSERT INTO punishments (module, src, guild_id, punishment, creator, target, handle_log, duration, reason, data)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, make_interval(secs => $8), $9, $10) RETURNING id, created_at
+            VALUES ($1, $2, $3, $4, $5, $6, $7, make_interval(secs => $8), $9, $10) RETURNING id, created_at, is_handled
             "#,
             self.module,
             self.src,
@@ -153,20 +158,7 @@ impl PunishmentCreate {
         .fetch_one(db)
         .await?;
 
-        Ok(Punishment {
-            id: ret_data.id,
-            module: self.module,
-            src: self.src,
-            guild_id: self.guild_id,
-            punishment: self.punishment,
-            creator: self.creator,
-            target: self.target,
-            handle_log: self.handle_log,
-            created_at: ret_data.created_at,
-            duration: self.duration,
-            reason: self.reason,
-            data: self.data,
-        })
+        Ok(self.to_punishment(ret_data.id, ret_data.created_at, ret_data.is_handled))
     }
 
     /// Creates a new Punishment and dispatches it as an event in one go

@@ -13,7 +13,7 @@ The first line of the template is a pragma. This is a special statement beginnin
 In this case, we want to tell AntiRaid that we are coding a template in Lua and that we want to allow the capability to send messages to Discord. This is done by adding the ``allowed_caps`` key to the pragma and specifying the capabilities we want to allow as seen below:
 
 ```lua
--- @pragma {"lang":"lua","allowed_caps":["discord:sendmessage_channel"]}
+-- @pragma {"lang":"lua","allowed_caps":["discord:create_message"]}
 ```
 
 Another example of pragma is on the Website:
@@ -21,7 +21,7 @@ Another example of pragma is on the Website:
 ![Pragma on website image](3-example-pragmaimg.png)
 
 ```json
-{"lang":"lua","builderInfo":{"ver":1,"data":{"embeds":[{"title":"Test","description":"","fields":[]}],"content":""},"checksum":"72e7225dfa2725a979fccc763e2e5bac3855f1cd3c10b5cd00c90b53e724db23"},"allowed_caps":["discord:sendmessage_channel"]}
+{"lang":"lua","builderInfo":{"ver":1,"data":{"embeds":[{"title":"Test","description":"","fields":[]}],"content":""},"checksum":"72e7225dfa2725a979fccc763e2e5bac3855f1cd3c10b5cd00c90b53e724db23"},"allowed_caps":["discord:create_message"]}
 ```
 
 Here, notice that the builderInfo contains the embeds, content, and checksum of the template. When the user wants to reread their template, the website only has to reread the pragma statement to reconstruct the state and show the right tab (either Builder if they are just making a simple embed, or Advanced if they were making changes to the content of the template itself). Without the pragma, the website would have to use its own arcane syntax on top of comments or execute the template just to reconstruct state.
@@ -103,7 +103,7 @@ table.insert(message.embeds, embed)
 
 -- Send message using action executor
 local discord_executor = discord.new(token);
-discord_executor:sendmessage_channel({
+discord_executor:create_message({
     channel_id = args.sink,
     message = message
 })
@@ -112,7 +112,7 @@ discord_executor:sendmessage_channel({
 Finally, we can put the entire loop together as so:
 
 ```lua
--- @pragma {"lang":"lua","allowed_caps":["discord:sendmessage_channel"]}
+-- @pragma {"lang":"lua","allowed_caps":["discord:create_message"]}
 local args, token = ...
 local discord = require "@antiraid/discord"
 local interop = require "@antiraid/interop"
@@ -145,7 +145,7 @@ table.insert(message.embeds, embed)
 
 -- Send message using action executor
 local discord_executor = discord.new(token);
-discord_executor:sendmessage_channel({
+discord_executor:create_message({
     channel_id = args.sink,
     message = message
 })

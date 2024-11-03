@@ -43,9 +43,9 @@ impl LuaRatelimits {
         let kick_lim2 = DefaultKeyedRateLimiter::keyed(kick_quota2);
 
         // Send message channel limits (are smaller to allow for more actions)
-        let sendmessage_channel_quota1 =
+        let create_message_quota1 =
             Self::create_quota(NonZeroU32::new(15).unwrap(), Duration::from_secs(20))?;
-        let sendmessage_channel_lim1 = DefaultKeyedRateLimiter::keyed(sendmessage_channel_quota1);
+        let create_message_lim1 = DefaultKeyedRateLimiter::keyed(create_message_quota1);
 
         // Create the clock
         let clock = QuantaClock::default();
@@ -55,7 +55,7 @@ impl LuaRatelimits {
             per_bucket: indexmap::indexmap!(
                 "ban".to_string() => vec![ban_lim1, ban_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
                 "kick".to_string() => vec![kick_lim1, kick_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
-                "sendmessage_channel".to_string() => vec![sendmessage_channel_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
+                "create_message_lim1".to_string() => vec![create_message_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
             ),
             clock,
         })

@@ -839,89 +839,85 @@ impl LuaUserData for DiscordActionExecutor {
             Ok(())
         });
 
-        methods.add_async_method(
-            "sendmessage_channel",
-            |lua, this, data: LuaValue| async move {
-                /// A kick action
-                #[derive(serde::Serialize, serde::Deserialize)]
-                pub struct SendMessageChannelAction {
-                    channel_id: serenity::all::ChannelId, // Channel *must* be in the same guild
-                    message: crate::core::messages::CreateMessage,
-                }
+        methods.add_async_method("create_message", |lua, this, data: LuaValue| async move {
+            #[derive(serde::Serialize, serde::Deserialize)]
+            pub struct SendMessageChannelAction {
+                channel_id: serenity::all::ChannelId, // Channel *must* be in the same guild
+                message: crate::core::messages::CreateMessage,
+            }
 
-                let data = lua.from_value::<SendMessageChannelAction>(data)?;
+            let data = lua.from_value::<SendMessageChannelAction>(data)?;
 
-                this.check_action("sendmessage_channel".to_string())
-                    .map_err(LuaError::external)?;
-
-                let msg = crate::core::messages::to_discord_reply(data.message)
-                    .map_err(LuaError::external)?;
-
-                // Perform required checks
-                let channel = sandwich_driver::channel(
-                    &this.cache_http,
-                    &this.reqwest_client,
-                    Some(this.guild_id),
-                    data.channel_id,
-                )
-                .await
+            this.check_action("create_message".to_string())
                 .map_err(LuaError::external)?;
 
-                let Some(channel) = channel else {
-                    return Err(LuaError::external("Channel not found"));
-                };
-
-                let Some(guild_channel) = channel.guild() else {
-                    return Err(LuaError::external("Channel not in guild"));
-                };
-
-                if guild_channel.guild_id != this.guild_id {
-                    return Err(LuaError::external("Channel not in guild"));
-                }
-
-                let bot_user_id = this.serenity_context.cache.current_user().id;
-
-                let bot_user = sandwich_driver::member_in_guild(
-                    &this.cache_http,
-                    &this.reqwest_client,
-                    this.guild_id,
-                    bot_user_id,
-                )
-                .await
+            let msg = crate::core::messages::to_discord_reply(data.message)
                 .map_err(LuaError::external)?;
 
-                let Some(bot_user) = bot_user else {
-                    return Err(LuaError::external("Bot user not found"));
-                };
+            // Perform required checks
+            let channel = sandwich_driver::channel(
+                &this.cache_http,
+                &this.reqwest_client,
+                Some(this.guild_id),
+                data.channel_id,
+            )
+            .await
+            .map_err(LuaError::external)?;
 
-                let guild =
-                    sandwich_driver::guild(&this.cache_http, &this.reqwest_client, this.guild_id)
-                        .await
-                        .map_err(LuaError::external)?;
+            let Some(channel) = channel else {
+                return Err(LuaError::external("Channel not found"));
+            };
 
-                // Check if the bot has permissions to send messages in the given channel
-                if !guild
-                    .user_permissions_in(&guild_channel, &bot_user)
-                    .send_messages()
-                {
-                    return Err(LuaError::external(
-                        "Bot does not have permission to send messages in the given channel",
-                    ));
-                }
+            let Some(guild_channel) = channel.guild() else {
+                return Err(LuaError::external("Channel not in guild"));
+            };
 
-                let cm = msg.to_create_message();
+            if guild_channel.guild_id != this.guild_id {
+                return Err(LuaError::external("Channel not in guild"));
+            }
 
-                let msg = guild_channel
-                    .send_message(&this.serenity_context.http, cm)
+            let bot_user_id = this.serenity_context.cache.current_user().id;
+
+            let bot_user = sandwich_driver::member_in_guild(
+                &this.cache_http,
+                &this.reqwest_client,
+                this.guild_id,
+                bot_user_id,
+            )
+            .await
+            .map_err(LuaError::external)?;
+
+            let Some(bot_user) = bot_user else {
+                return Err(LuaError::external("Bot user not found"));
+            };
+
+            let guild =
+                sandwich_driver::guild(&this.cache_http, &this.reqwest_client, this.guild_id)
                     .await
                     .map_err(LuaError::external)?;
 
-                Ok(MessageHandle {
-                    message: msg,
-                    shard_messenger: this.shard_messenger.clone(),
-                })
-            },
-        );
+            // Check if the bot has permissions to send messages in the given channel
+            if !guild
+                .user_permissions_in(&guild_channel, &bot_user)
+                .send_messages()
+            {
+                return Err(LuaError::external(
+                    "Bot does not have permission to send messages in the given channel",
+                ));
+            }
+
+            let cm = msg.to_create_message();
+
+            let msg = guild_channel
+                .send_message(&this.serenity_context.http, cm)
+                .await
+                .map_err(LuaError::external)?;
+
+            Ok(MessageHandle {
+                message: msg,
+                shard_messenger: this.shard_messenger.clone(),
+            })
+        });
     }
 }
 

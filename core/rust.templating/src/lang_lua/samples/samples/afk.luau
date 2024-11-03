@@ -1,7 +1,6 @@
--- @pragma {"lang":"lua","allowed_caps":["discord:sendmessage_channel","kv:*"]}
+-- @pragma {"lang":"lua","allowed_caps":["discord:create_message","kv:*"]}
 local args, token = ...
 local discord = require "@antiraid/discord"
-local interop = require "@antiraid/interop"
 
 if args.event_name ~= "MESSAGE" then
     return -- Early return if not a message event
@@ -13,7 +12,7 @@ local channel_id = args.event_data["new_message"]["channel_id"]
 
 -- Send message using action executor
 local discord_executor = discord.new(token);
-discord_executor:sendmessage_channel({
+discord_executor:create_message({
     channel_id = channel_id,
     message = user_id
 })

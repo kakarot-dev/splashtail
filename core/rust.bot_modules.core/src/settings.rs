@@ -1099,7 +1099,7 @@ pub static GUILD_TEMPLATES_KV: LazyLock<ConfigOption> = LazyLock::new(|| {
             module_settings::common_columns::created_at(),
             module_settings::common_columns::last_updated_at(),
         ]),
-        title_template: "{name}",
+        title_template: "{key}",
         operations: indexmap::indexmap! {
             OperationType::View => OperationSpecific {
                 columns_to_set: indexmap::indexmap! {},

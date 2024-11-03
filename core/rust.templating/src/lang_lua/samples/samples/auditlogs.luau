@@ -1,4 +1,4 @@
--- @pragma {"lang":"lua","allowed_caps":["discord:sendmessage_channel"]}
+-- @pragma {"lang":"lua","allowed_caps":["discord:create_message"]}
 local args, token = ...
 local discord = require "@antiraid/discord"
 local interop = require "@antiraid/interop"
@@ -31,7 +31,7 @@ table.insert(message.embeds, embed)
 
 -- Send message using action executor
 local discord_executor = discord.new(token);
-discord_executor:sendmessage_channel({
+discord_executor:create_message({
     channel_id = args.sink,
     message = message
 })

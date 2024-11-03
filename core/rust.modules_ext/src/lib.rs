@@ -38,6 +38,8 @@ pub fn create_full_command_list<T: Module + ?Sized>(module: &T) -> Vec<CommandOb
     // Add in the settings related commands as virtual commands to allow configuring permissions while not listing in the bot
     for config_opt in module.config_options() {
         let mut created_cmd = config_opt_base_cmd();
+        created_cmd.name = config_opt.id.to_string();
+        created_cmd.qualified_name = config_opt.id.to_string();
 
         for (operation_type, _) in config_opt.operations.iter() {
             let mut subcmd = config_opt_base_cmd();

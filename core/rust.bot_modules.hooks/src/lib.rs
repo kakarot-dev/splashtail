@@ -17,6 +17,10 @@ impl silverpelt::module::Module for Module {
         "Hooks allow for running a Lua template when a specific set of events occur."
     }
 
+    fn is_default_enabled(&self) -> bool {
+        true // Enable it by default
+    }
+
     fn event_listeners(&self) -> Option<Box<dyn silverpelt::module::ModuleEventListeners>> {
         Some(Box::new(EventHandler))
     }

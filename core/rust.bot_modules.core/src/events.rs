@@ -22,7 +22,7 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
                                 .title("Thank you for adding AntiRaid")
                                 .description(r#"While you have successfully added AntiRaid to your server, it won't do much until you take some time to configure it to your needs.
         
-Please check out both the `User Guide` and the `Website` to tailor AntiRaid to the needs of your server!    
+Please check out both the `User Guide` and the `Website` to tailor AntiRaid to the needs of your server! And, if you need help, feel free to join our `Support Server`!  
                                 "#)
                             )
                             .components(
@@ -36,7 +36,11 @@ Please check out both the `User Guide` and the `Website` to tailor AntiRaid to t
                                             serenity::all::CreateButton::new_link(
                                                 config::CONFIG.sites.frontend.clone(),
                                             )
-                                            .label("Website")
+                                            .label("Website"),
+                                            serenity::all::CreateButton::new_link(
+                                                config::CONFIG.meta.support_server_invite.clone(),
+                                            )
+                                            .label("Support Server")
                                         ]
                                     )
                                 ]

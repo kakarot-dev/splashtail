@@ -307,6 +307,49 @@ impl<'de> Deserialize<'de> for Box<dyn LockdownMode> {
     }
 }
 
+pub struct GuildLockdownSettings {
+    pub member_roles: HashSet<serenity::all::RoleId>,
+    pub require_correct_layout: bool,
+}
+
+impl Default for GuildLockdownSettings {
+    fn default() -> Self {
+        Self {
+            member_roles: HashSet::new(),
+            require_correct_layout: true,
+        }
+    }
+}
+
+pub async fn get_guild_lockdown_settings(
+    pool: &sqlx::PgPool,
+    guild_id: serenity::all::GuildId,
+) -> Result<GuildLockdownSettings, silverpelt::Error> {
+    match sqlx::query!(
+        "SELECT member_roles, require_correct_layout FROM lockdown__guilds WHERE guild_id = $1",
+        guild_id.to_string(),
+    )
+    .fetch_optional(pool)
+    .await?
+    {
+        Some(settings) => {
+            let member_roles = settings
+                .member_roles
+                .iter()
+                .map(|r| r.parse().unwrap())
+                .collect();
+
+            let settings = GuildLockdownSettings {
+                member_roles,
+                require_correct_layout: settings.require_correct_layout,
+            };
+
+            Ok(settings)
+        }
+        None => Ok(GuildLockdownSettings::default()),
+    }
+}
+
 /// Represents a lockdown
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Lockdown {
@@ -397,7 +440,7 @@ impl Lockdown {
 /// Represents a list of lockdowns
 pub struct LockdownSet {
     pub lockdowns: Vec<Lockdown>,
-    pub settings: Arc<super::cache::GuildLockdownSettings>,
+    pub settings: GuildLockdownSettings,
     pub guild_id: serenity::all::GuildId,
 }
 
@@ -435,7 +478,7 @@ impl LockdownSet {
             lockdowns.push(lockdown);
         }
 
-        let settings = super::cache::get_guild_lockdown_settings(pool, guild_id).await?;
+        let settings = get_guild_lockdown_settings(pool, guild_id).await?;
 
         Ok(LockdownSet {
             lockdowns,

@@ -4,9 +4,8 @@ use module_settings::{
     types::{
         settings_wrap, Column, ColumnSuggestion, ColumnType, ConfigOption,
         CreateDataStore, DataStore, InnerColumnType, InnerColumnTypeStringKind, OperationSpecific,
-        OperationType, SettingsData, SettingsError, NoOpValidator, NoOpPostAction, PostAction, HookContext
+        OperationType, SettingsData, SettingsError, NoOpValidator, NoOpPostAction,
     },
-    state::State,
 };
 use splashcore_rs::value::Value;
 use std::sync::LazyLock;
@@ -92,28 +91,6 @@ pub static LOCKDOWN_SETTINGS: LazyLock<ConfigOption> = LazyLock::new(|| {
         post_action: settings_wrap(NoOpPostAction {}),
     }
 });
-
-/// Post actions for Lockdown Settings to clear cache
-pub struct LockdownSettingsPostActions;
-
-#[async_trait::async_trait]
-impl PostAction for LockdownSettingsPostActions {
-    async fn post_action<'a>(
-        &self,
-        ctx: HookContext<'a>,
-        _state: &'a mut State,
-    ) -> Result<(), SettingsError> {
-        if ctx.operation_type == OperationType::View {
-            return Ok(());
-        }
-        super::cache::GUILD_LOCKDOWN_SETTINGS
-            .invalidate(&ctx.guild_id)
-            .await;
-
-        Ok(())
-    }
-}
-
 
 pub static LOCKDOWNS: LazyLock<ConfigOption> = LazyLock::new(|| ConfigOption {
     id: "lockdowns",
@@ -230,7 +207,7 @@ impl CreateDataStore for LockdownDataStore {
                 .create_impl(setting, guild_id, author, data, common_filters)
                 .await?,
             cache: silverpelt::data::Data::silverpelt_cache(data),
-            lockdown_data: super::core::LockdownData {
+            lockdown_data: lockdowns::LockdownData {
                 cache_http: data.cache_http.clone(),
                 pool: data.pool.clone(),
                 reqwest: data.reqwest.clone(),
@@ -243,7 +220,7 @@ impl CreateDataStore for LockdownDataStore {
 pub struct LockdownDataStoreImpl {
     inner: PostgresDataStoreImpl,
     cache: std::sync::Arc<silverpelt::cache::SilverpeltCache>,
-    lockdown_data: super::core::LockdownData,
+    lockdown_data: lockdowns::LockdownData,
 }
 
 #[async_trait]
@@ -312,7 +289,7 @@ impl DataStore for LockdownDataStoreImpl {
         };
 
         // Get the current lockdown set
-        let mut lockdowns = super::core::LockdownSet::guild(self.inner.guild_id, &self.inner.pool)
+        let mut lockdowns = lockdowns::LockdownSet::guild(self.inner.guild_id, &self.inner.pool)
             .await
             .map_err(|e| SettingsError::Generic {
                 message: format!("Error while fetching lockdown set: {}", e),
@@ -322,14 +299,14 @@ impl DataStore for LockdownDataStoreImpl {
 
         // Create the lockdown
         let lockdown_type =
-            super::core::from_lockdown_mode_string(typ).map_err(|_| SettingsError::Generic {
+            lockdowns::from_lockdown_mode_string(typ).map_err(|_| SettingsError::Generic {
                 message: format!(
                     "Invalid lockdown mode: {}.\n\nTIP: The following lockdown modes are supported: {}", 
                     typ, 
                     {
                         let mut supported_lockdown_modes = String::new();
 
-                        for mode in super::core::CREATE_LOCKDOWN_MODES.iter() {
+                        for mode in lockdowns::CREATE_LOCKDOWN_MODES.iter() {
                             let creator = mode.value();
                             supported_lockdown_modes.push_str(&format!("\n- {}", creator.syntax()));
                         }
@@ -428,7 +405,7 @@ impl DataStore for LockdownDataStoreImpl {
         };
 
         // Get the current lockdown set
-        let mut lockdowns = super::core::LockdownSet::guild(self.inner.guild_id, &self.inner.pool)
+        let mut lockdowns = lockdowns::LockdownSet::guild(self.inner.guild_id, &self.inner.pool)
             .await
             .map_err(|e| SettingsError::Generic {
                 message: format!("Error while fetching lockdown set: {}", e),

@@ -9,7 +9,6 @@ replace go.jobs => ../../core/go.jobs
 require (
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/cloudflare/tableflip v1.2.3
-	github.com/git-logs/client/webserver v0.0.0-20240809070647-860483f2c2cc
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/infinitybotlist/eureka v1.11.0

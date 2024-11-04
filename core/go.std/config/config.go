@@ -26,9 +26,7 @@ type DiscordAuth struct {
 type Sites struct {
 	Frontend string `yaml:"frontend" default:"https://antiraid.xyz" comment:"Frontend URL" validate:"required"`
 	API      string `yaml:"api" default:"https://splashtail.antiraid.xyz" comment:"API URL" validate:"required"`
-	CDN      string `yaml:"cdn" default:"https://cdn.antiraid.xyz" comment:"CDN URL" validate:"required"`
-	Instatus string `yaml:"instatus" default:"https://status.antiraid.xyz" comment:"Instatus Status Page URL" validate:"required"`
-	Panel    string `yaml:"panel" default:"https://panel.antiraid.xyz" comment:"Panel URL" validate:"required"`
+	Docs     string `yaml:"docs" default:"https://docs.antiraid.xyz" comment:"Docs URL" validate:"required"`
 }
 
 type JAPI struct {

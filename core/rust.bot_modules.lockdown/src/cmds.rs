@@ -64,14 +64,14 @@ pub async fn lockdowns_tsl(ctx: Context<'_>, reason: String) -> Result<(), Error
     let data = ctx.data();
 
     // Get the current lockdown set
-    let mut lockdowns = super::core::LockdownSet::guild(guild_id, &data.pool)
+    let mut lockdowns = lockdowns::LockdownSet::guild(guild_id, &data.pool)
         .await
         .map_err(|e| format!("Error while fetching lockdown set: {}", e))?;
 
     // Create the lockdown
-    let lockdown_type = super::core::tsl::TraditionalServerLockdown {};
+    let lockdown_type = lockdowns::tsl::TraditionalServerLockdown {};
 
-    let lockdown_data = super::core::LockdownData {
+    let lockdown_data = lockdowns::LockdownData {
         cache_http: botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
         pool: data.pool.clone(),
         reqwest: data.reqwest.clone(),
@@ -100,14 +100,14 @@ pub async fn lockdowns_qsl(ctx: Context<'_>, reason: String) -> Result<(), Error
     let data = ctx.data();
 
     // Get the current lockdown set
-    let mut lockdowns = super::core::LockdownSet::guild(guild_id, &data.pool)
+    let mut lockdowns = lockdowns::LockdownSet::guild(guild_id, &data.pool)
         .await
         .map_err(|e| format!("Error while fetching lockdown set: {}", e))?;
 
     // Create the lockdown
-    let lockdown_type = super::core::qsl::QuickServerLockdown {};
+    let lockdown_type = lockdowns::qsl::QuickServerLockdown {};
 
-    let lockdown_data = super::core::LockdownData {
+    let lockdown_data = lockdowns::LockdownData {
         cache_http: botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
         pool: data.pool.clone(),
         reqwest: data.reqwest.clone(),
@@ -141,14 +141,14 @@ pub async fn lockdowns_scl(
     let channel = channel.unwrap_or(ctx.channel_id());
 
     // Get the current lockdown set
-    let mut lockdowns = super::core::LockdownSet::guild(guild_id, &data.pool)
+    let mut lockdowns = lockdowns::LockdownSet::guild(guild_id, &data.pool)
         .await
         .map_err(|e| format!("Error while fetching lockdown set: {}", e))?;
 
     // Create the lockdown
-    let lockdown_type = super::core::scl::SingleChannelLockdown(channel);
+    let lockdown_type = lockdowns::scl::SingleChannelLockdown(channel);
 
-    let lockdown_data = super::core::LockdownData {
+    let lockdown_data = lockdowns::LockdownData {
         cache_http: botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
         pool: data.pool.clone(),
         reqwest: data.reqwest.clone(),
@@ -177,11 +177,11 @@ pub async fn lockdowns_remove(ctx: Context<'_>, id: String) -> Result<(), Error>
     let data = ctx.data();
 
     // Get the current lockdown set
-    let mut lockdowns = super::core::LockdownSet::guild(guild_id, &data.pool)
+    let mut lockdowns = lockdowns::LockdownSet::guild(guild_id, &data.pool)
         .await
         .map_err(|e| format!("Error while fetching lockdown set: {}", e))?;
 
-    let lockdown_data = super::core::LockdownData {
+    let lockdown_data = lockdowns::LockdownData {
         cache_http: botox::cache::CacheHttpImpl::from_ctx(ctx.serenity_context()),
         pool: data.pool.clone(),
         reqwest: data.reqwest.clone(),

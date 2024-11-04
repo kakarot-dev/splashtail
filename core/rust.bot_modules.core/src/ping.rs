@@ -27,7 +27,7 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     let new_st = std::time::Instant::now();
 
     let real_ws_latency = {
-        let sandwich_resp_guard = crate::sandwich_status_task::SANDWICH_STATUS.read().await;
+        let sandwich_resp_guard = crate::tasks::SANDWICH_STATUS.read().await;
         if let Some(sandwich_resp) = &*sandwich_resp_guard {
             // Due to Sandwich Virtual Sharding etc, we need to reshard the guild id
             let sid = {

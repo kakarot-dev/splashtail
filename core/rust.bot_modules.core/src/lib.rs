@@ -1,12 +1,11 @@
 mod commands;
+mod events;
 mod help;
 mod modules;
 mod ping;
-mod punishment_expiry_task;
-mod sandwich_status_task;
 mod settings;
 mod stats;
-mod stings_expiry_task;
+mod tasks;
 mod whois;
 
 use futures_util::future::FutureExt;
@@ -92,9 +91,7 @@ impl silverpelt::module::Module for Module {
                     description: "Checks the status of the sandwich http server",
                     duration: std::time::Duration::from_secs(30),
                     enabled: true,
-                    run: Box::new(move |ctx| {
-                        sandwich_status_task::sandwich_status_task(ctx).boxed()
-                    }),
+                    run: Box::new(move |ctx| tasks::sandwich_status_task(ctx).boxed()),
                 },
                 |_ctx| (true, "Sandwich HTTP API is enabled".to_string()),
             ),
@@ -104,9 +101,7 @@ impl silverpelt::module::Module for Module {
                     description: "Check for and dispatch events for expired punishments",
                     duration: std::time::Duration::from_secs(30),
                     enabled: true,
-                    run: Box::new(move |ctx| {
-                        punishment_expiry_task::punishment_expiry_task(ctx).boxed()
-                    }),
+                    run: Box::new(move |ctx| tasks::punishment_expiry_task(ctx).boxed()),
                 },
                 |_ctx| (true, "Punishment Expiry Task is enabled".to_string()),
             ),
@@ -116,7 +111,7 @@ impl silverpelt::module::Module for Module {
                     description: "Check for and dispatch events for expired stings",
                     duration: std::time::Duration::from_secs(20),
                     enabled: true,
-                    run: Box::new(move |ctx| stings_expiry_task::stings_expiry_task(ctx).boxed()),
+                    run: Box::new(move |ctx| tasks::stings_expiry_task(ctx).boxed()),
                 },
                 |_ctx| (true, "Stings Expiry Task is enabled".to_string()),
             ),
@@ -149,63 +144,16 @@ impl silverpelt::module::ModuleEventListeners for EventHandler {
         &self,
         ectx: &silverpelt::ar_event::EventHandlerContext,
     ) -> Result<(), silverpelt::Error> {
-        match ectx.event {
-            silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((ref event_name, ref data)) => {
-                if event_name != "settings.clearModuleEnabledCache" {
-                    return Ok(()); // Ignore all other events
-                }
-
-                if ectx.guild_id == silverpelt::ar_event::SYSTEM_GUILD_ID {
-                    ectx.data
-                        .silverpelt_cache
-                        .module_enabled_cache
-                        .invalidate_all();
-                } else {
-                    // Check for module data
-                    #[derive(serde::Deserialize)]
-                    pub struct ClearModuleEnabledCache {
-                        module: Option<String>,
-                    }
-
-                    let cmc = match serde_json::from_value::<ClearModuleEnabledCache>(data.clone())
-                    {
-                        Ok(cmc) => cmc,
-                        Err(e) => {
-                            log::error!("Failed to deserialize ClearModuleEnabledCache: {}", e);
-                            return Ok(());
-                        }
-                    };
-
-                    if let Some(module) = cmc.module {
-                        ectx.data
-                            .silverpelt_cache
-                            .module_enabled_cache
-                            .invalidate(&(ectx.guild_id, module))
-                            .await;
-                    } else {
-                        // Global enable/disable the module by iterating the entire cache
-                        for (k, _) in ectx.data.silverpelt_cache.module_enabled_cache.iter() {
-                            if k.0 == ectx.guild_id {
-                                ectx.data
-                                    .silverpelt_cache
-                                    .module_enabled_cache
-                                    .invalidate(&(k.0, k.1.clone()))
-                                    .await;
-                            }
-                        }
-                    }
-                }
-
-                Ok(())
-            }
-            _ => Ok(()),
-        }
+        events::event_listener(ectx).await
     }
 
     fn event_handler_filter(&self, event: &silverpelt::ar_event::AntiraidEvent) -> bool {
         match event {
             silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((event_name, _)) => {
                 event_name == "settings.clearModuleEnabledCache"
+            }
+            silverpelt::ar_event::AntiraidEvent::Discord(e) => {
+                matches!(e, serenity::all::FullEvent::GuildCreate { .. })
             }
             _ => false,
         }

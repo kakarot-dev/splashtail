@@ -1,6 +1,4 @@
-pub mod cache;
 pub mod cmds;
-pub mod core;
 pub mod settings;
 
 use silverpelt::types::CommandExtendedData;

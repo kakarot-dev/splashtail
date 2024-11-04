@@ -91,6 +91,7 @@ pub struct Meta {
 pub struct Sites {
     pub api: String,
     pub frontend: String,
+    pub docs: String,
 }
 
 #[derive(Serialize, Deserialize)]

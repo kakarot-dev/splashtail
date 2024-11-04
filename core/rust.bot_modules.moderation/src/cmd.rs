@@ -288,7 +288,7 @@ pub async fn prune_user(
 
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
+            .dispatch_create_event(ctx.serenity_context().clone())
             .await?;
     };
 
@@ -534,7 +534,7 @@ pub async fn kick(
     p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
+            .dispatch_create_event(ctx.serenity_context().clone())
             .await?;
     };
 
@@ -707,7 +707,7 @@ pub async fn ban(
     p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
+            .dispatch_create_event(ctx.serenity_context().clone())
             .await?;
     };
 
@@ -889,7 +889,7 @@ pub async fn tempban(
     p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
+            .dispatch_create_event(ctx.serenity_context().clone())
             .await?;
     };
 
@@ -1034,7 +1034,7 @@ pub async fn unban(
 
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
+            .dispatch_create_event(ctx.serenity_context().clone())
             .await?;
     };
 
@@ -1208,7 +1208,7 @@ pub async fn timeout(
     p.dispatch_event(ctx.serenity_context().clone()).await?;
     if let Some(sting_dispatch) = sting_dispatch {
         sting_dispatch
-            .dispatch_event(ctx.serenity_context().clone())
+            .dispatch_create_event(ctx.serenity_context().clone())
             .await?;
     };
 

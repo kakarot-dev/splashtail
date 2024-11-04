@@ -37,6 +37,55 @@ pub struct Sting {
 }
 
 impl Sting {
+    /// Lists stings for a guild paginated based on page number
+    pub async fn list(
+        db: impl sqlx::PgExecutor<'_>,
+        guild_id: serenity::all::GuildId,
+        page: usize,
+    ) -> Result<Vec<Sting>, crate::Error> {
+        const PAGE_SIZE: i64 = 20; // 20 stings per page
+
+        if page > i64::MAX as usize {
+            return Err("Page number too large".into());
+        }
+
+        let page = std::cmp::max(page, 1) as i64; // Avoid negative pages
+
+        let rec = sqlx::query!(
+            "SELECT id, module, src, stings, reason, void_reason, guild_id, creator, target, state, sting_data, created_at, duration FROM stings WHERE guild_id = $1 ORDER BY created_at DESC OFFSET $2 LIMIT $3",
+            guild_id.to_string(),
+            (page - 1) * PAGE_SIZE,
+            PAGE_SIZE,
+        )
+        .fetch_all(db)
+        .await?;
+
+        let mut stings = Vec::new();
+
+        for row in rec {
+            stings.push(Sting {
+                id: row.id,
+                module: row.module,
+                src: row.src,
+                stings: row.stings,
+                reason: row.reason,
+                void_reason: row.void_reason,
+                guild_id: row.guild_id.parse()?,
+                creator: StingTarget::from_str(&row.creator)?,
+                target: StingTarget::from_str(&row.target)?,
+                state: StingState::from_str(&row.state)?,
+                sting_data: row.sting_data,
+                created_at: row.created_at,
+                duration: row.duration.map(|d| {
+                    let secs = splashcore_rs::utils::pg_interval_to_secs(d);
+                    std::time::Duration::from_secs(secs.try_into().unwrap())
+                }),
+            });
+        }
+
+        Ok(stings)
+    }
+
     pub async fn get_expired(db: impl sqlx::PgExecutor<'_>) -> Result<Vec<Sting>, crate::Error> {
         let rec = sqlx::query!(
             "SELECT id, module, src, stings, reason, void_reason, guild_id, creator, target, state, sting_data, created_at, duration FROM stings WHERE duration IS NOT NULL AND (created_at + duration) < NOW()",
@@ -71,7 +120,10 @@ impl Sting {
     }
 
     /// Dispatch a StingCreate event
-    pub async fn dispatch_event(self, ctx: serenity::all::Context) -> Result<(), crate::Error> {
+    pub async fn dispatch_create_event(
+        self,
+        ctx: serenity::all::Context,
+    ) -> Result<(), crate::Error> {
         crate::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
             crate::ar_event::EventHandlerContext {
                 guild_id: self.guild_id,
@@ -80,6 +132,41 @@ impl Sting {
                 serenity_context: ctx,
             },
         ))
+        .await?;
+
+        Ok(())
+    }
+
+    /// Dispatch a StingDelete event
+    pub async fn dispatch_delete_event(
+        self,
+        ctx: serenity::all::Context,
+    ) -> Result<(), crate::Error> {
+        crate::ar_event::dispatch_event_to_modules_errflatten(std::sync::Arc::new(
+            crate::ar_event::EventHandlerContext {
+                guild_id: self.guild_id,
+                data: ctx.data::<crate::data::Data>(),
+                event: crate::ar_event::AntiraidEvent::StingDelete(self),
+                serenity_context: ctx,
+            },
+        ))
+        .await?;
+
+        Ok(())
+    }
+
+    /// Deletes a sting by ID
+    pub async fn delete_by_id(
+        db: impl sqlx::PgExecutor<'_>,
+        guild_id: serenity::all::GuildId,
+        id: sqlx::types::Uuid,
+    ) -> Result<(), crate::Error> {
+        sqlx::query!(
+            "DELETE FROM stings WHERE id = $1 AND guild_id = $2",
+            id,
+            guild_id.to_string(),
+        )
+        .execute(db)
         .await?;
 
         Ok(())
@@ -172,7 +259,7 @@ impl StingCreate {
     ) -> Result<(), crate::Error> {
         let sting = self.create_without_dispatch(db).await?;
 
-        sting.dispatch_event(ctx).await?;
+        sting.dispatch_create_event(ctx).await?;
 
         Ok(())
     }
@@ -186,27 +273,10 @@ impl StingCreate {
         let sting = self.create_without_dispatch(db).await?;
         let sid = sting.id;
 
-        sting.dispatch_event(ctx).await?;
+        sting.dispatch_create_event(ctx).await?;
 
         Ok(sid)
     }
-}
-
-/// For safety purposes, ``delete_sting_by_id`` should be used instead of directly deleting stings as it ensures deletes are guild-scoped
-pub async fn delete_sting_by_id(
-    db: impl sqlx::PgExecutor<'_>,
-    guild_id: serenity::all::GuildId,
-    id: sqlx::types::Uuid,
-) -> Result<(), crate::Error> {
-    sqlx::query!(
-        "DELETE FROM stings WHERE id = $1 AND guild_id = $2",
-        id,
-        guild_id.to_string(),
-    )
-    .execute(db)
-    .await?;
-
-    Ok(())
 }
 
 /// A sting target (either user or system)

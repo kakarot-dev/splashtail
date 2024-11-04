@@ -8,7 +8,6 @@ pub mod module;
 pub mod module_config;
 pub mod punishments;
 pub mod stings;
-pub mod subprocess_event;
 pub mod types;
 pub mod utils;
 

@@ -126,6 +126,21 @@ pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), sil
 
             Ok(())
         }
+        AntiraidEvent::StingDelete(ref sting) => {
+            let sting = serde_json::to_value(sting)?;
+
+            dispatch_audit_log(
+                ctx,
+                &ectx.data,
+                "AR/StingDelete",
+                "(Anti Raid) Sting Deleted",
+                serde_json::to_value(sting)?,
+                ectx.guild_id,
+            )
+            .await?;
+
+            Ok(())
+        }
         AntiraidEvent::PunishmentCreate(ref punishment) => {
             let punishment = serde_json::to_value(punishment)?;
 

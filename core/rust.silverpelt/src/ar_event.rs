@@ -42,6 +42,9 @@ pub enum AntiraidEvent {
     /// A sting expiry event. Dispatched when a sting expires
     StingExpire(super::stings::Sting),
 
+    /// A sting delete event. Dispatched when a sting is manually deleted
+    StingDelete(super::stings::Sting),
+
     /// A punishment create event. Dispatched when a punishment is created
     PunishmentCreate(super::punishments::Punishment),
 

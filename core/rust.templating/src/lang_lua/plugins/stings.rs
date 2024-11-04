@@ -1,12 +1,6 @@
 use crate::lang_lua::state;
 use mlua::prelude::*;
 use std::sync::Arc;
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct StingUserAction {
-    pub sting: silverpelt::stings::StingCreate,
-}
-
 /// An sting executor is used to execute actions related to stings from Lua
 /// templates
 pub struct StingExecutor {
@@ -36,13 +30,24 @@ impl StingExecutor {
 
 impl LuaUserData for StingExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
+        methods.add_async_method("list", |lua, this, page: usize| async move {
+            this.check_action("list".to_string())
+                .map_err(LuaError::external)?;
+
+            let stings = silverpelt::stings::Sting::list(&this.pool, this.guild_id, page)
+                .await
+                .map_err(LuaError::external)?;
+
+            let v = lua.to_value(&stings)?;
+
+            Ok(v)
+        });
+
         methods.add_async_method("create", |lua, this, data: LuaValue| async move {
-            let data = lua.from_value::<StingUserAction>(data)?;
+            let sting = lua.from_value::<silverpelt::stings::StingCreate>(data)?;
 
             this.check_action("create".to_string())
                 .map_err(LuaError::external)?;
-
-            let sting = data.sting;
 
             if sting.guild_id != this.guild_id {
                 return Err(LuaError::external("Guild ID mismatch"));
@@ -54,6 +59,19 @@ impl LuaUserData for StingExecutor {
                 .map_err(LuaError::external)?;
 
             Ok(sting.to_string())
+        });
+
+        methods.add_async_method("delete", |lua, this, id: LuaValue| async move {
+            let id = lua.from_value::<sqlx::types::Uuid>(id)?;
+
+            this.check_action("delete".to_string())
+                .map_err(LuaError::external)?;
+
+            silverpelt::stings::Sting::delete_by_id(&this.pool, this.guild_id, id)
+                .await
+                .map_err(LuaError::external)?;
+
+            Ok(())
         });
     }
 }

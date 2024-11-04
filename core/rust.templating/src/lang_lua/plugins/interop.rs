@@ -26,6 +26,35 @@ pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
         })?,
     )?;
 
+    module.set(
+        "gettemplatedata",
+        lua.create_function(|lua, token: String| {
+            let Some(data) = lua.app_data_ref::<state::LuaUserData>() else {
+                return Err(LuaError::external("No app data found"));
+            };
+
+            match data.per_template.read(&token, |_, x| x.clone()) {
+                Some(data) => {
+                    let v = lua.to_value(&data)?;
+                    Ok(v)
+                }
+                None => Ok(lua.null()),
+            }
+        })?,
+    )?;
+
+    module.set(
+        "current_user",
+        lua.create_function(|lua, _: ()| {
+            let Some(data) = lua.app_data_ref::<state::LuaUserData>() else {
+                return Err(LuaError::external("No app data found"));
+            };
+
+            let v = lua.to_value(&data.serenity_context.cache.current_user().clone())?;
+            Ok(v)
+        })?,
+    )?;
+
     module.set_readonly(true); // Block any attempt to modify this table
 
     Ok(module)

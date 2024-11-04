@@ -145,7 +145,7 @@ pub struct LuaKVConstraints {
 impl Default for LuaKVConstraints {
     fn default() -> Self {
         LuaKVConstraints {
-            max_keys: 256,
+            max_keys: 2048,
             max_key_length: 128,
             // 50kb max per value
             max_value_bytes: 50 * 1024,
@@ -153,7 +153,7 @@ impl Default for LuaKVConstraints {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct TemplateData {
     pub path: String,
     pub pragma: crate::TemplatePragma,

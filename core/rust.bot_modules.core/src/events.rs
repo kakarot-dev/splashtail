@@ -1,8 +1,6 @@
 use silverpelt::ar_event::EventHandlerContext;
 
 pub(crate) async fn event_listener(ectx: &EventHandlerContext) -> Result<(), silverpelt::Error> {
-    let ctx = &ectx.serenity_context;
-
     match ectx.event {
         silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((ref event_name, ref data)) => {
             if event_name != "settings.clearModuleEnabledCache" {

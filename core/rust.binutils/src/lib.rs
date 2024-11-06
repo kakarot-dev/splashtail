@@ -102,6 +102,38 @@ pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     }
 }
 
+pub fn setup_message<'a>() -> poise::CreateReply<'a> {
+    poise::CreateReply::new()
+    .embed(
+        serenity::all::CreateEmbed::new()
+        .title("Thank you for adding AntiRaid")
+        .description(r#"While you have successfully added AntiRaid to your server, it won't do much until you take some time to configure it to your needs.
+
+Please check out both the `User Guide` and the `Website` to tailor AntiRaid to the needs of your server! And, if you need help, feel free to join our `Support Server`!  
+        "#)
+    )
+    .components(
+        vec![
+            serenity::all::CreateActionRow::Buttons(
+                vec![
+                    serenity::all::CreateButton::new_link(
+                        config::CONFIG.sites.docs.clone(),
+                    )
+                    .label("User Guide"),
+                    serenity::all::CreateButton::new_link(
+                        config::CONFIG.sites.frontend.clone(),
+                    )
+                    .label("Website"),
+                    serenity::all::CreateButton::new_link(
+                        config::CONFIG.meta.support_server_invite.clone(),
+                    )
+                    .label("Support Server")
+                ]
+            )
+        ]
+    )
+}
+
 pub async fn command_check(ctx: Context<'_>) -> Result<bool, Error> {
     let guild_id = ctx.guild_id();
 
@@ -111,18 +143,37 @@ pub async fn command_check(ctx: Context<'_>) -> Result<bool, Error> {
 
     let data = ctx.data();
 
-    let guild = sqlx::query!(
-        "SELECT COUNT(*) FROM guilds WHERE id = $1",
+    let guild_onboarding_status = sqlx::query!(
+        "SELECT finished_onboarding FROM guilds WHERE id = $1",
         guild_id.to_string()
     )
-    .fetch_one(&data.pool)
+    .fetch_optional(&data.pool)
     .await?;
 
-    if guild.count.unwrap_or_default() == 0 {
+    if let Some(guild_onboarding_status) = guild_onboarding_status {
+        if !guild_onboarding_status.finished_onboarding {
+            // Send setup message instead
+            ctx.send(setup_message()).await?;
+
+            // Set onboarding status to true
+            sqlx::query!(
+                "UPDATE guilds SET finished_onboarding = true WHERE id = $1",
+                guild_id.to_string()
+            )
+            .execute(&data.pool)
+            .await?;
+
+            return Ok(false);
+        }
+    } else {
         // Guild not found, create it
         sqlx::query!("INSERT INTO guilds (id) VALUES ($1)", guild_id.to_string())
             .execute(&data.pool)
             .await?;
+
+        // Send setup message instead
+        ctx.send(setup_message()).await?;
+        return Ok(false);
     }
 
     let user = sqlx::query!(

@@ -152,9 +152,6 @@ impl silverpelt::module::ModuleEventListeners for EventHandler {
             silverpelt::ar_event::AntiraidEvent::TrustedWebEvent((event_name, _)) => {
                 event_name == "settings.clearModuleEnabledCache"
             }
-            silverpelt::ar_event::AntiraidEvent::Discord(e) => {
-                matches!(e, serenity::all::FullEvent::GuildCreate { .. })
-            }
             _ => false,
         }
     }

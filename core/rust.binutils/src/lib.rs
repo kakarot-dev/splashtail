@@ -167,7 +167,7 @@ pub async fn command_check(ctx: Context<'_>) -> Result<bool, Error> {
         }
     } else {
         // Guild not found, create it
-        sqlx::query!("INSERT INTO guilds (id) VALUES ($1)", guild_id.to_string())
+        sqlx::query!("INSERT INTO guilds (id, finished_onboarding) VALUES ($1, true)", guild_id.to_string())
             .execute(&data.pool)
             .await?;
 

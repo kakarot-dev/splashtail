@@ -1004,7 +1004,7 @@ pub static GUILD_TEMPLATES: LazyLock<ConfigOption> = LazyLock::new(|| {
                 columns_to_set: indexmap::indexmap! {},
             },
         },
-        validator: settings_wrap(NoOpValidator {}),
+        validator: settings_wrap(GuildTemplateValidator {}),
         post_action: settings_wrap(NoOpPostAction {}),
     }
 });
@@ -1022,27 +1022,43 @@ impl SettingDataValidator for GuildTemplateValidator {
             return Ok(());
         }
 
-        let Some(Value::String(s)) = state.state.get("content") else {
+        let Some(Value::String(name)) = state.state.get("name") else {
             return Err(SettingsError::MissingOrInvalidField {
                 field: "content".to_string(),
                 src: "guild_templates->content".to_string(),
             });
         };
 
-        let compiled = templating::parse(
-            ctx.guild_id,
-            templating::Template::Raw(s.to_string()),
-            ctx.data.pool.clone(),
-        )
-        .await;
-
-        if let Err(err) = compiled {
-            return Err(SettingsError::SchemaCheckValidationError {
-                column: "content".to_string(),
-                check: "GuildTemplateValidator".to_string(),
-                accepted_range: "Valid template".to_string(),
-                error: err.to_string(),
-            });
+        if name.starts_with("@shop/") {
+            let (shop_tname, shop_tversion) = templating::parse_shop_template(name)
+            .map_err(|e| SettingsError::Generic {
+                message: format!("Failed to parse shop template: {:?}", e),
+                src: "guild_templates->name".to_string(),
+                typ: "external".to_string(),
+            })?;
+    
+            let shop_template = sqlx::query!(
+                "SELECT COUNT(*) FROM template_shop WHERE name = $1 AND version = $2",
+                shop_tname,
+                shop_tversion
+            )
+            .fetch_one(&ctx.data.pool)
+            .await
+            .map_err(|e| SettingsError::Generic {
+                message: format!("Failed to get shop template: {:?}", e),
+                src: "guild_templates->name".to_string(),
+                typ: "internal".to_string(),
+            })?;
+    
+            if shop_template.count.unwrap_or(0) == 0 {
+                return Err(
+                    SettingsError::Generic {
+                        message: "Could not find shop template".to_string(),
+                        src: "guild_templates->name".to_string(),
+                        typ: "external".to_string(),
+                    }
+                );
+            }
         }
 
         Ok(())
@@ -1113,6 +1129,137 @@ pub static GUILD_TEMPLATES_KV: LazyLock<ConfigOption> = LazyLock::new(|| {
             OperationType::Update => OperationSpecific {
                 columns_to_set: indexmap::indexmap! {
                     "last_updated_at" => "{__now}",
+                },
+            },
+            OperationType::Delete => OperationSpecific {
+                columns_to_set: indexmap::indexmap! {},
+            },
+        },
+        validator: settings_wrap(NoOpValidator {}),
+        post_action: settings_wrap(NoOpPostAction {}),
+    }
+});
+
+pub static GUILD_TEMPLATE_SHOP: LazyLock<ConfigOption> = LazyLock::new(|| {
+    ConfigOption {
+        id: "template_shop",
+        name: "Created/Published Templates",
+        description: "Publish new templates to the shop that can be used by any other server",
+        table: "template_shop",
+        common_filters: indexmap::indexmap! {},
+        default_common_filters: indexmap::indexmap! {
+            "owner_guild" => "{__guild_id}"
+        },
+        primary_key: "id",
+        max_entries: None,
+        max_return: 10,
+        data_store: settings_wrap(PostgresDataStore {}),
+        columns: settings_wrap(vec![
+            Column {
+                id: "id",
+                name: "ID",
+                description: "The internal ID of the template",
+                column_type: ColumnType::new_scalar(InnerColumnType::Uuid {}),
+                nullable: false,
+                default: None,
+                unique: true,
+                suggestions: ColumnSuggestion::None {},
+                ignored_for: vec![OperationType::Create],
+                secret: false,
+            },
+            Column {
+                id: "name",
+                name: "Name",
+                description: "The name of the template on the shop",
+                column_type: ColumnType::new_scalar(InnerColumnType::String {
+                    kind: InnerColumnTypeStringKind::Normal,
+                    min_length: None,
+                    max_length: Some(64),
+                    allowed_values: vec![],
+                }),
+                nullable: false,
+                default: None,
+                unique: false,
+                suggestions: ColumnSuggestion::None {},
+                ignored_for: vec![],
+                secret: false,
+            },
+            Column {
+                id: "version",
+                name: "Version",
+                description: "The version of the template. Cannot be updated once set", 
+                column_type: ColumnType::new_scalar(InnerColumnType::String {
+                    kind: InnerColumnTypeStringKind::Normal,
+                    min_length: None,
+                    max_length: Some(64),
+                    allowed_values: vec![],
+                }),
+                nullable: false,
+                default: None,
+                unique: false,
+                suggestions: ColumnSuggestion::None {},
+                ignored_for: vec![OperationType::Update],
+                secret: false,
+            },
+            Column {
+                id: "description",
+                name: "Description",
+                description: "The description of the template", 
+                column_type: ColumnType::new_scalar(InnerColumnType::String {
+                    kind: InnerColumnTypeStringKind::Normal,
+                    min_length: None,
+                    max_length: Some(4096),
+                    allowed_values: vec![],
+                }),
+                nullable: false,
+                default: None,
+                unique: false,
+                suggestions: ColumnSuggestion::None {},
+                ignored_for: vec![],
+                secret: false,
+            },
+            Column {
+                id: "content",
+                name: "Content",
+                description: "The content of the template. Cannot be updated once set (use a new version for that)",
+                column_type: ColumnType::new_scalar(InnerColumnType::String {
+                    kind: InnerColumnTypeStringKind::Textarea {
+                        ctx: "template",
+                    },
+                    min_length: None,
+                    max_length: None,
+                    allowed_values: vec![],
+                }),
+                nullable: false,
+                default: None,
+                unique: true,
+                suggestions: ColumnSuggestion::None {},
+                ignored_for: vec![OperationType::Update],
+                secret: false,
+            },
+            module_settings::common_columns::guild_id("owner_guild", "Guild ID", "The Guild ID"),
+            module_settings::common_columns::created_at(),
+            module_settings::common_columns::created_by(),
+            module_settings::common_columns::last_updated_at(),
+            module_settings::common_columns::last_updated_by(),
+        ]),
+        title_template: "{name}",
+        operations: indexmap::indexmap! {
+            OperationType::View => OperationSpecific {
+                columns_to_set: indexmap::indexmap! {},
+            },
+            OperationType::Create => OperationSpecific {
+                columns_to_set: indexmap::indexmap! {
+                    "created_at" => "{__now}",
+                    "created_by" => "{__author}",
+                    "last_updated_at" => "{__now}",
+                    "last_updated_by" => "{__author}",
+                },
+            },
+            OperationType::Update => OperationSpecific {
+                columns_to_set: indexmap::indexmap! {
+                    "last_updated_at" => "{__now}",
+                    "last_updated_by" => "{__author}",
                 },
             },
             OperationType::Delete => OperationSpecific {

@@ -83,6 +83,17 @@ impl std::fmt::Display for TemplateLanguage {
     }
 }
 
+/// Parses a shop template of form template_name#version
+pub fn parse_shop_template(s: &str) -> Result<(String, String), Error> {
+    let s = s.trim_start_matches("@shop/");
+    let (template, version) = match s.split_once('#') {
+        Some((template, version)) => (template, version),
+        None => return Err("Invalid shop template".into()),
+    };
+
+    Ok((template.to_string(), version.to_string()))
+}
+
 async fn get_template(
     guild_id: serenity::all::GuildId,
     template: &str,
@@ -96,9 +107,28 @@ async fn get_template(
     .fetch_optional(pool)
     .await?;
 
-    match rec {
-        Some(rec) => Ok(rec.content),
-        None => Err("Template not found".into()),
+    let content = match rec {
+        Some(rec) => rec.content,
+        None => return Err("Template not found".into()),
+    };
+
+    if template.starts_with("@shop/") {
+        let (shop_tname, shop_tversion) = parse_shop_template(template)?;
+
+        let shop_template = sqlx::query!(
+            "SELECT content FROM template_shop WHERE name = $1 AND version = $2",
+            shop_tname,
+            shop_tversion
+        )
+        .fetch_optional(pool)
+        .await?;
+
+        match shop_template {
+            Some(shop_template) => Ok(format!("{}{}", content, shop_template.content)),
+            None => Err("Shop template not found".into()),
+        }
+    } else {
+        Ok(content)
     }
 }
 

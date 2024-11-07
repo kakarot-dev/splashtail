@@ -20,11 +20,11 @@ impl silverpelt::module::Module for Module {
     }
 
     fn name(&self) -> &'static str {
-        "Core Commands"
+        "Core"
     }
 
     fn description(&self) -> &'static str {
-        "Core commands for the bot"
+        "Core module handling pretty much all core functionality"
     }
 
     fn toggleable(&self) -> bool {

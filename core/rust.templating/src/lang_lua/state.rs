@@ -55,7 +55,7 @@ impl LuaRatelimits {
             per_bucket: indexmap::indexmap!(
                 "ban".to_string() => vec![ban_lim1, ban_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
                 "kick".to_string() => vec![kick_lim1, kick_lim2] as Vec<DefaultKeyedRateLimiter<()>>,
-                "create_message_lim1".to_string() => vec![create_message_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
+                "create_message".to_string() => vec![create_message_lim1] as Vec<DefaultKeyedRateLimiter<()>>,
             ),
             clock,
         })

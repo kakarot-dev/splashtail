@@ -1170,7 +1170,7 @@ pub static GUILD_TEMPLATE_SHOP: LazyLock<ConfigOption> = LazyLock::new(|| {
             Column {
                 id: "name",
                 name: "Name",
-                description: "The name of the template on the shop",
+                description: "The name of the template on the shop. Cannot be updated once set",
                 column_type: ColumnType::new_scalar(InnerColumnType::String {
                     kind: InnerColumnTypeStringKind::Normal,
                     min_length: None,
@@ -1181,7 +1181,7 @@ pub static GUILD_TEMPLATE_SHOP: LazyLock<ConfigOption> = LazyLock::new(|| {
                 default: None,
                 unique: false,
                 suggestions: ColumnSuggestion::None {},
-                ignored_for: vec![],
+                ignored_for: vec![OperationType::Update],
                 secret: false,
             },
             Column {

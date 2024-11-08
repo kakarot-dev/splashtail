@@ -1,17 +1,17 @@
 package types
 
 type ShardConn struct {
-	Status      string
-	RealLatency int64
-	Guilds      int64
-	Uptime      int64
-	TotalUptime int64
+	Status      string `json:"status"`
+	RealLatency int64  `json:"real_latency"`
+	Guilds      int64  `json:"guilds"`
+	Uptime      int64  `json:"uptime"`
+	TotalUptime int64  `json:"total_uptime"`
 }
 
 type GetStatusResponse struct {
-	Resp        StatusEndpointResponse
-	ShardConns  map[int64]ShardConn
-	TotalGuilds int64
+	Resp        StatusEndpointResponse `json:"resp"`
+	ShardConns  map[int64]ShardConn    `json:"shard_conns"`
+	TotalGuilds int64                  `json:"total_guilds"`
 }
 
 type StatusEndpointResponse struct {

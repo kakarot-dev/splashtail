@@ -55,6 +55,7 @@ func getStatus(client http.Client) (*types.GetStatusResponse, error) {
 
 	shards := make(map[int64]types.ShardConn)
 
+	var totalGuilds int64
 	for _, manager := range res.Data.Managers {
 		if manager.DisplayName != "Anti Raid" {
 			continue
@@ -94,13 +95,16 @@ func getStatus(client http.Client) (*types.GetStatusResponse, error) {
 					Uptime:      uptime,
 					TotalUptime: totalUptime,
 				}
+
+				totalGuilds += guilds
 			}
 		}
 	}
 
 	return &types.GetStatusResponse{
-		Resp:       *res.Data,
-		ShardConns: shards,
+		Resp:        *res.Data,
+		ShardConns:  shards,
+		TotalGuilds: totalGuilds,
 	}, nil
 }
 

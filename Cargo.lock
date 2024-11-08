@@ -4943,10 +4943,21 @@ dependencies = [
  "silverpelt",
  "splashcore_rs",
  "sqlx",
+ "templating_docgen",
  "thiserror",
  "tokio",
  "toml",
  "typetag",
+]
+
+[[package]]
+name = "templating_docgen"
+version = "0.1.0"
+dependencies = [
+ "erased-serde",
+ "scc",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

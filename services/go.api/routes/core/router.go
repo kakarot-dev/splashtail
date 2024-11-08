@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/infinitybotlist/eureka/uapi"
 	"go.api/routes/core/endpoints/get_api_config"
+	"go.api/routes/core/endpoints/get_bot_stats"
 	"go.api/routes/core/endpoints/get_modules"
 )
 
@@ -30,5 +31,13 @@ func (b Router) Routes(r *chi.Mux) {
 		Method:  uapi.GET,
 		Docs:    get_modules.Docs,
 		Handler: get_modules.Route,
+	}.Route(r)
+
+	uapi.Route{
+		Pattern: "/bot-stats",
+		OpId:    "get_bot_stats",
+		Method:  uapi.GET,
+		Docs:    get_bot_stats.Docs,
+		Handler: get_bot_stats.Route,
 	}.Route(r)
 }

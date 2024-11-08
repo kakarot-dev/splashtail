@@ -4,8 +4,28 @@ use crate::lang_lua::state;
 use mlua::prelude::*;
 
 pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
+    templating_docgen::create_plugin("async", "Utilities for asynchronous operations.");
     let module = lua.create_table()?;
 
+    templating_docgen::plugin_method(
+        "async",
+        "sleep",
+        |m| {
+            m.description("Sleep for a given duration.")
+            .parameter("duration", |p| {
+                p.r#type("f64").description("The duration to sleep for.")
+            })
+            .return_("slept_time", |r| {
+                r.r#type("f64").description("The actual duration slept for.")
+            })
+        }
+    );
+    // @method sleep
+    // 
+    // Sleep for a given duration.
+    // 
+    // @param duration(f64): The duration to sleep for.
+    // @returns(f64): The actual duration slept for.
     module.set(
         "sleep",
         lua.create_async_function(|lua, duration: f64| async move {

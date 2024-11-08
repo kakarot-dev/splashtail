@@ -16,6 +16,9 @@ pub struct DiscordActionExecutor {
     ratelimits: Arc<state::LuaRatelimits>,
 }
 
+// @userdata DiscordActionExecutor
+//
+// Executes actions on discord
 impl DiscordActionExecutor {
     pub fn check_action(&self, action: String) -> Result<(), crate::Error> {
         if !self
@@ -147,9 +150,28 @@ impl DiscordActionExecutor {
     }
 }
 
+/*impl templating_docgen::Documentable for DiscordActionExecutor {
+    fn update_plugin(plugin: &mut templating_docgen::Plugin) {
+        plugin.type_mut("DiscordActionExecutor", |t| {
+            t.method_mut("get_audit_logs", |m| {
+                m.description("Gets the audit logs")
+                    .parameter("data", "inner.GetAuditLogOptions")
+                    .return_("f64")
+            })
+        })
+    }
+}*/
+
 impl LuaUserData for DiscordActionExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
         // Audit Log
+
+        // @method get_audit_logs
+        //
+        // Gets the audit logs
+        //
+        // @param data(inner.GetAuditLogOptions): Options for getting audit logs.
+        // @returns(f64): The actual duration slept for.
         methods.add_async_method("get_audit_logs", |lua, this, data: LuaValue| async move {
             #[derive(serde::Serialize, serde::Deserialize)]
             pub struct GetAuditLogOptions {

@@ -110,6 +110,8 @@ pub fn setup_message<'a>() -> poise::CreateReply<'a> {
         .description(r#"While you have successfully added AntiRaid to your server, it won't do much until you take some time to configure it to your needs.
 
 Please check out both the `User Guide` and the `Website` to tailor AntiRaid to the needs of your server! And, if you need help, feel free to join our `Support Server`!  
+
+*Note: Feel free to rerun the command you were trying to run once you're content with your AntiRaid configuration*
         "#)
     )
     .components(
@@ -167,9 +169,12 @@ pub async fn command_check(ctx: Context<'_>) -> Result<bool, Error> {
         }
     } else {
         // Guild not found, create it
-        sqlx::query!("INSERT INTO guilds (id, finished_onboarding) VALUES ($1, true)", guild_id.to_string())
-            .execute(&data.pool)
-            .await?;
+        sqlx::query!(
+            "INSERT INTO guilds (id, finished_onboarding) VALUES ($1, true)",
+            guild_id.to_string()
+        )
+        .execute(&data.pool)
+        .await?;
 
         // Send setup message instead
         ctx.send(setup_message()).await?;

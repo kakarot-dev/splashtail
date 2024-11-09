@@ -109,7 +109,7 @@ pub fn setup_message<'a>() -> poise::CreateReply<'a> {
         .title("Thank you for adding AntiRaid")
         .description(r#"While you have successfully added AntiRaid to your server, it won't do much until you take some time to configure it to your needs.
 
-Please check out both the `User Guide` and use the `Website` to tailor AntiRaid to the needs of your server! And, if you need help, feel free to join our `Support Server`!  
+Please check out the `User Guide` and use the `Website` to tailor AntiRaid to the needs of your server! And, if you need help, feel free to join our `Support Server`!  
 
 *Note: Feel free to rerun the command you were trying to run once you're content with your AntiRaid configuration*
         "#)

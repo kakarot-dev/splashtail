@@ -432,6 +432,14 @@ async fn main() {
                     ctx.author().name,
                     ctx.author().id
                 );
+
+                // Record command execution counter
+                let _ = sqlx::query!(
+                    "INSERT INTO cmd_usage_stats (command_name, uses) VALUES ($1, 1) ON CONFLICT (command_name) DO UPDATE SET uses = cmd_usage_stats.uses + 1",
+                    ctx.command().qualified_name
+                )
+                .execute(&ctx.data().pool)
+                .await;
             })
         },
         on_error: |error| Box::pin(bot_binutils::on_error(error)),

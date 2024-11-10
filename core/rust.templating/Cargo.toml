@@ -62,7 +62,7 @@ sandwich_driver = { path = "../rust.sandwich_driver" }
 templating_docgen = { path = "../rust.templating.docgen" }
 
 # Template language support
-mlua = { version = "0.10.0", features = ["async", "luau", "serialize", "macros", "send"], optional = true } # Supported by default
+mlua = { version = "0.10.1", features = ["async", "luau", "serialize", "macros", "send"], optional = true } # Supported by default
 
 [dependencies.tokio]
 version = "1"

@@ -9,7 +9,7 @@ impl silverpelt::module::Module for Module {
     }
 
     fn name(&self) -> &'static str {
-        "Tags"
+        "Custom Commands / Tags"
     }
 
     fn is_default_enabled(&self) -> bool {
@@ -17,7 +17,7 @@ impl silverpelt::module::Module for Module {
     }
 
     fn description(&self) -> &'static str {
-        "Make custom tags for your server to allow quicker responses to commonly asked question or even more customizable actions thanks to Luau scripting!"
+        "Make custom tags for your server to allow quicker responses to commonly asked question or even more customizable actions/commands thanks to Lua(u) scripting!"
     }
 
     fn raw_commands(&self) -> Vec<silverpelt::module::CommandObj> {

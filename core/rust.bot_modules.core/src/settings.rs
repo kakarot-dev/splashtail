@@ -1029,7 +1029,7 @@ impl SettingDataValidator for GuildTemplateValidator {
             });
         };
 
-        if name.starts_with("@shop/") {
+        if name.starts_with("$shop/") {
             let (shop_tname, shop_tversion) = templating::parse_shop_template(name)
             .map_err(|e| SettingsError::Generic {
                 message: format!("Failed to parse shop template: {:?}", e),

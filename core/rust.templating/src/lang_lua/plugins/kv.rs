@@ -51,8 +51,89 @@ impl KvExecutor {
     }
 }
 
+pub fn plugin_docs() -> templating_docgen::Plugin {
+    templating_docgen::Plugin::default()
+        .name("@antiraid/kv")
+        .description("Utilities for key-value operations.")
+        .type_mut(
+            std::sync::Arc::new(templating_docgen::OpaqueStruct("KvRecord")),
+            "KvRecord represents a key-value record with metadata.",
+            |mut t| {
+                t
+                .field("key", |f| f.typ("string").description("The key of the record."))
+                .field("value", |f| f.typ("any").description("The value of the record."))
+                .field("exists", |f| f.typ("boolean").description("Whether the record exists."))
+                .field("created_at", |f| f.typ("datetime").description("The time the record was created."))
+                .field("last_updated_at", |f| f.typ("datetime").description("The time the record was last updated."))
+            },
+        )
+        .type_mut(
+            std::sync::Arc::new(templating_docgen::OpaqueStruct("KvExecutor")),
+            "KvExecutor allows templates to get, store and find persistent data within a server.",
+            |mut t| {
+                t
+                .method_mut("find", |mut m| {
+                    m.parameter("key", |p| p.typ("string").description("The key to search for."))
+                })
+                .method_mut("get", |mut m| {
+                    m.parameter("key", |p| p.typ("string").description("The key to get."))
+                    .return_("value", |r| r.typ("any").description("The value of the key."))
+                    .return_("exists", |r| r.typ("boolean").description("Whether the key exists."))
+                })
+                .method_mut("getrecord", |mut m| {
+                    m.parameter("key", |p| p.typ("string").description("The key to get."))
+                    .return_("record", |r| r.typ("KvRecord").description("The record of the key."))
+                })
+                .method_mut("set", |mut m| {
+                    m.parameter("key", |p| p.typ("string").description("The key to set."))
+                    .parameter("value", |p| p.typ("any").description("The value to set."))
+                })
+                .method_mut("delete", |mut m| {
+                    m.parameter("key", |p| p.typ("string").description("The key to delete."))
+                })
+            },
+        )
+}
+
 impl LuaUserData for KvExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
+        methods.add_async_method("find", |lua, this, key: String| async move {
+            this.check("find".to_string(), key.clone())
+                .map_err(LuaError::external)?;
+
+            // Check key length
+            if key.len() > this.kv_constraints.max_key_length {
+                return Err(LuaError::external("Key length too long"));
+            }
+
+            let rec = sqlx::query!(
+                "SELECT key, value, created_at, last_updated_at FROM guild_templates_kv WHERE guild_id = $1 AND key ILIKE $2",
+                this.guild_id.to_string(),
+                key
+            )
+            .fetch_all(&this.pool)
+            .await
+            .map_err(LuaError::external)?;
+
+            let mut records = vec![];
+
+            for rec in rec {
+                let record = KvRecord {
+                    key: rec.key,
+                    value: rec.value.unwrap_or(serde_json::Value::Null),
+                    exists: true,
+                    created_at: Some(rec.created_at),
+                    last_updated_at: Some(rec.last_updated_at),
+                };
+
+                records.push(record);
+            }
+
+            let records: LuaValue = lua.to_value(&records)?;
+
+            Ok(records)
+        });
+
         methods.add_async_method("get", |lua, this, key: String| async move {
             this.check("get".to_string(), key.clone())
                 .map_err(LuaError::external)?;

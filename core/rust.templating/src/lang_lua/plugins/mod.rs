@@ -13,24 +13,26 @@ use mlua::prelude::*;
 use std::sync::LazyLock;
 
 // Modules can load their own plugins
-pub static PLUGINS: LazyLock<indexmap::IndexMap<String, ModuleFn>> = LazyLock::new(|| {
-    indexmap::indexmap! {
-        "@antiraid/async".to_string() => r#async::init_plugin as ModuleFn,
-        "@antiraid/builtins".to_string() => builtins as ModuleFn,
-        "@antiraid/discord".to_string() => discord::init_plugin as ModuleFn,
-        "@antiraid/interop".to_string() => interop::init_plugin as ModuleFn,
-        "@antiraid/img_captcha".to_string() => img_captcha::init_plugin as ModuleFn,
-        "@antiraid/kv".to_string() => kv::init_plugin as ModuleFn,
-        "@antiraid/permissions".to_string() => permissions::init_plugin as ModuleFn,
-        "@antiraid/stings".to_string() => stings::init_plugin as ModuleFn,
-        "@antiraid/typesext".to_string() => typesext::init_plugin as ModuleFn,
-        "@lune/datetime".to_string() => lune::datetime::init_plugin as ModuleFn,
-        "@lune/regex".to_string() => lune::regex::init_plugin as ModuleFn,
-        "@lune/serde".to_string() => lune::serde::init_plugin as ModuleFn,
-    }
-});
+pub static PLUGINS: LazyLock<indexmap::IndexMap<String, (ModuleFn, Option<ModuleDocFn>)>> =
+    LazyLock::new(|| {
+        indexmap::indexmap! {
+            "@antiraid/async".to_string() => (r#async::init_plugin as ModuleFn, Some(r#async::plugin_docs as ModuleDocFn)),
+            "@antiraid/builtins".to_string() => (builtins as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/discord".to_string() => (discord::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/interop".to_string() => (interop::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/img_captcha".to_string() => (img_captcha::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/kv".to_string() => (kv::init_plugin as ModuleFn, Some(kv::plugin_docs as ModuleDocFn)),
+            "@antiraid/permissions".to_string() => (permissions::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/stings".to_string() => (stings::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/typesext".to_string() => (typesext::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@lune/datetime".to_string() => (lune::datetime::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@lune/regex".to_string() => (lune::regex::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@lune/serde".to_string() => (lune::serde::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+        }
+    });
 
 type ModuleFn = fn(&Lua) -> LuaResult<LuaTable>;
+type ModuleDocFn = fn() -> templating_docgen::Plugin;
 
 /// Provides the lua builtins as a seperate table
 pub fn builtins(lua: &Lua) -> LuaResult<LuaTable> {
@@ -54,7 +56,10 @@ pub struct RequireTemplateImportArgs {
 
 pub async fn require(lua: Lua, (plugin_name, args): (String, LuaValue)) -> LuaResult<LuaTable> {
     // Relative imports are special, they include the template stored in guild_templates
-    if plugin_name.starts_with("./") || plugin_name.starts_with("../") {
+    if plugin_name.starts_with("./")
+        || plugin_name.starts_with("../")
+        || plugin_name.starts_with("$shop/")
+    {
         let (pool, guild_id, compiler, vm_bytecode_cache, per_template) = {
             let Some(data) = lua.app_data_ref::<state::LuaUserData>() else {
                 return Err(LuaError::external("No app data found"));
@@ -102,31 +107,9 @@ pub async fn require(lua: Lua, (plugin_name, args): (String, LuaValue)) -> LuaRe
         }
 
         // Get template content
-        let template_content = {
-            if resolved_path.starts_with("@antiraid_samples") {
-                // Load embedded template
-                crate::lang_lua::samples::load_embedded_template(
-                    resolved_path.replace("@antiraid_samples/", "").as_str(),
-                )
-                .map_err(mlua::Error::external)?
-            } else {
-                let rec = sqlx::query!(
-                    "
-                    SELECT content FROM guild_templates WHERE guild_id = $1 AND name = $2",
-                    guild_id.to_string(),
-                    resolved_path
-                )
-                .fetch_optional(&pool)
-                .await
-                .map_err(|_| LuaError::external("Failed to fetch template"))?;
-
-                let Some(rec) = rec else {
-                    return Err(LuaError::external("Template not found"));
-                };
-
-                rec.content
-            }
-        };
+        let template_content = crate::get_template(guild_id, &resolved_path, &pool)
+            .await
+            .map_err(|_| LuaError::external("Failed to get template"))?;
 
         let template_bytecode = crate::lang_lua::resolve_template_to_bytecode(
             template_content,
@@ -162,7 +145,7 @@ pub async fn require(lua: Lua, (plugin_name, args): (String, LuaValue)) -> LuaRe
                 }
             }
 
-            let res = plugin(&lua);
+            let res = plugin.0(&lua);
 
             if args.plugin_cache.unwrap_or(true) {
                 if let Ok(table) = &res {
@@ -192,6 +175,10 @@ pub async fn require(lua: Lua, (plugin_name, args): (String, LuaValue)) -> LuaRe
 ///
 /// The caller should then, if requested in args, make a new template token and inherit the pragma (or use Null for token if caller did not request) for the imported template
 fn resolve_template_import_path(current_path: &str, path: &str, prefix: &str) -> String {
+    if path.starts_with("$shop/") {
+        return path.to_string();
+    }
+
     /*
     Potentially useful in the future
     // Get cwd and the file

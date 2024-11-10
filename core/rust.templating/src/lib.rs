@@ -85,7 +85,7 @@ impl std::fmt::Display for TemplateLanguage {
 
 /// Parses a shop template of form template_name#version
 pub fn parse_shop_template(s: &str) -> Result<(String, String), Error> {
-    let s = s.trim_start_matches("@shop/");
+    let s = s.trim_start_matches("$shop/");
     let (template, version) = match s.split_once('#') {
         Some((template, version)) => (template, version),
         None => return Err("Invalid shop template".into()),
@@ -112,7 +112,7 @@ async fn get_template(
         None => return Err("Template not found".into()),
     };
 
-    if template.starts_with("@shop/") {
+    if template.starts_with("$shop/") {
         let (shop_tname, shop_tversion) = parse_shop_template(template)?;
 
         let shop_template = sqlx::query!(

@@ -150,18 +150,6 @@ impl DiscordActionExecutor {
     }
 }
 
-/*impl templating_docgen::Documentable for DiscordActionExecutor {
-    fn update_plugin(plugin: &mut templating_docgen::Plugin) {
-        plugin.type_mut("DiscordActionExecutor", |t| {
-            t.method_mut("get_audit_logs", |m| {
-                m.description("Gets the audit logs")
-                    .parameter("data", "inner.GetAuditLogOptions")
-                    .return_("f64")
-            })
-        })
-    }
-}*/
-
 impl LuaUserData for DiscordActionExecutor {
     fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
         // Audit Log

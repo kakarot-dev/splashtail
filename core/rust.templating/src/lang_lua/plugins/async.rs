@@ -3,29 +3,25 @@ use std::time::{Instant, Duration};
 use crate::lang_lua::state;
 use mlua::prelude::*;
 
-pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
-    templating_docgen::create_plugin("async", "Utilities for asynchronous operations.");
-    let module = lua.create_table()?;
-
-    templating_docgen::plugin_method(
-        "async",
-        "sleep",
-        |m| {
+pub fn plugin_docs() -> templating_docgen::Plugin {
+    templating_docgen::Plugin::default()
+        .name("@antiraid/async")
+        .description("Utilities for asynchronous operations and timing")
+        .method_mut("sleep", |m| {
             m.description("Sleep for a given duration.")
             .parameter("duration", |p| {
-                p.r#type("f64").description("The duration to sleep for.")
+                p.typ("f64").description("The duration to sleep for.")
             })
             .return_("slept_time", |r| {
-                r.r#type("f64").description("The actual duration slept for.")
+                r.typ("f64").description("The actual duration slept for.")
             })
-        }
-    );
-    // @method sleep
-    // 
-    // Sleep for a given duration.
-    // 
-    // @param duration(f64): The duration to sleep for.
-    // @returns(f64): The actual duration slept for.
+        })
+
+}
+
+pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
+    let module = lua.create_table()?;
+
     module.set(
         "sleep",
         lua.create_async_function(|lua, duration: f64| async move {

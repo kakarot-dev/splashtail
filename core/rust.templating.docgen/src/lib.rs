@@ -1,69 +1,7 @@
 /// Tooling to document the Anti-Raid Luau API.
 //
-use scc::HashMap;
-use std::sync::{Arc, LazyLock};
-
-static PLUGINS: LazyLock<HashMap<String, Plugin>> = LazyLock::new(HashMap::new);
-
-/// Helper method to create a plugin
-pub fn create_plugin(name: &str, description: &str) {
-    let p = Plugin::default().name(name).description(description);
-    PLUGINS
-        .upsert(name.to_string(), p.clone())
-        .expect("Failed to insert plugin");
-}
-
-/// Helper method to get the plugin
-pub fn plugin(name: &str, f: impl FnOnce(Plugin) -> Plugin) {
-    if let Some(plugin) = PLUGINS.get(name) {
-        PLUGINS
-            .upsert(name.to_string(), f(plugin.clone()))
-            .expect("Failed to insert plugin");
-    } else {
-        PLUGINS
-            .upsert(name.to_string(), f(Plugin::default()))
-            .expect("Failed to insert plugin");
-    }
-}
-
-/// Helper method to add a method to a plugin using method_mut
-pub fn plugin_method(plugin_name: &str, method: &str, f: impl FnOnce(Method) -> Method) {
-    if let Some(plugin) = PLUGINS.get(plugin_name) {
-        let mut p = plugin.clone();
-        p.method_mut(method, f);
-        PLUGINS
-            .upsert(plugin_name.to_string(), p)
-            .expect("Failed to insert plugin");
-    } else {
-        let mut p = Plugin::default();
-        p.method_mut(method, f);
-        PLUGINS
-            .upsert(plugin_name.to_string(), p)
-            .expect("Failed to insert plugin");
-    }
-}
-
-/// Helper method to add a type to a plugin using type_mut
-pub fn plugin_type(
-    plugin_name: &str,
-    type_obj: Arc<dyn erased_serde::Serialize + Send + Sync>,
-    type_desc: &str,
-    f: impl FnOnce(Type) -> Type,
-) {
-    if let Some(plugin) = PLUGINS.get(plugin_name) {
-        let mut p = plugin.clone();
-        p = p.type_mut(type_obj, type_desc, f);
-        PLUGINS
-            .upsert(plugin_name.to_string(), p)
-            .expect("Failed to insert plugin");
-    } else {
-        let mut p = Plugin::default();
-        p = p.type_mut(type_obj, type_desc, f);
-        PLUGINS
-            .upsert(plugin_name.to_string(), p)
-            .expect("Failed to insert plugin");
-    }
-}
+use serde::ser::SerializeStruct;
+use std::sync::Arc;
 
 #[derive(Default, Debug, serde::Serialize, Clone)]
 /// The root of the documentation.
@@ -115,7 +53,7 @@ impl Plugin {
         p
     }
 
-    pub fn method_mut(&mut self, name: &str, f: impl FnOnce(Method) -> Method) {
+    pub fn method_mut(mut self, name: &str, f: impl FnOnce(Method) -> Method) -> Self {
         let method = self.methods.iter_mut().find(|m| m.name == name);
 
         if let Some(method) = method {
@@ -127,6 +65,8 @@ impl Plugin {
             method.name = name.to_string();
             self.methods.push(f(method));
         }
+
+        self
     }
 
     pub fn add_field(self, fields: Field) -> Self {
@@ -344,7 +284,7 @@ impl Parameter {
         p
     }
 
-    pub fn r#type(self, r#type: &str) -> Self {
+    pub fn typ(self, r#type: &str) -> Self {
         let mut p = self;
         p.r#type = r#type.to_string();
         p
@@ -385,7 +325,7 @@ impl Field {
         f
     }
 
-    pub fn r#type(self, r#type: &str) -> Self {
+    pub fn typ(self, r#type: &str) -> Self {
         let mut f = self;
         f.r#type = r#type.to_string();
         f
@@ -400,6 +340,7 @@ impl Field {
 pub struct Type {
     pub obj: Arc<dyn erased_serde::Serialize + Send + Sync>,
     pub description: String,
+    pub fields: Vec<Field>, // Description of the fields in type
     pub methods: Vec<Method>,
 }
 
@@ -409,6 +350,7 @@ impl Default for Type {
             obj: Arc::new(()),
             description: String::new(),
             methods: Vec::new(),
+            fields: Vec::new(),
         }
     }
 }
@@ -447,19 +389,37 @@ impl Type {
         self.clone()
     }
 
+    pub fn field(&mut self, name: &str, f: impl FnOnce(Field) -> Field) -> Self {
+        let fields = self.fields.iter_mut().find(|p| p.name == name);
+
+        if let Some(field) = fields {
+            let new_field = f(field.clone());
+
+            *field = new_field;
+        } else {
+            let mut field = Field::default();
+            field.name = name.to_string();
+            self.fields.push(f(field));
+        }
+
+        self.clone()
+    }
+
     pub fn build(self) -> Type {
         self
     }
 }
 
-pub trait Documentable {
-    fn update_plugin(plugin: &mut Plugin);
-}
+pub struct OpaqueStruct(pub &'static str);
 
-/// Helper method `export` allows Plugins to document Documentable's
-pub fn export<T: Documentable>(plugin_name: &str) {
-    plugin(plugin_name, |mut plugin| {
-        T::update_plugin(&mut plugin);
-        plugin
-    });
+/// Dummy serializer for OpaqueStruct for documentation
+///
+/// Just calls serialize_struct but with no fields
+impl serde::Serialize for OpaqueStruct {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_struct(self.0, 0)?.end()
+    }
 }

@@ -4955,7 +4955,6 @@ name = "templating_docgen"
 version = "0.1.0"
 dependencies = [
  "erased-serde",
- "scc",
  "serde",
  "serde_json",
 ]

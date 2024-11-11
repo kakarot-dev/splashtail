@@ -214,10 +214,10 @@ impl Method {
         ));
 
         if self.returns.len() == 1 {
-            out.push_str(&format!(" -> {}", self.returns[0].r#type.clone()));
+            out.push_str(&format!(": {}", self.returns[0].r#type.clone()));
         } else if self.returns.len() > 2 {
             out.push_str(&format!(
-                " -> ({})",
+                ": ({})",
                 self.returns
                     .iter()
                     .map(|r| r.r#type.clone())

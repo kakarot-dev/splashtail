@@ -74,7 +74,7 @@ fn method_to_string(method: &Method) -> String {
         markdown.push_str("\n\n### Parameters\n\n");
 
         method.parameters.iter().for_each(|param| {
-            markdown.push_str(&param_to_string(param));
+            markdown.push_str(&format!("{}\n", param_to_string(param)));
         });
     }
 

@@ -91,7 +91,7 @@ fn method_to_string(method: &Method) -> String {
 
 fn param_to_string(param: &Parameter) -> String {
     format!(
-        "- `{}` (`{}`): {}",
+        "- `{}` ({}): {}",
         param.name,
         typeref_to_link(&param.r#type),
         param.description

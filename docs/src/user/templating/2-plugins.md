@@ -14,11 +14,11 @@ Sleep for a given duration.
 
 ### Parameters
 
-- `duration` (`[f64](#type.f64)`): The duration to sleep for.
+- `duration` ([f64](#type.f64)): The duration to sleep for.
 
 ### Returns
 
-- `slept_time` (`[f64](#type.f64)`): The actual duration slept for.
+- `slept_time` ([f64](#type.f64)): The actual duration slept for.
 
 
 
@@ -40,7 +40,7 @@ Returns the current memory usage of the Lua VM.
 
 ### Returns
 
-- `memory_usage` (`[f64](#type.f64)`): The current memory usage, in bytes, of the Lua VM.
+- `memory_usage` ([f64](#type.f64)): The current memory usage, in bytes, of the Lua VM.
 
 **guild_id**
 
@@ -52,7 +52,7 @@ Returns the current guild ID of the Lua VM.
 
 ### Returns
 
-- `guild_id` (`[string](#type.string)`): The current guild ID.
+- `guild_id` ([string](#type.string)): The current guild ID.
 
 **gettemplatedata**
 
@@ -64,11 +64,11 @@ Returns the data associated with a template token.
 
 ### Parameters
 
-- `token` (`[string](#type.string)`): The token of the template to retrieve data for.
+- `token` ([string](#type.string)): The token of the template to retrieve data for.
 
 ### Returns
 
-- `data` (`[TemplateData?](#type.TemplateData)`): The data associated with the template token, or `null` if no data is found.
+- `data` ([TemplateData?](#type.TemplateData)): The data associated with the template token, or `null` if no data is found.
 
 **current_user**
 
@@ -80,7 +80,7 @@ Returns the current user of the Lua VM.
 
 ### Returns
 
-- `user` (`[serenity::model::user::User](https://docs.rs/serenity/model/user/latest/serenity/model/user/struct.User.html)`): Returns AntiRaid's discord user object.
+- `user` ([serenity::model::user::User](https://docs.rs/serenity/model/user/latest/serenity/model/user/struct.User.html)): Returns AntiRaid's discord user object.
 
 
 
@@ -102,11 +102,11 @@ Creates a new CAPTCHA with the given configuration.
 
 ### Parameters
 
-- `config` (`[CaptchaConfig](#type.CaptchaConfig)`): The configuration to use for the CAPTCHA.
+- `config` ([CaptchaConfig](#type.CaptchaConfig)): The configuration to use for the CAPTCHA.
 
 ### Returns
 
-- `captcha` (`[{u8}](#type.u8)`): The created CAPTCHA object.
+- `captcha` ([{u8}](#type.u8)): The created CAPTCHA object.
 
 
 
@@ -126,7 +126,7 @@ function new(token: string)
 
 ### Parameters
 
-- `token` (`[string](#type.string)`): The token of the template to use.
+- `token` ([string](#type.string)): The token of the template to use.
 
 
 
@@ -148,11 +148,11 @@ Returns a Permission object from a string.
 
 ### Parameters
 
-- `perm_string` (`[string](#type.string)`): The string to parse into a Permission object.
+- `perm_string` ([string](#type.string)): The string to parse into a Permission object.
 
 ### Returns
 
-- `permission` (`[Permission](#type.Permission)`): The parsed Permission object.
+- `permission` ([Permission](#type.Permission)): The parsed Permission object.
 
 **permission_to_string**
 
@@ -164,11 +164,11 @@ Returns a string from a Permission object.
 
 ### Parameters
 
-- `permission` (`[Permission](#type.Permission)`): The Permission object to parse into a string.
+- `permission` ([Permission](#type.Permission)): The Permission object to parse into a string.
 
 ### Returns
 
-- `perm_string` (`[string](#type.string)`): The parsed string.
+- `perm_string` ([string](#type.string)): The parsed string.
 
 **has_perm**
 
@@ -180,11 +180,11 @@ Checks if a list of permissions in Permission object form contains a specific pe
 
 ### Parameters
 
-- `permissions` (`[{Permission}](#type.Permission)`): The list of permissions- `permission` (`[Permission](#type.Permission)`): The permission to check for.
+- `permissions` ([{Permission}](#type.Permission)): The list of permissions- `permission` ([Permission](#type.Permission)): The permission to check for.
 
 ### Returns
 
-- `has_perm` (`[boolean](#type.boolean)`): Whether the permission is present in the list of permissions as per kittycat rules.
+- `has_perm` ([boolean](#type.boolean)): Whether the permission is present in the list of permissions as per kittycat rules.
 
 **has_perm_str**
 
@@ -196,11 +196,11 @@ Checks if a list of permissions in canonical string form contains a specific per
 
 ### Parameters
 
-- `permissions` (`[{string}](#type.string)`): The list of permissions- `permission` (`[string](#type.string)`): The permission to check for.
+- `permissions` ([{string}](#type.string)): The list of permissions- `permission` ([string](#type.string)): The permission to check for.
 
 ### Returns
 
-- `has_perm` (`[boolean](#type.boolean)`): Whether the permission is present in the list of permissions as per kittycat rules.
+- `has_perm` ([boolean](#type.boolean)): Whether the permission is present in the list of permissions as per kittycat rules.
 
 **check_perms_single**
 
@@ -212,11 +212,11 @@ Checks if a single permission check passes.
 
 ### Parameters
 
-- `check` (`[PermissionCheck](#type.PermissionCheck)`): The permission check to evaluate.- `member_native_perms` (`[Permissions](#type.Permissions)`): The native permissions of the member.- `member_kittycat_perms` (`[{Permission}](#type.Permission)`): The kittycat permissions of the member.
+- `check` ([PermissionCheck](#type.PermissionCheck)): The permission check to evaluate.- `member_native_perms` ([Permissions](#type.Permissions)): The native permissions of the member.- `member_kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions of the member.
 
 ### Returns
 
-- `result` (`[LuaPermissionResult](#type.LuaPermissionResult)`): The result of the permission check.
+- `result` ([LuaPermissionResult](#type.LuaPermissionResult)): The result of the permission check.
 
 **eval_checks**
 
@@ -228,11 +228,11 @@ Evaluates a list of permission checks.
 
 ### Parameters
 
-- `checks` (`[{PermissionCheck}](#type.PermissionCheck)`): The list of permission checks to evaluate.- `member_native_perms` (`[Permissions](#type.Permissions)`): The native permissions of the member.- `member_kittycat_perms` (`[{Permission}](#type.Permission)`): The kittycat permissions of the member.
+- `checks` ([{PermissionCheck}](#type.PermissionCheck)): The list of permission checks to evaluate.- `member_native_perms` ([Permissions](#type.Permissions)): The native permissions of the member.- `member_kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions of the member.
 
 ### Returns
 
-- `result` (`[LuaPermissionResult](#type.LuaPermissionResult)`): The result of the permission check.
+- `result` ([LuaPermissionResult](#type.LuaPermissionResult)): The result of the permission check.
 
 
 

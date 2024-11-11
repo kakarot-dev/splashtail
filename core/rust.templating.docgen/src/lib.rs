@@ -179,7 +179,7 @@ impl Method {
 }
 
 impl Method {
-    fn func_name(&self, cls: Option<String>) -> String {
+    pub fn func_name(&self, cls: &Option<String>) -> String {
         if let Some(cls) = cls {
             format!("{}:{}", cls, self.name)
         } else {
@@ -188,7 +188,7 @@ impl Method {
     }
 
     /// Format: function name<GENERICS>(parameters) -> returns
-    pub fn type_signature(&self, cls: Option<String>) -> String {
+    pub fn type_signature(&self, cls: &Option<String>) -> String {
         let mut out = String::new();
         out.push_str(&format!("function {}", self.func_name(cls)));
 

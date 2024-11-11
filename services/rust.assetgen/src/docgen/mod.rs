@@ -1,6 +1,4 @@
 // Generates AntiRaid documentation from docgen data
-mod type_serde;
-
 use templating_docgen::{Field, Method, Parameter, Plugin, Type};
 
 pub fn document_all_plugins() -> String {
@@ -71,10 +69,6 @@ fn type_to_string(typ: &Type) -> String {
         let example_json = serde_json::to_string_pretty(&example).unwrap();
 
         markdown.push_str(&format!("```json\n{}\n```", example_json));
-        markdown.push_str(&format!(
-            "\n\n#### JSON schema\n\n{}",
-            type_serde::serialize_type(&example).unwrap()
-        ));
     }
 
     if !typ.fields.is_empty() {
@@ -104,8 +98,8 @@ fn method_to_string(method: &Method, cls: Option<String>) -> String {
 
     markdown.push_str(&format!(
         "### {}\n\n```lua\n{}\n```",
-        method.name,
-        method.type_signature(cls)
+        method.func_name(&cls),
+        method.type_signature(&cls)
     ));
 
     if !method.description.is_empty() {

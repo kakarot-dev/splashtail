@@ -60,17 +60,6 @@ This plugin allows interoperability with AntiRaid and controlled interaction wit
 }
 ```
 
-#### JSON schema
-
-Map (key/value)  
-	- **lang**
- => string ["lua"]
-	- **allowed_caps**
- => (Array) 
-
-
-
-
 #### Fields
 
 - `lang` ([string](#type.string)): The language of the template.
@@ -92,20 +81,6 @@ Map (key/value)
   }
 }
 ```
-
-#### JSON schema
-
-- **path** => string [""]
-- **pragma** => Map (key/value)  
-	- **lang**
- => string ["lua"]
-	- **allowed_caps**
- => (Array) 
-
-
-
-
-
 
 #### Fields
 
@@ -259,71 +234,6 @@ Captcha configuration. See examples for the arguments
 }
 ```
 
-#### JSON schema
-
-- **char_count** => u8 [5]
-- **filters** => (Array) Map (key/value)  
-	- **filter**
- => string ["Noise"]
-	- **prob**
- => f32 [0.1]
-
-
-, Map (key/value)  
-	- **filter**
- => string ["Wave"]
-	- **f**
- => f64 [4]
-	- **amp**
- => f64 [2]
-	- **d**
- => string ["horizontal"]
-
-
-, Map (key/value)  
-	- **filter**
- => string ["Line"]
-	- **p1**
- => (Array) f32 [1]f32 [0]
-	- **p2**
- => (Array) f32 [20]f32 [20]
-	- **thickness**
- => f32 [2]
-	- **color**
- => Struct SerdeColor 
-		- **r** => u8 [0]
-		- **g** => u8 [30]
-		- **b** => u8 [100]
-
-
-
-
-
-Map (key/value)  
-	- **filter**
- => string ["RandomLine"]
-
-
-Map (key/value)  
-	- **filter**
- => string ["Grid"]
-	- **y_gap**
- => u32 [30]
-	- **x_gap**
- => u32 [10]
-
-
-Map (key/value)  
-	- **filter**
- => string ["ColorInvert"]
-
-
-
-- **viewbox_size** => (Array) u32 [512]u32 [512]
-- **set_viewbox_at_idx** => None (unknown value type)
-
-
-
 #### Fields
 
 - `filter` ([string](#type.string)): The name of the filter to use. See example for the parameters to pass for the filter as well as https://github.com/Anti-Raid/captcha.
@@ -374,16 +284,6 @@ KvRecord represents a key-value record with metadata.
 }
 ```
 
-#### JSON schema
-
-- **key** => string [""]
-- **value** => No Data/Unit Type (unknown value type)
-- **exists** => bool [false]
-- **created_at** => None (unknown value type)
-- **last_updated_at** => None (unknown value type)
-
-
-
 #### Fields
 
 - `key` ([string](#type.string)): The key of the record.
@@ -403,7 +303,7 @@ KvExecutor allows templates to get, store and find persistent data within a serv
 
 #### Methods
 
-### find
+### KvExecutor:find
 
 ```lua
 function KvExecutor:find(key: string)
@@ -413,7 +313,7 @@ function KvExecutor:find(key: string)
 
 - `key` ([string](#type.string)): The key to search for. % matches zero or more characters; _ matches a single character. To search anywhere in a string, surround {KEY} with %, e.g. %{KEY}%
 
-### get
+### KvExecutor:get
 
 ```lua
 function KvExecutor:get(key: string)
@@ -427,7 +327,7 @@ function KvExecutor:get(key: string)
 #### Returns
 
 - `value` ([any](#type.any)): The value of the key.- `exists` ([boolean](#type.boolean)): Whether the key exists.
-### getrecord
+### KvExecutor:getrecord
 
 ```lua
 function KvExecutor:getrecord(key: string) -> record: KvRecord
@@ -441,7 +341,7 @@ function KvExecutor:getrecord(key: string) -> record: KvRecord
 #### Returns
 
 - `record` ([KvRecord](#type.KvRecord)): The record of the key.
-### set
+### KvExecutor:set
 
 ```lua
 function KvExecutor:set(key: string, value: any)
@@ -452,7 +352,7 @@ function KvExecutor:set(key: string, value: any)
 - `key` ([string](#type.string)): The key to set.
 - `value` ([any](#type.any)): The value to set.
 
-### delete
+### KvExecutor:delete
 
 ```lua
 function KvExecutor:delete(key: string)
@@ -516,19 +416,6 @@ LuaPermissionResult is a type containing the status of a permission check in Ant
 }
 ```
 
-#### JSON schema
-
-- **result** => Struct PermissionResult 
-	- **var** => string ["Ok"]
-
-
-
-- **is_ok** => bool [true]
-- **code** => string ["Ok"]
-- **markdown** => string [""]
-
-
-
 #### Fields
 
 - `result` ([PermissionResult](#type.PermissionResult)): The raw/underlying result of the permission check.
@@ -552,15 +439,6 @@ PermissionCheck is a type containing the permissions to check for a user.
 }
 ```
 
-#### JSON schema
-
-- **kittycat_perms** => (Array) 
-- **native_perms** => (Array) 
-- **outer_and** => bool [false]
-- **inner_and** => bool [false]
-
-
-
 #### Fields
 
 - `kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions needed to run the command.
@@ -582,14 +460,6 @@ Permission is the primitive permission type used by AntiRaid. See https://github
   "negator": false
 }
 ```
-
-#### JSON schema
-
-- **namespace** => string ["moderation"]
-- **perm** => string ["ban"]
-- **negator** => bool [false]
-
-
 
 #### Fields
 

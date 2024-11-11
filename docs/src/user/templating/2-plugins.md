@@ -4,7 +4,7 @@ Utilities for asynchronous operations and timing
 
 ## Methods
 
-**sleep**
+### sleep
 
 ```lua
 function sleep(duration: f64) -> slept_time: f64
@@ -12,12 +12,12 @@ function sleep(duration: f64) -> slept_time: f64
 
 Sleep for a given duration.
 
-### Parameters
+#### Parameters
 
 - `duration` ([f64](#type.f64)): The duration to sleep for.
 
 
-### Returns
+#### Returns
 
 - `slept_time` ([f64](#type.f64)): The actual duration slept for.
 
@@ -29,9 +29,117 @@ Sleep for a given duration.
 
 This plugin allows interoperability with AntiRaid and controlled interaction with the low-levels of AntiRaid templating subsystem.
 
+## Types
+
+<div id="type.null" />
+
+### null
+
+`null` is a special value that represents nothing. It is often used in AntiRaid instead of `nil` due to issues regarding existence etc. `null` is not equal to `nil` but is also an opaque type.
+
+
+
+<div id="type.array_metatable" />
+
+### array_metatable
+
+`array_metatable` is a special metatable that is used to represent arrays across the Lua-AntiRaid templating subsystem boundary. This metatable must be set on all arrays over this boundary and is required to ensure AntiRaid knows the value you're sending it is actually an array and not an arbitrary Luau table.
+
+
+
+<div id="type.TemplatePragma" />
+
+### TemplatePragma
+
+`TemplatePragma` contains the pragma of the template. Note that the list of fields below in non-exhaustive as templates can define extra fields on the pragma as well
+
+```json
+{
+  "lang": "lua",
+  "allowed_caps": []
+}
+```
+
+#### JSON schema
+
+Map (key/value)  
+	- **lang**
+ => string ["lua"]
+	- **allowed_caps**
+ => (Array) 
+
+
+
+
+#### Fields
+
+- `lang` ([string](#type.string)): The language of the template.
+- `allowed_caps` ([{string}](#type.string)): The allowed capabilities provided to the template.
+
+
+<div id="type.TemplateData" />
+
+### TemplateData
+
+`TemplateData` is a struct that represents the data associated with a template token. It is used to store the path and pragma of a template token.
+
+```json
+{
+  "path": "",
+  "pragma": {
+    "lang": "lua",
+    "allowed_caps": []
+  }
+}
+```
+
+#### JSON schema
+
+- **path** => string [""]
+- **pragma** => Map (key/value)  
+	- **lang**
+ => string ["lua"]
+	- **allowed_caps**
+ => (Array) 
+
+
+
+
+
+
+#### Fields
+
+- `path` ([string](#type.string)): The path of the template token.
+- `pragma` ([TemplatePragma](#type.TemplatePragma)): The pragma of the template.
+
+
 ## Methods
 
-**memusage**
+### array_metatable
+
+```lua
+function array_metatable() -> array_metatable: table
+```
+
+Returns the array metatable.
+
+#### Returns
+
+- `array_metatable` ([table](#type.table)): The array metatable.
+
+### null
+
+```lua
+function null() -> null: null
+```
+
+Returns the null value.
+
+#### Returns
+
+- `null` ([null](#type.null)): The null value.
+
+### memusage
 
 ```lua
 function memusage() -> memory_usage: f64
@@ -39,11 +147,11 @@ function memusage() -> memory_usage: f64
 
 Returns the current memory usage of the Lua VM.
 
-### Returns
+#### Returns
 
 - `memory_usage` ([f64](#type.f64)): The current memory usage, in bytes, of the Lua VM.
 
-**guild_id**
+### guild_id
 
 ```lua
 function guild_id() -> guild_id: string
@@ -51,11 +159,11 @@ function guild_id() -> guild_id: string
 
 Returns the current guild ID of the Lua VM.
 
-### Returns
+#### Returns
 
 - `guild_id` ([string](#type.string)): The current guild ID.
 
-**gettemplatedata**
+### gettemplatedata
 
 ```lua
 function gettemplatedata(token: string) -> data: TemplateData?
@@ -63,16 +171,16 @@ function gettemplatedata(token: string) -> data: TemplateData?
 
 Returns the data associated with a template token.
 
-### Parameters
+#### Parameters
 
 - `token` ([string](#type.string)): The token of the template to retrieve data for.
 
 
-### Returns
+#### Returns
 
 - `data` ([TemplateData?](#type.TemplateData)): The data associated with the template token, or `null` if no data is found.
 
-**current_user**
+### current_user
 
 ```lua
 function current_user() -> user: serenity::model::user::User
@@ -80,7 +188,7 @@ function current_user() -> user: serenity::model::user::User
 
 Returns the current user of the Lua VM.
 
-### Returns
+#### Returns
 
 - `user` ([serenity::model::user::User](https://docs.rs/serenity/latest/serenity/model/user/struct.User.html)): Returns AntiRaid's discord user object.
 
@@ -92,9 +200,138 @@ Returns the current user of the Lua VM.
 
 This plugin allows for the creation of text/image CAPTCHA's with customizable filters which can be useful in protecting against bots.
 
+## Types
+
+<div id="type.CaptchaConfig" />
+
+### CaptchaConfig
+
+Captcha configuration. See examples for the arguments
+
+```json
+{
+  "char_count": 5,
+  "filters": [
+    {
+      "filter": "Noise",
+      "prob": 0.1
+    },
+    {
+      "filter": "Wave",
+      "f": 4.0,
+      "amp": 2.0,
+      "d": "horizontal"
+    },
+    {
+      "filter": "Line",
+      "p1": [
+        1.0,
+        0.0
+      ],
+      "p2": [
+        20.0,
+        20.0
+      ],
+      "thickness": 2.0,
+      "color": {
+        "r": 0,
+        "g": 30,
+        "b": 100
+      }
+    },
+    {
+      "filter": "RandomLine"
+    },
+    {
+      "filter": "Grid",
+      "y_gap": 30,
+      "x_gap": 10
+    },
+    {
+      "filter": "ColorInvert"
+    }
+  ],
+  "viewbox_size": [
+    512,
+    512
+  ],
+  "set_viewbox_at_idx": null
+}
+```
+
+#### JSON schema
+
+- **char_count** => u8 [5]
+- **filters** => (Array) Map (key/value)  
+	- **filter**
+ => string ["Noise"]
+	- **prob**
+ => f32 [0.1]
+
+
+, Map (key/value)  
+	- **filter**
+ => string ["Wave"]
+	- **f**
+ => f64 [4]
+	- **amp**
+ => f64 [2]
+	- **d**
+ => string ["horizontal"]
+
+
+, Map (key/value)  
+	- **filter**
+ => string ["Line"]
+	- **p1**
+ => (Array) f32 [1]f32 [0]
+	- **p2**
+ => (Array) f32 [20]f32 [20]
+	- **thickness**
+ => f32 [2]
+	- **color**
+ => Struct SerdeColor 
+		- **r** => u8 [0]
+		- **g** => u8 [30]
+		- **b** => u8 [100]
+
+
+
+
+
+Map (key/value)  
+	- **filter**
+ => string ["RandomLine"]
+
+
+Map (key/value)  
+	- **filter**
+ => string ["Grid"]
+	- **y_gap**
+ => u32 [30]
+	- **x_gap**
+ => u32 [10]
+
+
+Map (key/value)  
+	- **filter**
+ => string ["ColorInvert"]
+
+
+
+- **viewbox_size** => (Array) u32 [512]u32 [512]
+- **set_viewbox_at_idx** => None (unknown value type)
+
+
+
+#### Fields
+
+- `filter` ([string](#type.string)): The name of the filter to use. See example for the parameters to pass for the filter as well as https://github.com/Anti-Raid/captcha.
+
+
 ## Methods
 
-**new**
+### new
 
 ```lua
 function new(config: CaptchaConfig) -> captcha: {u8}
@@ -102,12 +339,12 @@ function new(config: CaptchaConfig) -> captcha: {u8}
 
 Creates a new CAPTCHA with the given configuration.
 
-### Parameters
+#### Parameters
 
 - `config` ([CaptchaConfig](#type.CaptchaConfig)): The configuration to use for the CAPTCHA.
 
 
-### Returns
+#### Returns
 
 - `captcha` ([{u8}](#type.u8)): The created CAPTCHA object.
 
@@ -119,20 +356,128 @@ Creates a new CAPTCHA with the given configuration.
 
 Utilities for key-value operations.
 
+## Types
+
+<div id="type.KvRecord" />
+
+### KvRecord
+
+KvRecord represents a key-value record with metadata.
+
+```json
+{
+  "key": "",
+  "value": null,
+  "exists": false,
+  "created_at": null,
+  "last_updated_at": null
+}
+```
+
+#### JSON schema
+
+- **key** => string [""]
+- **value** => No Data/Unit Type (unknown value type)
+- **exists** => bool [false]
+- **created_at** => None (unknown value type)
+- **last_updated_at** => None (unknown value type)
+
+
+
+#### Fields
+
+- `key` ([string](#type.string)): The key of the record.
+- `value` ([any](#type.any)): The value of the record.
+- `exists` ([boolean](#type.boolean)): Whether the record exists.
+- `created_at` ([datetime](#type.datetime)): The time the record was created.
+- `last_updated_at` ([datetime](#type.datetime)): The time the record was last updated.
+
+
+<div id="type.KvExecutor" />
+
+### KvExecutor
+
+KvExecutor allows templates to get, store and find persistent data within a server.
+
+
+
+#### Methods
+
+### find
+
+```lua
+function KvExecutor:find(key: string)
+```
+
+#### Parameters
+
+- `key` ([string](#type.string)): The key to search for. % matches zero or more characters; _ matches a single character. To search anywhere in a string, surround {KEY} with %, e.g. %{KEY}%
+
+### get
+
+```lua
+function KvExecutor:get(key: string)
+```
+
+#### Parameters
+
+- `key` ([string](#type.string)): The key to get.
+
+
+#### Returns
+
+- `value` ([any](#type.any)): The value of the key.- `exists` ([boolean](#type.boolean)): Whether the key exists.
+### getrecord
+
+```lua
+function KvExecutor:getrecord(key: string) -> record: KvRecord
+```
+
+#### Parameters
+
+- `key` ([string](#type.string)): The key to get.
+
+
+#### Returns
+
+- `record` ([KvRecord](#type.KvRecord)): The record of the key.
+### set
+
+```lua
+function KvExecutor:set(key: string, value: any)
+```
+
+#### Parameters
+
+- `key` ([string](#type.string)): The key to set.
+- `value` ([any](#type.any)): The value to set.
+
+### delete
+
+```lua
+function KvExecutor:delete(key: string)
+```
+
+#### Parameters
+
+- `key` ([string](#type.string)): The key to delete.
+
+
+
 ## Methods
 
-**new**
+### new
 
 ```lua
 function new(token: string) -> executor: KvExecutor
 ```
 
-### Parameters
+#### Parameters
 
 - `token` ([string](#type.string)): The token of the template to use.
 
 
-### Returns
+#### Returns
 
 - `executor` ([KvExecutor](#type.KvExecutor)): A key-value executor.
 
@@ -144,9 +489,118 @@ function new(token: string) -> executor: KvExecutor
 
 Utilities for handling permission checks.
 
+## Types
+
+<div id="type.PermissionResult" />
+
+### PermissionResult
+
+PermissionResult is an internal type containing the status of a permission check in AntiRaid. The exact contents are undocumented as of now
+
+
+
+<div id="type.LuaPermissionResult" />
+
+### LuaPermissionResult
+
+LuaPermissionResult is a type containing the status of a permission check in AntiRaid with prior parsing done for Lua.
+
+```json
+{
+  "result": {
+    "var": "Ok"
+  },
+  "is_ok": true,
+  "code": "Ok",
+  "markdown": ""
+}
+```
+
+#### JSON schema
+
+- **result** => Struct PermissionResult 
+	- **var** => string ["Ok"]
+
+
+
+- **is_ok** => bool [true]
+- **code** => string ["Ok"]
+- **markdown** => string [""]
+
+
+
+#### Fields
+
+- `result` ([PermissionResult](#type.PermissionResult)): The raw/underlying result of the permission check.
+- `is_ok` ([boolean](#type.boolean)): Whether the permission check was successful.
+- `code` ([string](#type.string)): The code of the permission check.
+- `markdown` ([string](#type.string)): The markdown representation of the permission check.
+
+
+<div id="type.PermissionCheck" />
+
+### PermissionCheck
+
+PermissionCheck is a type containing the permissions to check for a user.
+
+```json
+{
+  "kittycat_perms": [],
+  "native_perms": [],
+  "outer_and": false,
+  "inner_and": false
+}
+```
+
+#### JSON schema
+
+- **kittycat_perms** => (Array) 
+- **native_perms** => (Array) 
+- **outer_and** => bool [false]
+- **inner_and** => bool [false]
+
+
+
+#### Fields
+
+- `kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions needed to run the command.
+- `native_perms` ([{string}](#type.string)): The native permissions needed to run the command.
+- `outer_and` ([boolean](#type.boolean)): Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current
+- `inner_and` ([boolean](#type.boolean)): Whether or not the perms are ANDed (all needed) or OR'd (at least one)
+
+
+<div id="type.Permission" />
+
+### Permission
+
+Permission is the primitive permission type used by AntiRaid. See https://github.com/InfinityBotList/kittycat for more information
+
+```json
+{
+  "namespace": "moderation",
+  "perm": "ban",
+  "negator": false
+}
+```
+
+#### JSON schema
+
+- **namespace** => string ["moderation"]
+- **perm** => string ["ban"]
+- **negator** => bool [false]
+
+
+
+#### Fields
+
+- `namespace` ([string](#type.string)): The namespace of the permission.
+- `perm` ([string](#type.string)): The permission bit on the namespace.
+- `negator` ([boolean](#type.boolean)): Whether the permission is a negator permission or not
+
+
 ## Methods
 
-**permission_from_string**
+### permission_from_string
 
 ```lua
 function permission_from_string(perm_string: string) -> permission: Permission
@@ -154,16 +608,16 @@ function permission_from_string(perm_string: string) -> permission: Permission
 
 Returns a Permission object from a string.
 
-### Parameters
+#### Parameters
 
 - `perm_string` ([string](#type.string)): The string to parse into a Permission object.
 
 
-### Returns
+#### Returns
 
 - `permission` ([Permission](#type.Permission)): The parsed Permission object.
 
-**permission_to_string**
+### permission_to_string
 
 ```lua
 function permission_to_string(permission: Permission) -> perm_string: string
@@ -171,16 +625,16 @@ function permission_to_string(permission: Permission) -> perm_string: string
 
 Returns a string from a Permission object.
 
-### Parameters
+#### Parameters
 
 - `permission` ([Permission](#type.Permission)): The Permission object to parse into a string.
 
 
-### Returns
+#### Returns
 
 - `perm_string` ([string](#type.string)): The parsed string.
 
-**has_perm**
+### has_perm
 
 ```lua
 function has_perm(permissions: {Permission}, permission: Permission) -> has_perm: boolean
@@ -188,17 +642,17 @@ function has_perm(permissions: {Permission}, permission: Permission) -> has_perm
 
 Checks if a list of permissions in Permission object form contains a specific permission.
 
-### Parameters
+#### Parameters
 
 - `permissions` ([{Permission}](#type.Permission)): The list of permissions
 - `permission` ([Permission](#type.Permission)): The permission to check for.
 
 
-### Returns
+#### Returns
 
 - `has_perm` ([boolean](#type.boolean)): Whether the permission is present in the list of permissions as per kittycat rules.
 
-**has_perm_str**
+### has_perm_str
 
 ```lua
 function has_perm_str(permissions: {string}, permission: string) -> has_perm: boolean
@@ -206,17 +660,17 @@ function has_perm_str(permissions: {string}, permission: string) -> has_perm: bo
 
 Checks if a list of permissions in canonical string form contains a specific permission.
 
-### Parameters
+#### Parameters
 
 - `permissions` ([{string}](#type.string)): The list of permissions
 - `permission` ([string](#type.string)): The permission to check for.
 
 
-### Returns
+#### Returns
 
 - `has_perm` ([boolean](#type.boolean)): Whether the permission is present in the list of permissions as per kittycat rules.
 
-**check_perms_single**
+### check_perms_single
 
 ```lua
 function check_perms_single(check: PermissionCheck, member_native_perms: Permissions, member_kittycat_perms: {Permission}) -> result: LuaPermissionResult
@@ -224,18 +678,18 @@ function check_perms_single(check: PermissionCheck, member_native_perms: Permiss
 
 Checks if a single permission check passes.
 
-### Parameters
+#### Parameters
 
 - `check` ([PermissionCheck](#type.PermissionCheck)): The permission check to evaluate.
 - `member_native_perms` ([Permissions](#type.Permissions)): The native permissions of the member.
 - `member_kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions of the member.
 
 
-### Returns
+#### Returns
 
 - `result` ([LuaPermissionResult](#type.LuaPermissionResult)): The result of the permission check.
 
-**eval_checks**
+### eval_checks
 
 ```lua
 function eval_checks(checks: {PermissionCheck}, member_native_perms: Permissions, member_kittycat_perms: {Permission}) -> result: LuaPermissionResult
@@ -243,14 +697,14 @@ function eval_checks(checks: {PermissionCheck}, member_native_perms: Permissions
 
 Evaluates a list of permission checks.
 
-### Parameters
+#### Parameters
 
 - `checks` ([{PermissionCheck}](#type.PermissionCheck)): The list of permission checks to evaluate.
 - `member_native_perms` ([Permissions](#type.Permissions)): The native permissions of the member.
 - `member_kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions of the member.
 
 
-### Returns
+#### Returns
 
 - `result` ([LuaPermissionResult](#type.LuaPermissionResult)): The result of the permission check.
 

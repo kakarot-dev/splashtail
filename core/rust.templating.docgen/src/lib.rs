@@ -1,6 +1,5 @@
 /// Tooling to document the Anti-Raid Luau API.
 //
-use serde::ser::SerializeStruct;
 use std::sync::Arc;
 
 #[derive(Default, Debug, serde::Serialize, Clone)]
@@ -81,14 +80,9 @@ impl Plugin {
         p
     }
 
-    pub fn type_mut(
-        self,
-        typ: Arc<dyn erased_serde::Serialize + Send + Sync>,
-        description: &str,
-        f: impl FnOnce(Type) -> Type,
-    ) -> Self {
+    pub fn type_mut(self, name: &str, description: &str, f: impl FnOnce(Type) -> Type) -> Self {
         let mut p = self;
-        let new_typ = Type::new(typ, description);
+        let new_typ = Type::new(name, description);
         p.types.push(f(new_typ));
 
         p
@@ -185,10 +179,18 @@ impl Method {
 }
 
 impl Method {
+    fn func_name(&self, cls: Option<String>) -> String {
+        if let Some(cls) = cls {
+            format!("{}:{}", cls, self.name)
+        } else {
+            self.name.clone()
+        }
+    }
+
     /// Format: function name<GENERICS>(parameters) -> returns
-    pub fn type_signature(&self) -> String {
+    pub fn type_signature(&self, cls: Option<String>) -> String {
         let mut out = String::new();
-        out.push_str(&format!("function {}", self.name));
+        out.push_str(&format!("function {}", self.func_name(cls)));
 
         // Add in the generics if they exist
         if !self.generics.is_empty() {
@@ -338,8 +340,9 @@ impl Field {
 
 #[derive(serde::Serialize, Clone)]
 pub struct Type {
-    pub obj: Arc<dyn erased_serde::Serialize + Send + Sync>,
+    pub name: String,
     pub description: String,
+    pub example: Option<Arc<dyn erased_serde::Serialize + Send + Sync>>,
     pub fields: Vec<Field>, // Description of the fields in type
     pub methods: Vec<Method>,
 }
@@ -347,8 +350,9 @@ pub struct Type {
 impl Default for Type {
     fn default() -> Self {
         Type {
-            obj: Arc::new(()),
+            name: String::new(),
             description: String::new(),
+            example: None,
             methods: Vec::new(),
             fields: Vec::new(),
         }
@@ -366,10 +370,16 @@ impl std::fmt::Debug for Type {
 
 // Type builder code
 impl Type {
-    pub fn new(obj: Arc<dyn erased_serde::Serialize + Send + Sync>, description: &str) -> Self {
+    pub fn new(name: &str, description: &str) -> Self {
         let mut t = Type::default();
-        t.obj = obj;
+        t.name = name.to_string();
         t.description = description.to_string();
+        t
+    }
+
+    pub fn example(self, example: Arc<dyn erased_serde::Serialize + Send + Sync>) -> Self {
+        let mut t = self;
+        t.example = Some(example);
         t
     }
 
@@ -407,19 +417,5 @@ impl Type {
 
     pub fn build(self) -> Type {
         self
-    }
-}
-
-pub struct OpaqueStruct(pub &'static str);
-
-/// Dummy serializer for OpaqueStruct for documentation
-///
-/// Just calls serialize_struct but with no fields
-impl serde::Serialize for OpaqueStruct {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_struct(self.0, 0)?.end()
     }
 }

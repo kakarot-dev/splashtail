@@ -1,6 +1,7 @@
 // Generates AntiRaid documentation from docgen data
+mod type_serde;
 
-use templating_docgen::{Method, Parameter, Plugin, Type};
+use templating_docgen::{Field, Method, Parameter, Plugin, Type};
 
 pub fn document_all_plugins() -> String {
     let mut markdown = String::new();
@@ -37,33 +38,82 @@ fn generate_markdown_for_plugin(plugin: Plugin) -> String {
         markdown.push_str(&format!("{}\n\n", plugin.description));
     }
 
+    // Document the types
+    if !plugin.types.is_empty() {
+        markdown.push_str("## Types\n\n");
+
+        plugin.types.iter().for_each(|typ| {
+            markdown.push_str(&format!("{}\n\n", type_to_string(typ)));
+        });
+    }
+
     // Document the methods
     if !plugin.methods.is_empty() {
         markdown.push_str("## Methods\n\n");
 
         plugin.methods.iter().for_each(|method| {
-            markdown.push_str(&format!(
-                "**{}**\n\n{}\n\n",
-                method.name,
-                method_to_string(method)
-            ));
+            markdown.push_str(&format!("{}\n\n", method_to_string(method, None)));
         });
     }
 
     markdown // TODO: Implement the rest of the function
 }
 
-fn method_to_string(method: &Method) -> String {
+fn type_to_string(typ: &Type) -> String {
     let mut markdown = String::new();
 
-    markdown.push_str(&format!("```lua\n{}\n```", method.type_signature()));
+    markdown.push_str(&format!(
+        "<div id=\"type.{}\" />\n\n### {}\n\n{}\n\n",
+        typ.name, typ.name, typ.description
+    ));
+
+    if let Some(ref example) = typ.example {
+        let example_json = serde_json::to_string_pretty(&example).unwrap();
+
+        markdown.push_str(&format!("```json\n{}\n```", example_json));
+        markdown.push_str(&format!(
+            "\n\n#### JSON schema\n\n{}",
+            type_serde::serialize_type(&example).unwrap()
+        ));
+    }
+
+    if !typ.fields.is_empty() {
+        markdown.push_str("\n\n#### Fields\n\n");
+
+        typ.fields.iter().for_each(|field| {
+            markdown.push_str(&format!("{}\n", field_to_string(field)));
+        });
+    }
+
+    if !typ.methods.is_empty() {
+        markdown.push_str("\n\n#### Methods\n\n");
+
+        typ.methods.iter().for_each(|method| {
+            markdown.push_str(&format!(
+                "{}\n",
+                method_to_string(method, Some(typ.name.clone()))
+            ));
+        });
+    }
+
+    markdown
+}
+
+fn method_to_string(method: &Method, cls: Option<String>) -> String {
+    let mut markdown = String::new();
+
+    markdown.push_str(&format!(
+        "### {}\n\n```lua\n{}\n```",
+        method.name,
+        method.type_signature(cls)
+    ));
 
     if !method.description.is_empty() {
         markdown.push_str(&format!("\n\n{}", method.description));
     }
 
     if !method.generics.is_empty() {
-        markdown.push_str("\n\n### Generics\n\n");
+        markdown.push_str("\n\n#### Generics\n\n");
 
         method.generics.iter().for_each(|gen| {
             markdown.push_str(&format!("- `{}`: {}", gen.param, gen.type_signature()));
@@ -71,7 +121,7 @@ fn method_to_string(method: &Method) -> String {
     }
 
     if !method.parameters.is_empty() {
-        markdown.push_str("\n\n### Parameters\n\n");
+        markdown.push_str("\n\n#### Parameters\n\n");
 
         method.parameters.iter().for_each(|param| {
             markdown.push_str(&format!("{}\n", param_to_string(param)));
@@ -79,7 +129,7 @@ fn method_to_string(method: &Method) -> String {
     }
 
     if !method.returns.is_empty() {
-        markdown.push_str("\n\n### Returns\n\n");
+        markdown.push_str("\n\n#### Returns\n\n");
 
         method.returns.iter().for_each(|ret| {
             markdown.push_str(&param_to_string(ret));
@@ -87,6 +137,15 @@ fn method_to_string(method: &Method) -> String {
     }
 
     markdown
+}
+
+fn field_to_string(field: &Field) -> String {
+    format!(
+        "- `{}` ({}): {}",
+        field.name,
+        typeref_to_link(&field.r#type),
+        field.description
+    )
 }
 
 fn param_to_string(param: &Parameter) -> String {

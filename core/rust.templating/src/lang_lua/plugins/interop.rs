@@ -6,19 +6,31 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
         .name("@antiraid/interop")
         .description("This plugin allows interoperability with AntiRaid and controlled interaction with the low-levels of AntiRaid templating subsystem.")
         .type_mut(
-            std::sync::Arc::new(templating_docgen::OpaqueStruct("null")),
-            "`null`` is a special value that represents nothing. It is often used in AntiRaid instead of `nil` due to issues regarding existence etc. `null` is not equal to `nil` but is also an opaque type.",
+            "null",
+            "`null` is a special value that represents nothing. It is often used in AntiRaid instead of `nil` due to issues regarding existence etc. `null` is not equal to `nil` but is also an opaque type.",
             |t| {
                 t
             },
         )
         .type_mut(
-            std::sync::Arc::new(templating_docgen::OpaqueStruct("array_metatable")),
+            "array_metatable",
             "`array_metatable` is a special metatable that is used to represent arrays across the Lua-AntiRaid templating subsystem boundary. This metatable must be set on all arrays over this boundary and is required to ensure AntiRaid knows the value you're sending it is actually an array and not an arbitrary Luau table.",
             |t| {
                 t
             },
         )
+        .method_mut("array_metatable", |m| {
+            m.description("Returns the array metatable.")
+            .return_("array_metatable", |r| {
+                r.typ("table").description("The array metatable.")
+            })
+        })
+        .method_mut("null", |m| {
+            m.description("Returns the null value.")
+            .return_("null", |r| {
+                r.typ("null").description("The null value.")
+            })
+        })
         .method_mut("memusage", |m| {
             m.description("Returns the current memory usage of the Lua VM.")
             .return_("memory_usage", |r| {
@@ -32,10 +44,11 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
             })
         })
         .type_mut(
-            std::sync::Arc::new(templating_docgen::OpaqueStruct("TemplatePragma")),
+            "TemplatePragma",
             "`TemplatePragma` contains the pragma of the template. Note that the list of fields below in non-exhaustive as templates can define extra fields on the pragma as well",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(crate::TemplatePragma::default()))
                 .field("lang", |f| {
                     f.typ("string").description("The language of the template.")
                 })
@@ -45,10 +58,11 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
             },
         )
         .type_mut(
-            std::sync::Arc::new(crate::lang_lua::state::TemplateData::default()),
+            "TemplateData",
             "`TemplateData` is a struct that represents the data associated with a template token. It is used to store the path and pragma of a template token.",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(crate::lang_lua::state::TemplateData::default()))
                 .field("path", |f| {
                     f.typ("string").description("The path of the template token.")
                 })

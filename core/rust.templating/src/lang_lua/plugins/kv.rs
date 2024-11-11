@@ -23,6 +23,18 @@ pub struct KvRecord {
     pub last_updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+impl KvRecord {
+    fn default() -> KvRecord {
+        KvRecord {
+            key: "".to_string(),
+            value: serde_json::Value::Null,
+            exists: false,
+            created_at: None,
+            last_updated_at: None,
+        }
+    }
+}
+
 impl KvExecutor {
     pub fn check(&self, action: String, key: String) -> Result<(), crate::Error> {
         if !self.template_data
@@ -56,10 +68,11 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
         .name("@antiraid/kv")
         .description("Utilities for key-value operations.")
         .type_mut(
-            std::sync::Arc::new(templating_docgen::OpaqueStruct("KvRecord")),
+            "KvRecord",
             "KvRecord represents a key-value record with metadata.",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(KvRecord::default()))
                 .field("key", |f| f.typ("string").description("The key of the record."))
                 .field("value", |f| f.typ("any").description("The value of the record."))
                 .field("exists", |f| f.typ("boolean").description("Whether the record exists."))
@@ -68,7 +81,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
             },
         )
         .type_mut(
-            std::sync::Arc::new(templating_docgen::OpaqueStruct("KvExecutor")),
+            "KvExecutor",
             "KvExecutor allows templates to get, store and find persistent data within a server.",
             |mut t| {
                 t

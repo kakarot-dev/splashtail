@@ -40,17 +40,18 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
         .name("@antiraid/permissions")
         .description("Utilities for handling permission checks.")
         .type_mut(
-            std::sync::Arc::new(templating_docgen::OpaqueStruct("PermissionResult")),
+            "PermissionResult",
             "PermissionResult is an internal type containing the status of a permission check in AntiRaid. The exact contents are undocumented as of now",
             |t| {
                 t
             },
         )
         .type_mut(
-            std::sync::Arc::new(LuaPermissionResult::default()),
+            "LuaPermissionResult",
             "LuaPermissionResult is a type containing the status of a permission check in AntiRaid with prior parsing done for Lua.",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(LuaPermissionResult::default()))
                 .field("result", |f| f.typ("PermissionResult").description("The raw/underlying result of the permission check."))
                 .field("is_ok", |f| f.typ("boolean").description("Whether the permission check was successful."))
                 .field("code", |f| f.typ("string").description("The code of the permission check."))
@@ -58,10 +59,11 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
             },
         )
         .type_mut(
-            std::sync::Arc::new(permissions::types::PermissionCheck::default()),
+            "PermissionCheck",
             "PermissionCheck is a type containing the permissions to check for a user.",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(permissions::types::PermissionCheck::default()))
                 .field("kittycat_perms", |f| f.typ("{Permission}").description("The kittycat permissions needed to run the command."))
                 .field("native_perms", |f| f.typ("{string}").description("The native permissions needed to run the command."))
                 .field("outer_and", |f| f.typ("boolean").description("Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current"))
@@ -69,10 +71,11 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
             },
         )
         .type_mut(
-            std::sync::Arc::new(kittycat::perms::Permission::from_string("moderation.ban")),
+            "Permission",
             "Permission is the primitive permission type used by AntiRaid. See https://github.com/InfinityBotList/kittycat for more information",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(kittycat::perms::Permission::from_string("moderation.ban")))
                 .field("namespace", |f| f.typ("string").description("The namespace of the permission."))
                 .field("perm", |f| f.typ("string").description("The permission bit on the namespace."))
                 .field("negator", |f| f.typ("boolean").description("Whether the permission is a negator permission or not"))

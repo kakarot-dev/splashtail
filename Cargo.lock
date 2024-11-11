@@ -3861,6 +3861,7 @@ dependencies = [
  "rust_rpc_server",
  "rust_rpc_server_bot",
  "sandwich_driver",
+ "serde",
  "serde_json",
  "serenity",
  "silverpelt",

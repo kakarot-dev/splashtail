@@ -161,10 +161,11 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
         .name("@antiraid/img_captcha")
         .description("This plugin allows for the creation of text/image CAPTCHA's with customizable filters which can be useful in protecting against bots.")
         .type_mut(
-            std::sync::Arc::new(CaptchaConfig::default()),
+            "CaptchaConfig",
             "Captcha configuration. See examples for the arguments",
-            |mut t| {
+            |t| {
                 t
+                .example(std::sync::Arc::new(CaptchaConfig::default()))
                 .field("filter", |f| {
                     f.typ("string").description("The name of the filter to use. See example for the parameters to pass for the filter as well as https://github.com/Anti-Raid/captcha.")
                 })

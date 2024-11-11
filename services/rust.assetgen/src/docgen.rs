@@ -107,7 +107,7 @@ fn typeref_to_link(tref: &str) -> String {
         let mut parts = tref.split("::").collect::<Vec<_>>();
         let last = parts.pop().unwrap();
 
-        let mut url = format!("https://docs.rs/{}/latest/", parts.join("/"));
+        let mut url = format!("https://docs.rs/{}/latest/", parts.remove(0));
         url.push_str(&parts.join("/"));
         url.push_str(&format!("/struct.{}.html", last));
 

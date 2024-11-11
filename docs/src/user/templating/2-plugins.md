@@ -7,7 +7,7 @@ Utilities for asynchronous operations and timing
 ### sleep
 
 ```lua
-function sleep(duration: f64) -> slept_time: f64
+function sleep(duration: f64) -> f64
 ```
 
 Sleep for a given duration.
@@ -93,7 +93,7 @@ This plugin allows interoperability with AntiRaid and controlled interaction wit
 ### array_metatable
 
 ```lua
-function array_metatable() -> array_metatable: table
+function array_metatable() -> table
 ```
 
 Returns the array metatable.
@@ -105,7 +105,7 @@ Returns the array metatable.
 ### null
 
 ```lua
-function null() -> null: null
+function null() -> null
 ```
 
 Returns the null value.
@@ -117,7 +117,7 @@ Returns the null value.
 ### memusage
 
 ```lua
-function memusage() -> memory_usage: f64
+function memusage() -> f64
 ```
 
 Returns the current memory usage of the Lua VM.
@@ -129,7 +129,7 @@ Returns the current memory usage of the Lua VM.
 ### guild_id
 
 ```lua
-function guild_id() -> guild_id: string
+function guild_id() -> string
 ```
 
 Returns the current guild ID of the Lua VM.
@@ -141,7 +141,7 @@ Returns the current guild ID of the Lua VM.
 ### gettemplatedata
 
 ```lua
-function gettemplatedata(token: string) -> data: TemplateData?
+function gettemplatedata(token: string) -> TemplateData?
 ```
 
 Returns the data associated with a template token.
@@ -158,7 +158,7 @@ Returns the data associated with a template token.
 ### current_user
 
 ```lua
-function current_user() -> user: serenity::model::user::User
+function current_user() -> serenity::model::user::User
 ```
 
 Returns the current user of the Lua VM.
@@ -244,7 +244,7 @@ Captcha configuration. See examples for the arguments
 ### new
 
 ```lua
-function new(config: CaptchaConfig) -> captcha: {u8}
+function new(config: CaptchaConfig) -> {u8}
 ```
 
 Creates a new CAPTCHA with the given configuration.
@@ -330,7 +330,7 @@ function KvExecutor:get(key: string)
 ### KvExecutor:getrecord
 
 ```lua
-function KvExecutor:getrecord(key: string) -> record: KvRecord
+function KvExecutor:getrecord(key: string) -> KvRecord
 ```
 
 #### Parameters
@@ -369,7 +369,7 @@ function KvExecutor:delete(key: string)
 ### new
 
 ```lua
-function new(token: string) -> executor: KvExecutor
+function new(token: string) -> KvExecutor
 ```
 
 #### Parameters
@@ -473,7 +473,7 @@ Permission is the primitive permission type used by AntiRaid. See https://github
 ### permission_from_string
 
 ```lua
-function permission_from_string(perm_string: string) -> permission: Permission
+function permission_from_string(perm_string: string) -> Permission
 ```
 
 Returns a Permission object from a string.
@@ -490,7 +490,7 @@ Returns a Permission object from a string.
 ### permission_to_string
 
 ```lua
-function permission_to_string(permission: Permission) -> perm_string: string
+function permission_to_string(permission: Permission) -> string
 ```
 
 Returns a string from a Permission object.
@@ -507,7 +507,7 @@ Returns a string from a Permission object.
 ### has_perm
 
 ```lua
-function has_perm(permissions: {Permission}, permission: Permission) -> has_perm: boolean
+function has_perm(permissions: {Permission}, permission: Permission) -> boolean
 ```
 
 Checks if a list of permissions in Permission object form contains a specific permission.
@@ -525,7 +525,7 @@ Checks if a list of permissions in Permission object form contains a specific pe
 ### has_perm_str
 
 ```lua
-function has_perm_str(permissions: {string}, permission: string) -> has_perm: boolean
+function has_perm_str(permissions: {string}, permission: string) -> boolean
 ```
 
 Checks if a list of permissions in canonical string form contains a specific permission.
@@ -543,7 +543,7 @@ Checks if a list of permissions in canonical string form contains a specific per
 ### check_perms_single
 
 ```lua
-function check_perms_single(check: PermissionCheck, member_native_perms: Permissions, member_kittycat_perms: {Permission}) -> result: LuaPermissionResult
+function check_perms_single(check: PermissionCheck, member_native_perms: Permissions, member_kittycat_perms: {Permission}) -> LuaPermissionResult
 ```
 
 Checks if a single permission check passes.
@@ -562,7 +562,7 @@ Checks if a single permission check passes.
 ### eval_checks
 
 ```lua
-function eval_checks(checks: {PermissionCheck}, member_native_perms: Permissions, member_kittycat_perms: {Permission}) -> result: LuaPermissionResult
+function eval_checks(checks: {PermissionCheck}, member_native_perms: Permissions, member_kittycat_perms: {Permission}) -> LuaPermissionResult
 ```
 
 Evaluates a list of permission checks.

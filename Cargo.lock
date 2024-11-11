@@ -3866,6 +3866,8 @@ dependencies = [
  "silverpelt",
  "splashcore_rs",
  "sqlx",
+ "templating",
+ "templating_docgen",
  "tokio",
 ]
 

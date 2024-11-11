@@ -185,10 +185,10 @@ impl Method {
 }
 
 impl Method {
-    /// Format: name(<generics>)(parameters) -> returns
+    /// Format: function name<GENERICS>(parameters) -> returns
     pub fn type_signature(&self) -> String {
         let mut out = String::new();
-        out.push_str(&format!("{}", self.name));
+        out.push_str(&format!("function {}", self.name));
 
         // Add in the generics if they exist
         if !self.generics.is_empty() {

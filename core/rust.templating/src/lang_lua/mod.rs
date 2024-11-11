@@ -1,10 +1,12 @@
 // Work in progress
 pub(crate) mod multioption;
 mod perthreadpanichook;
-mod plugins;
 pub mod samples;
 pub(crate) mod state;
 pub(crate) mod stream;
+
+mod plugins;
+pub use plugins::PLUGINS;
 
 use crate::atomicinstant;
 use mlua::prelude::*;

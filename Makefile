@@ -33,6 +33,7 @@ build:
 	make build_go
 	make build_rust
 	make copyassets
+	make templatedocs
 
 build_go:
 	for d in services/go.*; do \
@@ -73,6 +74,9 @@ ifndef CI_BUILD
 	cd services/website/src/lib/generated/build_assets && ../../../../../../out/rust.assetgen genassets && cd ../../../../../..
 
 endif
+
+templatedocs:
+	./out/rust.assetgen templatedocs > docs/src/user/templating/2-plugins.md
 
 tests:
 	./out/rust.assetgen test

@@ -1,3 +1,4 @@
+mod docgen;
 mod tester;
 
 use std::fs::File;
@@ -56,7 +57,7 @@ fn generate_channel_types_json() {
 
 #[tokio::main]
 async fn main() {
-    println!(
+    eprintln!(
         "Current dir: {}",
         std::env::current_dir().unwrap().display(),
     );
@@ -77,8 +78,13 @@ async fn main() {
         Some("test") => {
             crate::tester::run_tester().await;
         }
+        Some("templatedocs") => {
+            let docs = crate::docgen::document_all_plugins();
+
+            println!("{}", docs)
+        }
         _ => {
-            println!("No/unknown command specified. Use 'genassets' [generate build assets] or 'test' [test bot with some sanity checks]");
+            println!("No/unknown command specified.\n\ngenassets: [generate build assets]\ntest [test bot with some sanity checks]\ntemplatedocs: [generate template docs]");
         }
     }
 }

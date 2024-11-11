@@ -24,8 +24,8 @@ config = { path = "../../core/rust.config" }
 permissions = { path = "../../core/rust.permissions" }
 silverpelt = { path = "../../core/rust.silverpelt" }
 fred = { version = "9.3", features = ["serde-json"] }
-
-# Modules
+templating = { path = "../../core/rust.templating" }
+templating_docgen = { path = "../../core/rust.templating.docgen" }
 bot_modules_default = { path = "../../core/rust.bot_modules_default" }
 bot_binutils = { path = "../../core/rust.binutils" }
 rust_rpc_server = { path = "../../core/rust.rpc_server" }

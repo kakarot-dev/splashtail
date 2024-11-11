@@ -95,6 +95,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
         )
         .method_mut("new", |mut m| {
             m.parameter("token", |p| p.typ("string").description("The token of the template to use."))
+            .return_("executor", |r| r.typ("KvExecutor").description("A key-value executor."))
         })
 }
 

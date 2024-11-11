@@ -124,13 +124,17 @@ Utilities for key-value operations.
 **new**
 
 ```lua
-function new(token: string)
+function new(token: string) -> executor: KvExecutor
 ```
 
 ### Parameters
 
 - `token` ([string](#type.string)): The token of the template to use.
 
+
+### Returns
+
+- `executor` ([KvExecutor](#type.KvExecutor)): A key-value executor.
 
 
 

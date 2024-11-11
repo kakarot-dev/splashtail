@@ -3,7 +3,6 @@ pub(crate) mod multioption;
 mod perthreadpanichook;
 pub mod samples;
 pub(crate) mod state;
-pub(crate) mod stream;
 
 mod plugins;
 pub use plugins::PLUGINS;

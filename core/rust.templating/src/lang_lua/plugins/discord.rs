@@ -944,7 +944,7 @@ impl LuaUserData for MessageHandle {
         });
 
         methods.add_method("await_component_interaction", |_, this, _: ()| {
-            let stream = crate::lang_lua::stream::LuaStream::new(
+            let stream = super::typesext::LuaStream::new(
                 this.message
                     .await_component_interaction(this.shard_messenger.clone())
                     .timeout(std::time::Duration::from_secs(60))

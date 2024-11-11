@@ -88,6 +88,23 @@ impl Plugin {
         p
     }
 
+    pub fn field_mut(self, name: &str, f: impl FnOnce(Field) -> Field) -> Self {
+        let mut p = self;
+        let field = p.fields.iter_mut().find(|f| f.name == name);
+
+        if let Some(field) = field {
+            let new_field = f(field.clone());
+
+            *field = new_field;
+        } else {
+            let mut field = Field::default();
+            field.name = name.to_string();
+            p.fields.push(f(field));
+        }
+
+        p
+    }
+
     pub fn build(self) -> Plugin {
         self
     }
@@ -300,6 +317,7 @@ impl Field {
 pub struct Type {
     pub name: String,
     pub description: String,
+    pub generics: Vec<String>,
     pub example: Option<Arc<dyn erased_serde::Serialize + Send + Sync>>,
     pub fields: Vec<Field>, // Description of the fields in type
     pub methods: Vec<Method>,
@@ -310,6 +328,7 @@ impl Default for Type {
         Type {
             name: String::new(),
             description: String::new(),
+            generics: Vec::new(),
             example: None,
             methods: Vec::new(),
             fields: Vec::new(),
@@ -341,6 +360,18 @@ impl Type {
         t
     }
 
+    pub fn description(self, description: &str) -> Self {
+        let mut t = self;
+        t.description = description.to_string();
+        t
+    }
+
+    pub fn add_method(self, methods: Method) -> Self {
+        let mut t = self;
+        t.methods.push(methods);
+        t
+    }
+
     pub fn method_mut(&mut self, name: &str, f: impl FnOnce(Method) -> Method) -> Self {
         let method = self.methods.iter_mut().find(|m| m.name == name);
 
@@ -355,6 +386,12 @@ impl Type {
         }
 
         self.clone()
+    }
+
+    pub fn add_field(self, fields: Field) -> Self {
+        let mut t = self;
+        t.fields.push(fields);
+        t
     }
 
     pub fn field(&mut self, name: &str, f: impl FnOnce(Field) -> Field) -> Self {
@@ -373,7 +410,26 @@ impl Type {
         self.clone()
     }
 
+    pub fn add_generic(self, param: &str) -> Self {
+        let mut t = self;
+        t.generics.push(param.to_string());
+        t
+    }
+
     pub fn build(self) -> Type {
         self
+    }
+}
+
+// Other type code
+impl Type {
+    pub fn genericized_name(&self) -> String {
+        let mut name = self.name.clone();
+
+        if !self.generics.is_empty() {
+            name.push_str(&format!("<{}>", self.generics.join(", ")));
+        }
+
+        name
     }
 }

@@ -1,4 +1,330 @@
+use futures_util::stream::{Stream, StreamExt};
 use mlua::prelude::*;
+use std::pin::Pin;
+
+pub fn plugin_docs() -> templating_docgen::Plugin {
+    templating_docgen::Plugin::default()
+        .name("@antiraid/typesext")
+        .description("Extra types used by Anti-Raid Lua templating subsystem to either add in common functionality such as streams or handle things like u64/i64 types performantly.")
+        .type_mut(
+            "LuaStream",
+            "LuaStream<T> provides a stream implementation. This is returned by MessageHandle's await_component_interaction for instance for handling button clicks/select menu choices etc.",
+            |t| {
+                t
+                .add_generic("T")
+                .method_mut("next", |m| {
+                    m.description("Returns the next item in the stream.")
+                    .return_("item", |r| {
+                        r.typ("<T>").description("The next item in the stream.")
+                    })
+                })
+                .method_mut("for_each", |m| {
+                    m.description("Executes a callback for every entry in the stream.")
+                    .parameter("callback", |p| {
+                        p.typ("<function>").description("The callback to execute for each entry.")
+                    })
+                })
+            }
+        )
+        .type_mut("U64", "U64 is a 64-bit unsigned integer type. Implements Add/Subtract/Multiply/Divide/Modulus/Power/Integer Division/Equality/Comparison (Lt/Le and its complements Gt/Ge) and ToString with a type name of U64", |mut t| {
+            t
+            .method_mut("to_ne_bytes", |m| {
+                m.description("Converts the U64 to a little-endian byte array.")
+                .return_("bytes", |r| {
+                    r.typ("{u8}").description("The little-endian byte array.")
+                })
+            })
+            .method_mut("from_ne_bytes", |m| {
+                m.description("Converts a little-endian byte array to a U64.")
+                .parameter("bytes", |p| {
+                    p.typ("{u8}").description("The little-endian byte array.")
+                })
+                .return_("u64", |r| {
+                    r.typ("U64").description("The U64 value.")
+                })
+            })
+            .method_mut("to_le_bytes", |m| {
+                m.description("Converts the U64 to a little-endian byte array.")
+                .return_("bytes", |r| {
+                    r.typ("{u8}").description("The little-endian byte array.")
+                })
+            })
+            .method_mut("from_le_bytes", |m| {
+                m.description("Converts a little-endian byte array to a U64.")
+                .parameter("bytes", |p| {
+                    p.typ("{u8}").description("The little-endian byte array.")
+                })
+                .return_("u64", |r| {
+                    r.typ("U64").description("The U64 value.")
+                })
+            })
+            .method_mut("to_be_bytes", |m| {
+                m.description("Converts the U64 to a big-endian byte array.")
+                .return_("bytes", |r| {
+                    r.typ("{u8}").description("The big-endian byte array.")
+                })
+            })
+            .method_mut("from_be_bytes", |m| {
+                m.description("Converts a big-endian byte array to a U64.")
+                .parameter("bytes", |p| {
+                    p.typ("{u8}").description("The big-endian byte array.")
+                })
+                .return_("u64", |r| {
+                    r.typ("U64").description("The U64 value.")
+                })
+            })
+            .method_mut("to_i64", |m| {
+                m.description("Converts the U64 to an i64.")
+                .return_("i64", |r| {
+                    r.typ("I64").description("The i64 value.")
+                })
+            })
+        })
+        .type_mut("I64", "I64 is a 64-bit signed integer type. Implements Add/Subtract/Multiply/Divide/Modulus/Power/Integer Division/Equality/Comparison (Lt/Le and its complements Gt/Ge) and ToString with a type name of I64", |mut t| {
+            t
+            .method_mut("to_ne_bytes", |m| {
+                m.description("Converts the I64 to a little-endian byte array.")
+                .return_("bytes", |r| {
+                    r.typ("{u8}").description("The little-endian byte array.")
+                })
+            })
+            .method_mut("from_ne_bytes", |m| {
+                m.description("Converts a little-endian byte array to a I64.")
+                .parameter("bytes", |p| {
+                    p.typ("{u8}").description("The little-endian byte array.")
+                })
+                .return_("i64", |r| {
+                    r.typ("I64").description("The I64 value.")
+                })
+            })
+            .method_mut("to_le_bytes", |m| {
+                m.description("Converts the I64 to a little-endian byte array.")
+                .return_("bytes", |r| {
+                    r.typ("{u8}").description("The little-endian byte array.")
+                })
+            })
+            .method_mut("from_le_bytes", |m| {
+                m.description("Converts a little-endian byte array to a I64.")
+                .parameter("bytes", |p| {
+                    p.typ("{u8}").description("The little-endian byte array.")
+                })
+                .return_("i64", |r| {
+                    r.typ("I64").description("The I64 value.")
+                })
+            })
+            .method_mut("to_be_bytes", |m| {
+                m.description("Converts the I64 to a big-endian byte array.")
+                .return_("bytes", |r| {
+                    r.typ("{u8}").description("The big-endian byte array.")
+                })
+            })
+            .method_mut("from_be_bytes", |m| {
+                m.description("Converts a big-endian byte array to a I64.")
+                .parameter("bytes", |p| {
+                    p.typ("{u8}").description("The big-endian byte array.")
+                })
+                .return_("i64", |r| {
+                    r.typ("I64").description("The I64 value.")
+                })
+            })
+            .method_mut("to_u64", |m| {
+                m.description("Converts the I64 to a U64.")
+                .return_("u64", |r| {
+                    r.typ("U64").description("The U64 value.")
+                })
+            })
+        })
+        .type_mut("bitu64", "[bit32](https://luau.org/library#bit32-library) but for U64 datatype. Note that bit64 is experimental and may not be properly documented at all times. When in doubt, reach for Luau's bit32 documentation and simply replace 31's with 63's", |mut t| {
+            t
+            .method_mut("band", |m| {
+                m.description("Performs a bitwise AND operation on the given values.")
+                .parameter("...", |p| {
+                    p.typ("<U64>").description("The values to perform the operation on.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The result of the operation.")
+                })
+            })
+            .method_mut("bnor", |m| {
+                m.description("Performs a bitwise NOR operation on the given value.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to perform the operation on.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The result of the operation.")
+                })
+            })
+            .method_mut("bor", |m| {
+                m.description("Performs a bitwise OR operation on the given values.")
+                .parameter("...", |p| {
+                    p.typ("<U64>").description("The values to perform the operation on.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The result of the operation.")
+                })
+            })
+            .method_mut("bxor", |m| {
+                m.description("Performs a bitwise XOR operation on the given values.")
+                .parameter("...", |p| {
+                    p.typ("<U64>").description("The values to perform the operation on.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The result of the operation.")
+                })
+            })
+            .method_mut("btest", |m| {
+                m.description("Tests if the bitwise AND of the given values is not zero.")
+                .parameter("...", |p| {
+                    p.typ("<U64>").description("The values to perform the operation on.")
+                })
+                .return_("result", |r| {
+                    r.typ("boolean").description("True if the bitwise AND of the values is not zero, false otherwise.")
+                })
+            })
+            .method_mut("extract", |m| {
+                m.description("Extracts a field from a value.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to extract the field from.")
+                })
+                .parameter("f", |p| {
+                    p.typ("u64").description("The field to extract.")
+                })
+                .parameter("w", |p| {
+                    p.typ("u64").description("The width of the field to extract.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The extracted field.")
+                })
+            })
+            .method_mut("lrotate", |m| {
+                m.description("Rotates a value left or right.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to rotate.")
+                })
+                .parameter("i", |p| {
+                    p.typ("i64").description("The amount to rotate by.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The rotated value.")
+                })
+            })
+            .method_mut("lshift", |m| {
+                m.description("Shifts a value left or right.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to shift.")
+                })
+                .parameter("i", |p| {
+                    p.typ("i64").description("The amount to shift by.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The shifted value.")
+                })
+            })
+            .method_mut("replace", |m| {
+                m.description("Replaces a field in a value.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to replace the field in.")
+                })
+                .parameter("v", |p| {
+                    p.typ("U64").description("The value to replace the field with.")
+                })
+                .parameter("f", |p| {
+                    p.typ("u64").description("The field to replace.")
+                })
+                .parameter("w", |p| {
+                    p.typ("u64").description("The width of the field to replace.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The value with the field replaced.")
+                })
+            })
+            .method_mut("rrotate", |m| {
+                m.description("Rotates a value left or right.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to rotate.")
+                })
+                .parameter("i", |p| {
+                    p.typ("i64").description("The amount to rotate by.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The rotated value.")
+                })
+            })
+            .method_mut("rshift", |m| {
+                m.description("Shifts a value left or right.")
+                .parameter("n", |p| {
+                    p.typ("U64").description("The value to shift.")
+                })
+                .parameter("i", |p| {
+                    p.typ("i64").description("The amount to shift by.")
+                })
+                .return_("result", |r| {
+                    r.typ("U64").description("The shifted value.")
+                })
+            })
+        })
+        .method_mut("U64", |m| {
+            m.description("Creates a new U64.")
+            .parameter("value", |p| {
+                p.typ("u64").description("The value of the U64.")
+            })
+            .return_("u64", |r| {
+                r.typ("U64").description("The U64 value.")
+            })
+        })
+        .method_mut("I64", |m| {
+            m.description("Creates a new I64.")
+            .parameter("value", |p| {
+                p.typ("i64").description("The value of the I64.")
+            })
+            .return_("i64", |r| {
+                r.typ("I64").description("The I64 value.")
+            })
+        })
+        .field_mut("bitu64", |f| {
+            f.typ("bitu64").description("The bitu64 library.")
+        })
+}
+
+pub struct LuaStream<T: Stream<Item: IntoLua + Send> + Send + 'static> {
+    pub inner: Pin<Box<T>>, // Box the stream to ensure its pinned,
+}
+
+impl<ST: Stream<Item: IntoLua + Send> + Send + 'static> LuaStream<ST> {
+    pub fn new(stream: ST) -> Self {
+        Self {
+            inner: Box::pin(stream), // Pin the stream
+        }
+    }
+}
+
+impl<T: Stream<Item: IntoLua + Send> + Send + 'static> LuaUserData for LuaStream<T> {
+    fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
+        // Go to the next item in the stream
+        methods.add_async_method_mut("next", |lua, mut this, _: ()| async move {
+            match this.inner.next().await {
+                Some(item) => Ok(item.into_lua(&lua)?), // Convert the item to LuaValue
+                None => Ok(LuaValue::Nil),              // Return nil if the stream is exhausted
+            }
+        }); // Implement the method
+
+        // Executes a callback for every entry in the stream
+        methods.add_async_method_mut(
+            "for_each",
+            |lua, mut this, callback: LuaFunction| async move {
+                while let Some(item) = this.inner.next().await {
+                    let item_value = item.into_lua(&lua)?; // Convert the item to LuaValue
+                    callback
+                        .call_async::<()>((
+                            item_value, // Convert the item to LuaValue
+                        ))
+                        .await?; // Call the Lua callback
+                }
+                Ok(())
+            },
+        );
+    }
+}
 
 // U64 type
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -345,7 +671,7 @@ impl LuaUserData for I64 {
 ///
 /// Not yet implemented due to spec difficulties:
 /// - arshift
-pub fn bitu64(lua: &Lua) -> LuaResult<LuaTable> {
+fn bitu64(lua: &Lua) -> LuaResult<LuaTable> {
     let submodule = lua.create_table()?;
 
     submodule.set(

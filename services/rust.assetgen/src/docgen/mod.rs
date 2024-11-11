@@ -62,7 +62,9 @@ fn type_to_string(typ: &Type) -> String {
 
     markdown.push_str(&format!(
         "<div id=\"type.{}\" />\n\n### {}\n\n{}\n\n",
-        typ.name, typ.name, typ.description
+        typ.name,
+        typ.genericized_name(),
+        typ.description
     ));
 
     if let Some(ref example) = typ.example {
@@ -104,14 +106,6 @@ fn method_to_string(method: &Method, cls: Option<String>) -> String {
 
     if !method.description.is_empty() {
         markdown.push_str(&format!("\n\n{}", method.description));
-    }
-
-    if !method.generics.is_empty() {
-        markdown.push_str("\n\n#### Generics\n\n");
-
-        method.generics.iter().for_each(|gen| {
-            markdown.push_str(&format!("- `{}`: {}", gen.param, gen.type_signature()));
-        });
     }
 
     if !method.parameters.is_empty() {
@@ -166,6 +160,8 @@ fn typeref_to_link(tref: &str) -> String {
         url.push_str(&format!("/struct.{}.html", last));
 
         format!("[{}]({})", tref, url)
+    } else if tref.starts_with("<") {
+        format!("`{}`", tref)
     } else {
         format!("[{}](#type.{})", tref, {
             let mut tref = tref.to_string();

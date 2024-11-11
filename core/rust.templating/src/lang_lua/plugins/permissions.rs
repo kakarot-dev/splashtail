@@ -24,39 +24,139 @@ impl LuaPermissionResult {
     }
 }
 
+impl Default for LuaPermissionResult {
+    fn default() -> Self {
+        Self {
+            is_ok: true,
+            code: "Ok".to_string(),
+            markdown: "".to_string(),
+            result: permissions::types::PermissionResult::Ok {},
+        }
+    }
+}
+
+pub fn plugin_docs() -> templating_docgen::Plugin {
+    templating_docgen::Plugin::default()
+        .name("@antiraid/permissions")
+        .description("Utilities for handling permission checks.")
+        .type_mut(
+            std::sync::Arc::new(templating_docgen::OpaqueStruct("PermissionResult")),
+            "PermissionResult is an internal type containing the status of a permission check in AntiRaid. The exact contents are undocumented as of now",
+            |t| {
+                t
+            },
+        )
+        .type_mut(
+            std::sync::Arc::new(LuaPermissionResult::default()),
+            "LuaPermissionResult is a type containing the status of a permission check in AntiRaid with prior parsing done for Lua.",
+            |mut t| {
+                t
+                .field("result", |f| f.typ("PermissionResult").description("The raw/underlying result of the permission check."))
+                .field("is_ok", |f| f.typ("boolean").description("Whether the permission check was successful."))
+                .field("code", |f| f.typ("string").description("The code of the permission check."))
+                .field("markdown", |f| f.typ("string").description("The markdown representation of the permission check."))
+            },
+        )
+        .type_mut(
+            std::sync::Arc::new(permissions::types::PermissionCheck::default()),
+            "PermissionCheck is a type containing the permissions to check for a user.",
+            |mut t| {
+                t
+                .field("kittycat_perms", |f| f.typ("{Permission}").description("The kittycat permissions needed to run the command."))
+                .field("native_perms", |f| f.typ("{string}").description("The native permissions needed to run the command."))
+                .field("outer_and", |f| f.typ("boolean").description("Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current"))
+                .field("inner_and", |f| f.typ("boolean").description("Whether or not the perms are ANDed (all needed) or OR'd (at least one)"))
+            },
+        )
+        .type_mut(
+            std::sync::Arc::new(kittycat::perms::Permission::from_string("moderation.ban")),
+            "Permission is the primitive permission type used by AntiRaid. See https://github.com/InfinityBotList/kittycat for more information",
+            |mut t| {
+                t
+                .field("namespace", |f| f.typ("string").description("The namespace of the permission."))
+                .field("perm", |f| f.typ("string").description("The permission bit on the namespace."))
+                .field("negator", |f| f.typ("boolean").description("Whether the permission is a negator permission or not"))
+            },
+        )
+        .method_mut("permission_from_string", |m| {
+            m.description("Returns a Permission object from a string.")
+            .parameter("perm_string", |p| {
+                p.typ("string").description("The string to parse into a Permission object.")
+            })
+            .return_("permission", |r| {
+                r.typ("Permission").description("The parsed Permission object.")
+            })
+        })
+        .method_mut("permission_to_string", |m| {
+            m.description("Returns a string from a Permission object.")
+            .parameter("permission", |p| {
+                p.typ("Permission").description("The Permission object to parse into a string.")
+            })
+            .return_("perm_string", |r| {
+                r.typ("string").description("The parsed string.")
+            })
+        })
+        .method_mut("has_perm", |m| {
+            m.description("Checks if a list of permissions in Permission object form contains a specific permission.")
+            .parameter("permissions", |p| {
+                p.typ("{Permission}").description("The list of permissions")
+            })
+            .parameter("permission", |p| {
+                p.typ("Permission").description("The permission to check for.")
+            })
+            .return_("has_perm", |r| {
+                r.typ("boolean").description("Whether the permission is present in the list of permissions as per kittycat rules.")
+            })
+        })
+        .method_mut("has_perm_str", |m| {
+            m.description("Checks if a list of permissions in canonical string form contains a specific permission.")
+            .parameter("permissions", |p| {
+                p.typ("{string}").description("The list of permissions")
+            })
+            .parameter("permission", |p| {
+                p.typ("string").description("The permission to check for.")
+            })
+            .return_("has_perm", |r| {
+                r.typ("boolean").description("Whether the permission is present in the list of permissions as per kittycat rules.")
+            })
+        })
+        .method_mut("check_perms_single", |m| {
+            m.description("Checks if a single permission check passes.")
+            .parameter("check", |p| {
+                p.typ("PermissionCheck").description("The permission check to evaluate.")
+            })
+            .parameter("member_native_perms", |p| {
+                p.typ("Permissions").description("The native permissions of the member.")
+            })
+            .parameter("member_kittycat_perms", |p| {
+                p.typ("{Permission}").description("The kittycat permissions of the member.")
+            })
+            .return_("result", |r| {
+                r.typ("LuaPermissionResult").description("The result of the permission check.")
+            })
+        })
+        .method_mut("eval_checks", |m| {
+            m.description("Evaluates a list of permission checks.")
+            .parameter("checks", |p| {
+                p.typ("{PermissionCheck}").description("The list of permission checks to evaluate.")
+            })
+            .parameter("member_native_perms", |p| {
+                p.typ("Permissions").description("The native permissions of the member.")
+            })
+            .parameter("member_kittycat_perms", |p| {
+                p.typ("{Permission}").description("The kittycat permissions of the member.")
+            })
+            .return_("result", |r| {
+                r.typ("LuaPermissionResult").description("The result of the permission check.")
+            })
+        })
+}
+
 pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {
     let module = lua.create_table()?;
 
     module.set(
-        "new_permission_check",
-        lua.create_function(|lua, ()| {
-            let pc = permissions::types::PermissionCheck::default();
-            lua.to_value(&pc)
-        })?,
-    )?;
-
-    module.set(
-        "new_permission_checks",
-        lua.create_function(|lua, ()| {
-            let pc = permissions::types::PermissionChecks::default();
-            lua.to_value(&pc)
-        })?,
-    )?;
-
-    module.set(
-        "new_permission",
-        lua.create_function(|lua, (namespace, perm, negator): (String, String, bool)| {
-            let perm = kittycat::perms::Permission {
-                namespace,
-                perm,
-                negator,
-            };
-            lua.to_value(&perm)
-        })?,
-    )?;
-
-    module.set(
-        "new_permission_from_string",
+        "permission_from_string",
         lua.create_function(|lua, (perm_string,): (String,)| {
             let ps = kittycat::perms::Permission::from_string(&perm_string);
             lua.to_value(&ps)

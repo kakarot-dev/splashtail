@@ -17,14 +17,15 @@ pub static PLUGINS: LazyLock<indexmap::IndexMap<String, (ModuleFn, Option<Module
     LazyLock::new(|| {
         indexmap::indexmap! {
             "@antiraid/async".to_string() => (r#async::init_plugin as ModuleFn, Some(r#async::plugin_docs as ModuleDocFn)),
-            "@antiraid/builtins".to_string() => (builtins as ModuleFn, None as Option<ModuleDocFn>),
             "@antiraid/discord".to_string() => (discord::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
-            "@antiraid/interop".to_string() => (interop::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
-            "@antiraid/img_captcha".to_string() => (img_captcha::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/interop".to_string() => (interop::init_plugin as ModuleFn, Some(interop::plugin_docs as ModuleDocFn)),
+            "@antiraid/img_captcha".to_string() => (img_captcha::init_plugin as ModuleFn, Some(img_captcha::plugin_docs as ModuleDocFn)),
             "@antiraid/kv".to_string() => (kv::init_plugin as ModuleFn, Some(kv::plugin_docs as ModuleDocFn)),
-            "@antiraid/permissions".to_string() => (permissions::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+            "@antiraid/permissions".to_string() => (permissions::init_plugin as ModuleFn, Some(permissions::plugin_docs as ModuleDocFn)),
             "@antiraid/stings".to_string() => (stings::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
             "@antiraid/typesext".to_string() => (typesext::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
+
+            // External plugins
             "@lune/datetime".to_string() => (lune::datetime::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
             "@lune/regex".to_string() => (lune::regex::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
             "@lune/serde".to_string() => (lune::serde::init_plugin as ModuleFn, None as Option<ModuleDocFn>),
@@ -33,14 +34,6 @@ pub static PLUGINS: LazyLock<indexmap::IndexMap<String, (ModuleFn, Option<Module
 
 type ModuleFn = fn(&Lua) -> LuaResult<LuaTable>;
 type ModuleDocFn = fn() -> templating_docgen::Plugin;
-
-/// Provides the lua builtins as a seperate table
-pub fn builtins(lua: &Lua) -> LuaResult<LuaTable> {
-    let module = lua.create_table()?;
-    module.set("require", lua.create_async_function(require)?)?;
-    module.set_readonly(true); // Block any attempt to modify this table
-    Ok(module)
-}
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 pub struct RequirePluginArgs {

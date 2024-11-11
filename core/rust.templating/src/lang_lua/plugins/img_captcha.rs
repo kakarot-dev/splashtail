@@ -15,6 +15,29 @@ pub struct CaptchaConfig {
     pub set_viewbox_at_idx: Option<usize>,
 }
 
+impl Default for CaptchaConfig {
+    fn default() -> Self {
+        Self {
+            char_count: 5,
+            filters: vec![
+                Box::new(captcha::filters::Noise::new(0.1)),
+                Box::new(captcha::filters::Wave::new(4.0, 2.0)),
+                Box::new(captcha::filters::Line::new(
+                    (1.0, 0.0),
+                    (20.0, 20.0),
+                    2.0,
+                    captcha::filters::SerdeColor::new(0, 30, 100),
+                )),
+                Box::new(captcha::filters::RandomLine::new()),
+                Box::new(captcha::filters::Grid::new(10, 30)),
+                Box::new(captcha::filters::ColorInvert::new()),
+            ],
+            viewbox_size: (512, 512),
+            set_viewbox_at_idx: None,
+        }
+    }
+}
+
 impl CaptchaConfig {
     pub fn is_valid(&self) -> Result<(), silverpelt::Error> {
         if self.char_count == 0 {
@@ -131,6 +154,31 @@ impl CaptchaConfig {
         })
         .await?
     }
+}
+
+pub fn plugin_docs() -> templating_docgen::Plugin {
+    templating_docgen::Plugin::default()
+        .name("@antiraid/img_captcha")
+        .description("This plugin allows for the creation of text/image CAPTCHA's with customizable filters which can be useful in protecting against bots.")
+        .type_mut(
+            std::sync::Arc::new(CaptchaConfig::default()),
+            "Captcha configuration. See examples for the arguments",
+            |mut t| {
+                t
+                .field("filter", |f| {
+                    f.typ("string").description("The name of the filter to use. See example for the parameters to pass for the filter as well as https://github.com/Anti-Raid/captcha.")
+                })
+            },
+        )
+        .method_mut("new", |m| {
+            m.description("Creates a new CAPTCHA with the given configuration.")
+            .parameter("config", |p| {
+                p.typ("CaptchaConfig").description("The configuration to use for the CAPTCHA.")
+            })
+            .return_("captcha", |r| {
+                r.typ("{u8}").description("The created CAPTCHA object.")
+            })
+        })
 }
 
 pub fn init_plugin(lua: &Lua) -> LuaResult<LuaTable> {

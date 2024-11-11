@@ -153,7 +153,7 @@ impl Default for LuaKVConstraints {
     }
 }
 
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TemplateData {
     pub path: String,
     pub pragma: crate::TemplatePragma,

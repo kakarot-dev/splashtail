@@ -1,6 +1,7 @@
 use crate::lang_lua::state;
 use mlua::prelude::*;
 use std::sync::Arc;
+
 /// An sting executor is used to execute actions related to stings from Lua
 /// templates
 pub struct StingExecutor {

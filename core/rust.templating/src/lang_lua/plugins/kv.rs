@@ -73,7 +73,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
             |mut t| {
                 t
                 .method_mut("find", |mut m| {
-                    m.parameter("key", |p| p.typ("string").description("The key to search for."))
+                    m.parameter("key", |p| p.typ("string").description("The key to search for. % matches zero or more characters; _ matches a single character. To search anywhere in a string, surround {KEY} with %, e.g. %{KEY}%"))
                 })
                 .method_mut("get", |mut m| {
                     m.parameter("key", |p| p.typ("string").description("The key to get."))
@@ -93,6 +93,9 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 })
             },
         )
+        .method_mut("new", |mut m| {
+            m.parameter("token", |p| p.typ("string").description("The token of the template to use."))
+        })
 }
 
 impl LuaUserData for KvExecutor {

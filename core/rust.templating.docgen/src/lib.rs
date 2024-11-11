@@ -103,7 +103,7 @@ impl Plugin {
 #[derive(Default, Debug, serde::Serialize, Clone)]
 pub struct Method {
     pub name: String,
-    pub generics: Vec<MethodGeneric>,
+    pub generics: Vec<String>,
     pub description: String,
     pub parameters: Vec<Parameter>,
     pub returns: Vec<Parameter>,
@@ -117,9 +117,9 @@ impl Method {
         m
     }
 
-    pub fn add_generic(self, generics: MethodGeneric) -> Self {
+    pub fn add_generic(self, param: String) -> Self {
         let mut m = self;
-        m.generics.push(generics);
+        m.generics.push(param);
         m
     }
 
@@ -194,14 +194,7 @@ impl Method {
 
         // Add in the generics if they exist
         if !self.generics.is_empty() {
-            out.push_str(&format!(
-                "<{}>",
-                self.generics
-                    .iter()
-                    .map(|g| g.type_signature())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ));
+            out.push_str(&format!("<{}>", self.generics.join(", ")));
         }
 
         out.push_str(&format!(
@@ -225,41 +218,6 @@ impl Method {
                     .join(", ")
             ));
         }
-        out
-    }
-}
-
-/// A generic in a method.
-#[derive(Default, Debug, serde::Serialize, Clone)]
-pub struct MethodGeneric {
-    pub param: String,
-    pub constraints: String,
-}
-
-// MethodGeneric builder code
-impl MethodGeneric {
-    pub fn param(self, param: &str) -> Self {
-        let mut m = self;
-        m.param = param.to_string();
-        m
-    }
-
-    pub fn constraints(self, constraints: String) -> Self {
-        let mut m = self;
-        m.constraints = constraints;
-        m
-    }
-
-    pub fn build(self) -> MethodGeneric {
-        self
-    }
-}
-
-impl MethodGeneric {
-    /// Format: <param>: <constraints>
-    pub fn type_signature(&self) -> String {
-        let mut out = String::new();
-        out.push_str(&format!("{}: {}", self.param, self.constraints));
         out
     }
 }

@@ -82,7 +82,7 @@ Returns the current user of the Lua VM.
 
 ### Returns
 
-- `user` ([serenity::model::user::User](https://docs.rs/serenity/latest/model/user/struct.User.html)): Returns AntiRaid's discord user object.
+- `user` ([serenity::model::user::User](https://docs.rs/serenity/latest/serenity/model/user/struct.User.html)): Returns AntiRaid's discord user object.
 
 
 

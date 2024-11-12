@@ -1070,6 +1070,8 @@ Creates a new I64.
 
 # Primitives
 
+<div id="type.u8" />
+
 ## u8
 
 ``type u8 = number``
@@ -1081,6 +1083,8 @@ An unsigned 8-bit integer. **Note: u8 arrays (`{u8}`) are often used to represen
 - **range**: The range of values this number can take on
 
 ---
+
+<div id="type.u16" />
 
 ## u16
 
@@ -1094,6 +1098,8 @@ An unsigned 16-bit integer.
 
 ---
 
+<div id="type.u32" />
+
 ## u32
 
 ``type u32 = number``
@@ -1105,6 +1111,8 @@ An unsigned 32-bit integer.
 - **range**: The range of values this number can take on
 
 ---
+
+<div id="type.u64" />
 
 ## u64
 
@@ -1118,6 +1126,8 @@ An unsigned 64-bit integer. **Note that most, if not all, cases of `i64` in the 
 
 ---
 
+<div id="type.i8" />
+
 ## i8
 
 ``type i8 = number``
@@ -1129,6 +1139,8 @@ A signed 8-bit integer.
 - **range**: The range of values this number can take on
 
 ---
+
+<div id="type.i16" />
 
 ## i16
 
@@ -1142,6 +1154,8 @@ A signed 16-bit integer.
 
 ---
 
+<div id="type.i32" />
+
 ## i32
 
 ``type i32 = number``
@@ -1153,6 +1167,8 @@ A signed 32-bit integer.
 - **range**: The range of values this number can take on
 
 ---
+
+<div id="type.i64" />
 
 ## i64
 
@@ -1166,6 +1182,8 @@ A signed 64-bit integer. **Note that most, if not all, cases of `i64` in the act
 
 ---
 
+<div id="type.f32" />
+
 ## f32
 
 ``type f32 = number``
@@ -1177,6 +1195,8 @@ A 32-bit floating point number.
 - **range**: The range of values this number can take on
 
 ---
+
+<div id="type.f64" />
 
 ## f64
 
@@ -1190,6 +1210,8 @@ A 64-bit floating point number.
 
 ---
 
+<div id="type.bool" />
+
 ## bool
 
 ``type bool = boolean``
@@ -1197,6 +1219,8 @@ A 64-bit floating point number.
 A boolean value.
 
 ---
+
+<div id="type.char" />
 
 ## char
 
@@ -1209,6 +1233,8 @@ A single Unicode character.
 - **length**: The length of the string
 
 ---
+
+<div id="type.string" />
 
 ## string
 

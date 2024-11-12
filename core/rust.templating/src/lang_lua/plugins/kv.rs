@@ -75,7 +75,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 .example(std::sync::Arc::new(KvRecord::default()))
                 .field("key", |f| f.typ("string").description("The key of the record."))
                 .field("value", |f| f.typ("any").description("The value of the record."))
-                .field("exists", |f| f.typ("boolean").description("Whether the record exists."))
+                .field("exists", |f| f.typ("bool").description("Whether the record exists."))
                 .field("created_at", |f| f.typ("datetime").description("The time the record was created."))
                 .field("last_updated_at", |f| f.typ("datetime").description("The time the record was last updated."))
             },
@@ -91,7 +91,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 .method_mut("get", |mut m| {
                     m.parameter("key", |p| p.typ("string").description("The key to get."))
                     .return_("value", |r| r.typ("any").description("The value of the key."))
-                    .return_("exists", |r| r.typ("boolean").description("Whether the key exists."))
+                    .return_("exists", |r| r.typ("bool").description("Whether the key exists."))
                 })
                 .method_mut("getrecord", |mut m| {
                     m.parameter("key", |p| p.typ("string").description("The key to get."))

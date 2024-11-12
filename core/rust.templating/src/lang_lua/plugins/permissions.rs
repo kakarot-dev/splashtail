@@ -53,7 +53,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 t
                 .example(std::sync::Arc::new(LuaPermissionResult::default()))
                 .field("result", |f| f.typ("PermissionResult").description("The raw/underlying result of the permission check."))
-                .field("is_ok", |f| f.typ("boolean").description("Whether the permission check was successful."))
+                .field("is_ok", |f| f.typ("bool").description("Whether the permission check was successful."))
                 .field("code", |f| f.typ("string").description("The code of the permission check."))
                 .field("markdown", |f| f.typ("string").description("The markdown representation of the permission check."))
             },
@@ -66,8 +66,8 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 .example(std::sync::Arc::new(permissions::types::PermissionCheck::default()))
                 .field("kittycat_perms", |f| f.typ("{Permission}").description("The kittycat permissions needed to run the command."))
                 .field("native_perms", |f| f.typ("{string}").description("The native permissions needed to run the command."))
-                .field("outer_and", |f| f.typ("boolean").description("Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current"))
-                .field("inner_and", |f| f.typ("boolean").description("Whether or not the perms are ANDed (all needed) or OR'd (at least one)"))
+                .field("outer_and", |f| f.typ("bool").description("Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current"))
+                .field("inner_and", |f| f.typ("bool").description("Whether or not the perms are ANDed (all needed) or OR'd (at least one)"))
             },
         )
         .type_mut(
@@ -78,7 +78,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 .example(std::sync::Arc::new(kittycat::perms::Permission::from_string("moderation.ban")))
                 .field("namespace", |f| f.typ("string").description("The namespace of the permission."))
                 .field("perm", |f| f.typ("string").description("The permission bit on the namespace."))
-                .field("negator", |f| f.typ("boolean").description("Whether the permission is a negator permission or not"))
+                .field("negator", |f| f.typ("bool").description("Whether the permission is a negator permission or not"))
             },
         )
         .method_mut("permission_from_string", |m| {
@@ -108,7 +108,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 p.typ("Permission").description("The permission to check for.")
             })
             .return_("has_perm", |r| {
-                r.typ("boolean").description("Whether the permission is present in the list of permissions as per kittycat rules.")
+                r.typ("bool").description("Whether the permission is present in the list of permissions as per kittycat rules.")
             })
         })
         .method_mut("has_perm_str", |m| {
@@ -120,7 +120,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                 p.typ("string").description("The permission to check for.")
             })
             .return_("has_perm", |r| {
-                r.typ("boolean").description("Whether the permission is present in the list of permissions as per kittycat rules.")
+                r.typ("bool").description("Whether the permission is present in the list of permissions as per kittycat rules.")
             })
         })
         .method_mut("check_perms_single", |m| {

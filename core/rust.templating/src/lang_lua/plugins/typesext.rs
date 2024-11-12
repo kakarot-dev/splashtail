@@ -178,7 +178,7 @@ pub fn plugin_docs() -> templating_docgen::Plugin {
                     p.typ("<U64>").description("The values to perform the operation on.")
                 })
                 .return_("result", |r| {
-                    r.typ("boolean").description("True if the bitwise AND of the values is not zero, false otherwise.")
+                    r.typ("bool").description("True if the bitwise AND of the values is not zero, false otherwise.")
                 })
             })
             .method_mut("extract", |m| {

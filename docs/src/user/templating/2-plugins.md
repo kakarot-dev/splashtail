@@ -288,7 +288,7 @@ KvRecord represents a key-value record with metadata.
 
 - `key` ([string](#type.string)): The key of the record.
 - `value` ([any](#type.any)): The value of the record.
-- `exists` ([boolean](#type.boolean)): Whether the record exists.
+- `exists` ([bool](#type.bool)): Whether the record exists.
 - `created_at` ([datetime](#type.datetime)): The time the record was created.
 - `last_updated_at` ([datetime](#type.datetime)): The time the record was last updated.
 
@@ -326,7 +326,7 @@ function KvExecutor:get(key: string)
 
 ###### Returns
 
-- `value` ([any](#type.any)): The value of the key.- `exists` ([boolean](#type.boolean)): Whether the key exists.
+- `value` ([any](#type.any)): The value of the key.- `exists` ([bool](#type.bool)): Whether the key exists.
 ##### KvExecutor:getrecord
 
 ```lua
@@ -419,7 +419,7 @@ LuaPermissionResult is a type containing the status of a permission check in Ant
 #### Fields
 
 - `result` ([PermissionResult](#type.PermissionResult)): The raw/underlying result of the permission check.
-- `is_ok` ([boolean](#type.boolean)): Whether the permission check was successful.
+- `is_ok` ([bool](#type.bool)): Whether the permission check was successful.
 - `code` ([string](#type.string)): The code of the permission check.
 - `markdown` ([string](#type.string)): The markdown representation of the permission check.
 
@@ -443,8 +443,8 @@ PermissionCheck is a type containing the permissions to check for a user.
 
 - `kittycat_perms` ([{Permission}](#type.Permission)): The kittycat permissions needed to run the command.
 - `native_perms` ([{string}](#type.string)): The native permissions needed to run the command.
-- `outer_and` ([boolean](#type.boolean)): Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current
-- `inner_and` ([boolean](#type.boolean)): Whether or not the perms are ANDed (all needed) or OR'd (at least one)
+- `outer_and` ([bool](#type.bool)): Whether the next permission check should be ANDed (all needed) or OR'd (at least one) to the current
+- `inner_and` ([bool](#type.bool)): Whether or not the perms are ANDed (all needed) or OR'd (at least one)
 
 
 <div id="type.Permission" />
@@ -465,7 +465,7 @@ Permission is the primitive permission type used by AntiRaid. See https://github
 
 - `namespace` ([string](#type.string)): The namespace of the permission.
 - `perm` ([string](#type.string)): The permission bit on the namespace.
-- `negator` ([boolean](#type.boolean)): Whether the permission is a negator permission or not
+- `negator` ([bool](#type.bool)): Whether the permission is a negator permission or not
 
 
 ## Methods
@@ -507,7 +507,7 @@ Returns a string from a Permission object.
 ### has_perm
 
 ```lua
-function has_perm(permissions: {Permission}, permission: Permission): boolean
+function has_perm(permissions: {Permission}, permission: Permission): bool
 ```
 
 Checks if a list of permissions in Permission object form contains a specific permission.
@@ -520,12 +520,12 @@ Checks if a list of permissions in Permission object form contains a specific pe
 
 #### Returns
 
-- `has_perm` ([boolean](#type.boolean)): Whether the permission is present in the list of permissions as per kittycat rules.
+- `has_perm` ([bool](#type.bool)): Whether the permission is present in the list of permissions as per kittycat rules.
 
 ### has_perm_str
 
 ```lua
-function has_perm_str(permissions: {string}, permission: string): boolean
+function has_perm_str(permissions: {string}, permission: string): bool
 ```
 
 Checks if a list of permissions in canonical string form contains a specific permission.
@@ -538,7 +538,7 @@ Checks if a list of permissions in canonical string form contains a specific per
 
 #### Returns
 
-- `has_perm` ([boolean](#type.boolean)): Whether the permission is present in the list of permissions as per kittycat rules.
+- `has_perm` ([bool](#type.bool)): Whether the permission is present in the list of permissions as per kittycat rules.
 
 ### check_perms_single
 
@@ -908,7 +908,7 @@ Performs a bitwise XOR operation on the given values.
 ##### bitu64:btest
 
 ```lua
-function bitu64:btest(...: <U64>): boolean
+function bitu64:btest(...: <U64>): bool
 ```
 
 Tests if the bitwise AND of the given values is not zero.
@@ -920,7 +920,7 @@ Tests if the bitwise AND of the given values is not zero.
 
 ###### Returns
 
-- `result` ([boolean](#type.boolean)): True if the bitwise AND of the values is not zero, false otherwise.
+- `result` ([bool](#type.bool)): True if the bitwise AND of the values is not zero, false otherwise.
 ##### bitu64:extract
 
 ```lua
@@ -1074,7 +1074,9 @@ Creates a new I64.
 
 ## u8
 
-``type u8 = number``
+```lua
+type u8 = number
+```
 
 An unsigned 8-bit integer. **Note: u8 arrays (`{u8}`) are often used to represent an array of bytes in AntiRaid**
 
@@ -1088,7 +1090,9 @@ An unsigned 8-bit integer. **Note: u8 arrays (`{u8}`) are often used to represen
 
 ## u16
 
-``type u16 = number``
+```lua
+type u16 = number
+```
 
 An unsigned 16-bit integer.
 
@@ -1102,7 +1106,9 @@ An unsigned 16-bit integer.
 
 ## u32
 
-``type u32 = number``
+```lua
+type u32 = number
+```
 
 An unsigned 32-bit integer.
 
@@ -1116,7 +1122,9 @@ An unsigned 32-bit integer.
 
 ## u64
 
-``type u64 = number``
+```lua
+type u64 = number
+```
 
 An unsigned 64-bit integer. **Note that most, if not all, cases of `i64` in the actual API are either `string` or the `I64` custom type from typesext**
 
@@ -1130,7 +1138,9 @@ An unsigned 64-bit integer. **Note that most, if not all, cases of `i64` in the 
 
 ## i8
 
-``type i8 = number``
+```lua
+type i8 = number
+```
 
 A signed 8-bit integer.
 
@@ -1144,7 +1154,9 @@ A signed 8-bit integer.
 
 ## i16
 
-``type i16 = number``
+```lua
+type i16 = number
+```
 
 A signed 16-bit integer.
 
@@ -1158,7 +1170,9 @@ A signed 16-bit integer.
 
 ## i32
 
-``type i32 = number``
+```lua
+type i32 = number
+```
 
 A signed 32-bit integer.
 
@@ -1172,7 +1186,9 @@ A signed 32-bit integer.
 
 ## i64
 
-``type i64 = number``
+```lua
+type i64 = number
+```
 
 A signed 64-bit integer. **Note that most, if not all, cases of `i64` in the actual API are either `string` or the `I64` custom type from typesext**
 
@@ -1186,7 +1202,9 @@ A signed 64-bit integer. **Note that most, if not all, cases of `i64` in the act
 
 ## f32
 
-``type f32 = number``
+```lua
+type f32 = number
+```
 
 A 32-bit floating point number.
 
@@ -1200,7 +1218,9 @@ A 32-bit floating point number.
 
 ## f64
 
-``type f64 = number``
+```lua
+type f64 = number
+```
 
 A 64-bit floating point number.
 
@@ -1214,7 +1234,9 @@ A 64-bit floating point number.
 
 ## bool
 
-``type bool = boolean``
+```lua
+type bool = boolean
+```
 
 A boolean value.
 
@@ -1224,7 +1246,9 @@ A boolean value.
 
 ## char
 
-``type char = string``
+```lua
+type char = string
+```
 
 A single Unicode character.
 
@@ -1238,7 +1262,9 @@ A single Unicode character.
 
 ## string
 
-``type string = string``
+```lua
+type string = string
+```
 
 A UTF-8 encoded string.
 

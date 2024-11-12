@@ -92,7 +92,7 @@ fn generate_markdown_for_primitive(primitive: Primitive, heading_level: usize) -
     let mut markdown = String::new();
 
     markdown.push_str(&format!(
-        "<div id=\"type.{}\" />\n\n{} {}\n\n``{}``\n\n{}",
+        "<div id=\"type.{}\" />\n\n{} {}\n\n```lua\n{}\n```\n\n{}",
         primitive.name,
         _headings(heading_level),
         primitive.name,

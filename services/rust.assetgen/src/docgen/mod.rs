@@ -1,7 +1,19 @@
 // Generates AntiRaid documentation from docgen data
-use templating_docgen::{Field, Method, Parameter, Plugin, Type};
+use templating_docgen::{Field, Method, Parameter, Plugin, Primitive, PrimitiveConstraint, Type};
 
-pub fn document_all_plugins() -> String {
+pub fn create_documentation() -> String {
+    let mut markdown = String::new();
+
+    // First, document all the plugins
+    markdown.push_str(&document_all_plugins(1));
+
+    // Next, document all the primitive types
+    markdown.push_str(&document_all_primitives(1));
+
+    markdown
+}
+
+pub fn document_all_plugins(heading_level: usize) -> String {
     let mut markdown = String::new();
 
     for (plugin_name, data) in templating::PLUGINS.iter() {
@@ -19,18 +31,34 @@ pub fn document_all_plugins() -> String {
             panic!("Plugin name mismatch: {} != {}", plugin.name, plugin_name);
         }
 
-        markdown.push_str(&generate_markdown_for_plugin(plugin));
+        markdown.push_str(&generate_markdown_for_plugin(plugin, heading_level));
         markdown.push_str("\n\n---\n\n");
     }
 
     markdown
 }
 
-fn generate_markdown_for_plugin(plugin: Plugin) -> String {
+pub fn document_all_primitives(heading_level: usize) -> String {
+    let mut markdown = String::new();
+
+    markdown.push_str(&format!("{} Primitives\n\n", _headings(heading_level)));
+
+    for primitive in templating::primitives_docs::document_primitives() {
+        markdown.push_str(&generate_markdown_for_primitive(
+            primitive,
+            heading_level + 1,
+        ));
+        markdown.push_str("\n\n---\n\n");
+    }
+
+    markdown
+}
+
+fn generate_markdown_for_plugin(plugin: Plugin, heading_level: usize) -> String {
     let mut markdown = String::new();
 
     // Write Base Info
-    markdown.push_str(&format!("# {}\n\n", plugin.name));
+    markdown.push_str(&format!("{} {}\n\n", _headings(heading_level), plugin.name));
 
     if !plugin.description.is_empty() {
         markdown.push_str(&format!("{}\n\n", plugin.description));
@@ -38,31 +66,70 @@ fn generate_markdown_for_plugin(plugin: Plugin) -> String {
 
     // Document the types
     if !plugin.types.is_empty() {
-        markdown.push_str("## Types\n\n");
+        markdown.push_str(&format!("{} Types\n\n", _headings(heading_level + 1)));
 
         plugin.types.iter().for_each(|typ| {
-            markdown.push_str(&format!("{}\n\n", type_to_string(typ)));
+            markdown.push_str(&format!("{}\n\n", type_to_string(typ, heading_level + 2)));
         });
     }
 
     // Document the methods
     if !plugin.methods.is_empty() {
-        markdown.push_str("## Methods\n\n");
+        markdown.push_str(&format!("{} Methods\n\n", _headings(heading_level + 1)));
 
         plugin.methods.iter().for_each(|method| {
-            markdown.push_str(&format!("{}\n\n", method_to_string(method, None)));
+            markdown.push_str(&format!(
+                "{}\n\n",
+                method_to_string(method, None, heading_level + 2)
+            ));
         });
     }
 
     markdown // TODO: Implement the rest of the function
 }
 
-fn type_to_string(typ: &Type) -> String {
+fn generate_markdown_for_primitive(primitive: Primitive, heading_level: usize) -> String {
     let mut markdown = String::new();
 
     markdown.push_str(&format!(
-        "<div id=\"type.{}\" />\n\n### {}\n\n{}\n\n",
+        "{} {}\n\n``{}``\n\n{}",
+        _headings(heading_level),
+        primitive.name,
+        primitive.type_definition(),
+        primitive.description
+    ));
+
+    // Add Constraints if any
+    if !primitive.constraints.is_empty() {
+        markdown.push_str(&format!(
+            "\n\n{} Constraints\n\n",
+            _headings(heading_level + 1)
+        ));
+
+        markdown.push_str(
+            &primitive
+                .constraints
+                .iter()
+                .map(|constraint| primitive_constraint_to_string(constraint))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
+    }
+
+    markdown
+}
+
+fn primitive_constraint_to_string(p_constraint: &PrimitiveConstraint) -> String {
+    format!("- **{}**: {}", p_constraint.name, p_constraint.description)
+}
+
+fn type_to_string(typ: &Type, heading_level: usize) -> String {
+    let mut markdown = String::new();
+
+    markdown.push_str(&format!(
+        "<div id=\"type.{}\" />\n\n{} {}\n\n{}\n\n",
         typ.name,
+        _headings(heading_level),
         typ.genericized_name(),
         typ.description
     ));
@@ -74,7 +141,7 @@ fn type_to_string(typ: &Type) -> String {
     }
 
     if !typ.fields.is_empty() {
-        markdown.push_str("\n\n#### Fields\n\n");
+        markdown.push_str(&format!("\n\n{} Fields\n\n", _headings(heading_level + 1)));
 
         typ.fields.iter().for_each(|field| {
             markdown.push_str(&format!("{}\n", field_to_string(field)));
@@ -82,12 +149,12 @@ fn type_to_string(typ: &Type) -> String {
     }
 
     if !typ.methods.is_empty() {
-        markdown.push_str("\n\n#### Methods\n\n");
+        markdown.push_str(&format!("\n\n{} Methods\n\n", _headings(heading_level + 1)));
 
         typ.methods.iter().for_each(|method| {
             markdown.push_str(&format!(
                 "{}\n",
-                method_to_string(method, Some(typ.name.clone()))
+                method_to_string(method, Some(typ.name.clone()), heading_level + 2),
             ));
         });
     }
@@ -95,11 +162,12 @@ fn type_to_string(typ: &Type) -> String {
     markdown
 }
 
-fn method_to_string(method: &Method, cls: Option<String>) -> String {
+fn method_to_string(method: &Method, cls: Option<String>, heading_level: usize) -> String {
     let mut markdown = String::new();
 
     markdown.push_str(&format!(
-        "### {}\n\n```lua\n{}\n```",
+        "{} {}\n\n```lua\n{}\n```",
+        _headings(heading_level),
         method.func_name(&cls),
         method.type_signature(&cls)
     ));
@@ -109,7 +177,10 @@ fn method_to_string(method: &Method, cls: Option<String>) -> String {
     }
 
     if !method.parameters.is_empty() {
-        markdown.push_str("\n\n#### Parameters\n\n");
+        markdown.push_str(&format!(
+            "\n\n{} Parameters\n\n",
+            _headings(heading_level + 1)
+        ));
 
         method.parameters.iter().for_each(|param| {
             markdown.push_str(&format!("{}\n", param_to_string(param)));
@@ -117,7 +188,7 @@ fn method_to_string(method: &Method, cls: Option<String>) -> String {
     }
 
     if !method.returns.is_empty() {
-        markdown.push_str("\n\n#### Returns\n\n");
+        markdown.push_str(&format!("\n\n{} Returns\n\n", _headings(heading_level + 1)));
 
         method.returns.iter().for_each(|ret| {
             markdown.push_str(&param_to_string(ret));
@@ -183,4 +254,15 @@ fn typeref_to_link(tref: &str) -> String {
             tref
         })
     }
+}
+
+/// Helper function to generate a string of `#` characters
+fn _headings(level: usize) -> String {
+    let mut s = String::new();
+
+    for _ in 0..level {
+        s.push('#');
+    }
+
+    s
 }

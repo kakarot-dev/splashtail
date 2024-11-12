@@ -2,6 +2,7 @@ mod atomicinstant;
 pub mod core;
 
 mod lang_lua;
+pub use lang_lua::primitives_docs;
 pub use lang_lua::samples;
 pub use lang_lua::state::LuaKVConstraints;
 pub use lang_lua::PLUGINS;

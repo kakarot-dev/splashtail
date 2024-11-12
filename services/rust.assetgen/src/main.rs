@@ -79,7 +79,7 @@ async fn main() {
             crate::tester::run_tester().await;
         }
         Some("templatedocs") => {
-            let docs = crate::docgen::document_all_plugins();
+            let docs = crate::docgen::create_documentation();
 
             println!("{}", docs)
         }

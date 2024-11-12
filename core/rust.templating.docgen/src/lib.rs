@@ -2,22 +2,103 @@
 //
 use std::sync::Arc;
 
+/// A primitive type in the Anti-Raid Luau API.
+/// E.g. u64, string, etc.
+///
+/// These are typedefs to primitive Luau types
 #[derive(Default, Debug, serde::Serialize, Clone)]
-/// The root of the documentation.
-pub struct Docs {
-    pub plugins: Vec<Plugin>,
+pub struct Primitive {
+    pub name: String,
+    pub lua_type: String,
+    pub description: String,
+    pub constraints: Vec<PrimitiveConstraint>,
 }
 
-// Docs builder code
-impl Docs {
-    pub fn add_plugin(self, plugin: Plugin) -> Self {
-        let mut d = self;
-        d.plugins.push(plugin);
-        d
+// Primitive builder code
+impl Primitive {
+    pub fn name(self, name: &str) -> Self {
+        let mut p = self;
+        p.name = name.to_string();
+        p
     }
 
-    pub fn build(self) -> Docs {
+    pub fn lua_type(self, lua_type: &str) -> Self {
+        let mut p = self;
+        p.lua_type = lua_type.to_string();
+        p
+    }
+
+    pub fn description(self, description: &str) -> Self {
+        let mut p = self;
+        p.description = description.to_string();
+        p
+    }
+
+    pub fn add_constraint(self, name: &str, description: &str, accepted_values: &str) -> Self {
+        let mut p = self;
+        p.constraints.push(PrimitiveConstraint {
+            name: name.to_string(),
+            description: description.to_string(),
+            accepted_values: accepted_values.to_string(),
+        });
+
+        p
+    }
+
+    pub fn build(self) -> Primitive {
         self
+    }
+}
+
+impl Primitive {
+    pub fn type_definition(&self) -> String {
+        format!("type {} = {}", self.name, self.lua_type)
+    }
+}
+
+/// A primitive constraint
+#[derive(Default, Debug, serde::Serialize, Clone)]
+pub struct PrimitiveConstraint {
+    pub name: String,
+    pub description: String,
+    pub accepted_values: String,
+}
+
+/// A special helper types for building a list of primitives.
+pub struct PrimitiveListBuilder {
+    primitives: Vec<Primitive>,
+}
+
+impl Default for PrimitiveListBuilder {
+    fn default() -> Self {
+        PrimitiveListBuilder {
+            primitives: Vec::new(),
+        }
+    }
+}
+
+impl PrimitiveListBuilder {
+    pub fn add(
+        self,
+        name: &str,
+        lua_type: &str,
+        description: &str,
+        p_fn: impl Fn(Primitive) -> Primitive,
+    ) -> Self {
+        let mut p = self;
+
+        let new_primitive = Primitive::default()
+            .name(name)
+            .lua_type(lua_type)
+            .description(description);
+
+        p.primitives.push(p_fn(new_primitive));
+
+        p
+    }
+
+    pub fn build(self) -> Vec<Primitive> {
+        self.primitives
     }
 }
 

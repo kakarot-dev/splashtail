@@ -303,62 +303,62 @@ KvExecutor allows templates to get, store and find persistent data within a serv
 
 #### Methods
 
-### KvExecutor:find
+##### KvExecutor:find
 
 ```lua
 function KvExecutor:find(key: string)
 ```
 
-#### Parameters
+###### Parameters
 
 - `key` ([string](#type.string)): The key to search for. % matches zero or more characters; _ matches a single character. To search anywhere in a string, surround {KEY} with %, e.g. %{KEY}%
 
-### KvExecutor:get
+##### KvExecutor:get
 
 ```lua
 function KvExecutor:get(key: string)
 ```
 
-#### Parameters
+###### Parameters
 
 - `key` ([string](#type.string)): The key to get.
 
 
-#### Returns
+###### Returns
 
 - `value` ([any](#type.any)): The value of the key.- `exists` ([boolean](#type.boolean)): Whether the key exists.
-### KvExecutor:getrecord
+##### KvExecutor:getrecord
 
 ```lua
 function KvExecutor:getrecord(key: string): KvRecord
 ```
 
-#### Parameters
+###### Parameters
 
 - `key` ([string](#type.string)): The key to get.
 
 
-#### Returns
+###### Returns
 
 - `record` ([KvRecord](#type.KvRecord)): The record of the key.
-### KvExecutor:set
+##### KvExecutor:set
 
 ```lua
 function KvExecutor:set(key: string, value: any)
 ```
 
-#### Parameters
+###### Parameters
 
 - `key` ([string](#type.string)): The key to set.
 - `value` ([any](#type.any)): The value to set.
 
-### KvExecutor:delete
+##### KvExecutor:delete
 
 ```lua
 function KvExecutor:delete(key: string)
 ```
 
-#### Parameters
+###### Parameters
 
 - `key` ([string](#type.string)): The key to delete.
 
@@ -598,7 +598,7 @@ LuaStream<T> provides a stream implementation. This is returned by MessageHandle
 
 #### Methods
 
-### LuaStream:next
+##### LuaStream:next
 
 ```lua
 function LuaStream:next(): <T>
@@ -606,10 +606,10 @@ function LuaStream:next(): <T>
 
 Returns the next item in the stream.
 
-#### Returns
+###### Returns
 
 - `item` (`<T>`): The next item in the stream.
-### LuaStream:for_each
+##### LuaStream:for_each
 
 ```lua
 function LuaStream:for_each(callback: <function>)
@@ -617,7 +617,7 @@ function LuaStream:for_each(callback: <function>)
 
 Executes a callback for every entry in the stream.
 
-#### Parameters
+###### Parameters
 
 - `callback` (`<function>`): The callback to execute for each entry.
 
@@ -633,7 +633,7 @@ U64 is a 64-bit unsigned integer type. Implements Add/Subtract/Multiply/Divide/M
 
 #### Methods
 
-### U64:to_ne_bytes
+##### U64:to_ne_bytes
 
 ```lua
 function U64:to_ne_bytes(): {u8}
@@ -641,10 +641,10 @@ function U64:to_ne_bytes(): {u8}
 
 Converts the U64 to a little-endian byte array.
 
-#### Returns
+###### Returns
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
-### U64:from_ne_bytes
+##### U64:from_ne_bytes
 
 ```lua
 function U64:from_ne_bytes(bytes: {u8}): U64
@@ -652,15 +652,15 @@ function U64:from_ne_bytes(bytes: {u8}): U64
 
 Converts a little-endian byte array to a U64.
 
-#### Parameters
+###### Parameters
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
 
 
-#### Returns
+###### Returns
 
 - `u64` ([U64](#type.U64)): The U64 value.
-### U64:to_le_bytes
+##### U64:to_le_bytes
 
 ```lua
 function U64:to_le_bytes(): {u8}
@@ -668,10 +668,10 @@ function U64:to_le_bytes(): {u8}
 
 Converts the U64 to a little-endian byte array.
 
-#### Returns
+###### Returns
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
-### U64:from_le_bytes
+##### U64:from_le_bytes
 
 ```lua
 function U64:from_le_bytes(bytes: {u8}): U64
@@ -679,15 +679,15 @@ function U64:from_le_bytes(bytes: {u8}): U64
 
 Converts a little-endian byte array to a U64.
 
-#### Parameters
+###### Parameters
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
 
 
-#### Returns
+###### Returns
 
 - `u64` ([U64](#type.U64)): The U64 value.
-### U64:to_be_bytes
+##### U64:to_be_bytes
 
 ```lua
 function U64:to_be_bytes(): {u8}
@@ -695,10 +695,10 @@ function U64:to_be_bytes(): {u8}
 
 Converts the U64 to a big-endian byte array.
 
-#### Returns
+###### Returns
 
 - `bytes` ([{u8}](#type.u8)): The big-endian byte array.
-### U64:from_be_bytes
+##### U64:from_be_bytes
 
 ```lua
 function U64:from_be_bytes(bytes: {u8}): U64
@@ -706,15 +706,15 @@ function U64:from_be_bytes(bytes: {u8}): U64
 
 Converts a big-endian byte array to a U64.
 
-#### Parameters
+###### Parameters
 
 - `bytes` ([{u8}](#type.u8)): The big-endian byte array.
 
 
-#### Returns
+###### Returns
 
 - `u64` ([U64](#type.U64)): The U64 value.
-### U64:to_i64
+##### U64:to_i64
 
 ```lua
 function U64:to_i64(): I64
@@ -722,7 +722,7 @@ function U64:to_i64(): I64
 
 Converts the U64 to an i64.
 
-#### Returns
+###### Returns
 
 - `i64` ([I64](#type.I64)): The i64 value.
 
@@ -737,7 +737,7 @@ I64 is a 64-bit signed integer type. Implements Add/Subtract/Multiply/Divide/Mod
 
 #### Methods
 
-### I64:to_ne_bytes
+##### I64:to_ne_bytes
 
 ```lua
 function I64:to_ne_bytes(): {u8}
@@ -745,10 +745,10 @@ function I64:to_ne_bytes(): {u8}
 
 Converts the I64 to a little-endian byte array.
 
-#### Returns
+###### Returns
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
-### I64:from_ne_bytes
+##### I64:from_ne_bytes
 
 ```lua
 function I64:from_ne_bytes(bytes: {u8}): I64
@@ -756,15 +756,15 @@ function I64:from_ne_bytes(bytes: {u8}): I64
 
 Converts a little-endian byte array to a I64.
 
-#### Parameters
+###### Parameters
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
 
 
-#### Returns
+###### Returns
 
 - `i64` ([I64](#type.I64)): The I64 value.
-### I64:to_le_bytes
+##### I64:to_le_bytes
 
 ```lua
 function I64:to_le_bytes(): {u8}
@@ -772,10 +772,10 @@ function I64:to_le_bytes(): {u8}
 
 Converts the I64 to a little-endian byte array.
 
-#### Returns
+###### Returns
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
-### I64:from_le_bytes
+##### I64:from_le_bytes
 
 ```lua
 function I64:from_le_bytes(bytes: {u8}): I64
@@ -783,15 +783,15 @@ function I64:from_le_bytes(bytes: {u8}): I64
 
 Converts a little-endian byte array to a I64.
 
-#### Parameters
+###### Parameters
 
 - `bytes` ([{u8}](#type.u8)): The little-endian byte array.
 
 
-#### Returns
+###### Returns
 
 - `i64` ([I64](#type.I64)): The I64 value.
-### I64:to_be_bytes
+##### I64:to_be_bytes
 
 ```lua
 function I64:to_be_bytes(): {u8}
@@ -799,10 +799,10 @@ function I64:to_be_bytes(): {u8}
 
 Converts the I64 to a big-endian byte array.
 
-#### Returns
+###### Returns
 
 - `bytes` ([{u8}](#type.u8)): The big-endian byte array.
-### I64:from_be_bytes
+##### I64:from_be_bytes
 
 ```lua
 function I64:from_be_bytes(bytes: {u8}): I64
@@ -810,15 +810,15 @@ function I64:from_be_bytes(bytes: {u8}): I64
 
 Converts a big-endian byte array to a I64.
 
-#### Parameters
+###### Parameters
 
 - `bytes` ([{u8}](#type.u8)): The big-endian byte array.
 
 
-#### Returns
+###### Returns
 
 - `i64` ([I64](#type.I64)): The I64 value.
-### I64:to_u64
+##### I64:to_u64
 
 ```lua
 function I64:to_u64(): U64
@@ -826,7 +826,7 @@ function I64:to_u64(): U64
 
 Converts the I64 to a U64.
 
-#### Returns
+###### Returns
 
 - `u64` ([U64](#type.U64)): The U64 value.
 
@@ -841,7 +841,7 @@ Converts the I64 to a U64.
 
 #### Methods
 
-### bitu64:band
+##### bitu64:band
 
 ```lua
 function bitu64:band(...: <U64>): U64
@@ -849,15 +849,15 @@ function bitu64:band(...: <U64>): U64
 
 Performs a bitwise AND operation on the given values.
 
-#### Parameters
+###### Parameters
 
 - `...` (`<U64>`): The values to perform the operation on.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The result of the operation.
-### bitu64:bnor
+##### bitu64:bnor
 
 ```lua
 function bitu64:bnor(n: U64): U64
@@ -865,15 +865,15 @@ function bitu64:bnor(n: U64): U64
 
 Performs a bitwise NOR operation on the given value.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to perform the operation on.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The result of the operation.
-### bitu64:bor
+##### bitu64:bor
 
 ```lua
 function bitu64:bor(...: <U64>): U64
@@ -881,15 +881,15 @@ function bitu64:bor(...: <U64>): U64
 
 Performs a bitwise OR operation on the given values.
 
-#### Parameters
+###### Parameters
 
 - `...` (`<U64>`): The values to perform the operation on.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The result of the operation.
-### bitu64:bxor
+##### bitu64:bxor
 
 ```lua
 function bitu64:bxor(...: <U64>): U64
@@ -897,15 +897,15 @@ function bitu64:bxor(...: <U64>): U64
 
 Performs a bitwise XOR operation on the given values.
 
-#### Parameters
+###### Parameters
 
 - `...` (`<U64>`): The values to perform the operation on.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The result of the operation.
-### bitu64:btest
+##### bitu64:btest
 
 ```lua
 function bitu64:btest(...: <U64>): boolean
@@ -913,15 +913,15 @@ function bitu64:btest(...: <U64>): boolean
 
 Tests if the bitwise AND of the given values is not zero.
 
-#### Parameters
+###### Parameters
 
 - `...` (`<U64>`): The values to perform the operation on.
 
 
-#### Returns
+###### Returns
 
 - `result` ([boolean](#type.boolean)): True if the bitwise AND of the values is not zero, false otherwise.
-### bitu64:extract
+##### bitu64:extract
 
 ```lua
 function bitu64:extract(n: U64, f: u64, w: u64): U64
@@ -929,17 +929,17 @@ function bitu64:extract(n: U64, f: u64, w: u64): U64
 
 Extracts a field from a value.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to extract the field from.
 - `f` ([u64](#type.u64)): The field to extract.
 - `w` ([u64](#type.u64)): The width of the field to extract.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The extracted field.
-### bitu64:lrotate
+##### bitu64:lrotate
 
 ```lua
 function bitu64:lrotate(n: U64, i: i64): U64
@@ -947,16 +947,16 @@ function bitu64:lrotate(n: U64, i: i64): U64
 
 Rotates a value left or right.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to rotate.
 - `i` ([i64](#type.i64)): The amount to rotate by.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The rotated value.
-### bitu64:lshift
+##### bitu64:lshift
 
 ```lua
 function bitu64:lshift(n: U64, i: i64): U64
@@ -964,16 +964,16 @@ function bitu64:lshift(n: U64, i: i64): U64
 
 Shifts a value left or right.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to shift.
 - `i` ([i64](#type.i64)): The amount to shift by.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The shifted value.
-### bitu64:replace
+##### bitu64:replace
 
 ```lua
 function bitu64:replace(n: U64, v: U64, f: u64, w: u64): U64
@@ -981,7 +981,7 @@ function bitu64:replace(n: U64, v: U64, f: u64, w: u64): U64
 
 Replaces a field in a value.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to replace the field in.
 - `v` ([U64](#type.U64)): The value to replace the field with.
@@ -989,10 +989,10 @@ Replaces a field in a value.
 - `w` ([u64](#type.u64)): The width of the field to replace.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The value with the field replaced.
-### bitu64:rrotate
+##### bitu64:rrotate
 
 ```lua
 function bitu64:rrotate(n: U64, i: i64): U64
@@ -1000,16 +1000,16 @@ function bitu64:rrotate(n: U64, i: i64): U64
 
 Rotates a value left or right.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to rotate.
 - `i` ([i64](#type.i64)): The amount to rotate by.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The rotated value.
-### bitu64:rshift
+##### bitu64:rshift
 
 ```lua
 function bitu64:rshift(n: U64, i: i64): U64
@@ -1017,13 +1017,13 @@ function bitu64:rshift(n: U64, i: i64): U64
 
 Shifts a value left or right.
 
-#### Parameters
+###### Parameters
 
 - `n` ([U64](#type.U64)): The value to shift.
 - `i` ([i64](#type.i64)): The amount to shift by.
 
 
-#### Returns
+###### Returns
 
 - `result` ([U64](#type.U64)): The shifted value.
 
@@ -1065,6 +1065,160 @@ Creates a new I64.
 - `i64` ([I64](#type.I64)): The I64 value.
 
 
+
+---
+
+# Primitives
+
+## u8
+
+``type u8 = number``
+
+An unsigned 8-bit integer. **Note: u8 arrays (`{u8}`) are often used to represent an array of bytes in AntiRaid**
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## u16
+
+``type u16 = number``
+
+An unsigned 16-bit integer.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## u32
+
+``type u32 = number``
+
+An unsigned 32-bit integer.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## u64
+
+``type u64 = number``
+
+An unsigned 64-bit integer. **Note that most, if not all, cases of `i64` in the actual API are either `string` or the `I64` custom type from typesext**
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## i8
+
+``type i8 = number``
+
+A signed 8-bit integer.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## i16
+
+``type i16 = number``
+
+A signed 16-bit integer.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## i32
+
+``type i32 = number``
+
+A signed 32-bit integer.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## i64
+
+``type i64 = number``
+
+A signed 64-bit integer. **Note that most, if not all, cases of `i64` in the actual API are either `string` or the `I64` custom type from typesext**
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## f32
+
+``type f32 = number``
+
+A 32-bit floating point number.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## f64
+
+``type f64 = number``
+
+A 64-bit floating point number.
+
+### Constraints
+
+- **range**: The range of values this number can take on
+
+---
+
+## bool
+
+``type bool = boolean``
+
+A boolean value.
+
+---
+
+## char
+
+``type char = string``
+
+A single Unicode character.
+
+### Constraints
+
+- **length**: The length of the string
+
+---
+
+## string
+
+``type string = string``
+
+A UTF-8 encoded string.
+
+### Constraints
+
+- **encoding**: Accepted character encoding
 
 ---
 

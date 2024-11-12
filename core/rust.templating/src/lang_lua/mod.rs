@@ -1,6 +1,7 @@
 // Work in progress
 pub(crate) mod multioption;
 mod perthreadpanichook;
+pub mod primitives_docs;
 pub mod samples;
 pub(crate) mod state;
 

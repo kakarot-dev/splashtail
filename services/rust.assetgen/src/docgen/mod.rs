@@ -121,7 +121,10 @@ fn generate_markdown_for_primitive(primitive: Primitive, heading_level: usize) -
 }
 
 fn primitive_constraint_to_string(p_constraint: &PrimitiveConstraint) -> String {
-    format!("- **{}**: {}", p_constraint.name, p_constraint.description)
+    format!(
+        "- **{}**: {} (accepted values: {})",
+        p_constraint.name, p_constraint.description, p_constraint.accepted_values
+    )
 }
 
 fn type_to_string(typ: &Type, heading_level: usize) -> String {

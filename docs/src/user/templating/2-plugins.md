@@ -1080,7 +1080,7 @@ An unsigned 8-bit integer. **Note: u8 arrays (`{u8}`) are often used to represen
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: 0-255)
 
 ---
 
@@ -1094,7 +1094,7 @@ An unsigned 16-bit integer.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: 0-65535)
 
 ---
 
@@ -1108,7 +1108,7 @@ An unsigned 32-bit integer.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: 0-4294967295)
 
 ---
 
@@ -1122,7 +1122,7 @@ An unsigned 64-bit integer. **Note that most, if not all, cases of `i64` in the 
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: 0-18446744073709551615)
 
 ---
 
@@ -1136,7 +1136,7 @@ A signed 8-bit integer.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: -128-127)
 
 ---
 
@@ -1150,7 +1150,7 @@ A signed 16-bit integer.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: -32768-32767)
 
 ---
 
@@ -1164,7 +1164,7 @@ A signed 32-bit integer.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: -2147483648-2147483647)
 
 ---
 
@@ -1178,7 +1178,7 @@ A signed 64-bit integer. **Note that most, if not all, cases of `i64` in the act
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: -9223372036854775808-9223372036854775807)
 
 ---
 
@@ -1192,7 +1192,7 @@ A 32-bit floating point number.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: IEEE 754 single-precision floating point)
 
 ---
 
@@ -1206,7 +1206,7 @@ A 64-bit floating point number.
 
 ### Constraints
 
-- **range**: The range of values this number can take on
+- **range**: The range of values this number can take on (accepted values: IEEE 754 double-precision floating point)
 
 ---
 
@@ -1230,7 +1230,7 @@ A single Unicode character.
 
 ### Constraints
 
-- **length**: The length of the string
+- **length**: The length of the string (accepted values: 1)
 
 ---
 
@@ -1244,7 +1244,7 @@ A UTF-8 encoded string.
 
 ### Constraints
 
-- **encoding**: Accepted character encoding
+- **encoding**: Accepted character encoding (accepted values: UTF-8 *only*)
 
 ---
 
